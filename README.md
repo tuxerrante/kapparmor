@@ -14,6 +14,6 @@ go mod init ./go/src/app/
 
 # Build and run the container image
 docker build -t mygoapp --build-arg POLL_TIME=30 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . &&\
- echo &&\
- docker run --rm -it mygoapp /bin/sh
+  echo &&\
+  docker run --rm -it mygoapp
 
