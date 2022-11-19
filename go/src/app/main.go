@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -19,13 +18,17 @@ func main() {
 
 	log.Printf("Polling directory %s every %d seconds.", DIRNAME, POLL_TIME)
 
-	files, err := ioutil.ReadDir(DIRNAME)
+	files, err := os.ReadDir(DIRNAME)
 	if err != nil  {
 		log.Fatal(err.Error())
 	}
 
-	for _, filename := range files {
-		fmt.Printf("- %s\n", filename)
+	for _, file := range files {
+		if file.IsDir() {
+			fmt.Printf("Directory '%s' will be skipped.\n", file.Name())
+			continue
+		}
+		fmt.Printf("- %s\n", file.Name())		
 	}
 
 	// TODO: filter only the files recently changed
