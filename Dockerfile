@@ -14,7 +14,8 @@ WORKDIR /app
 
 RUN addgroup --system appgroup &&\
     adduser  --system appuser -G appgroup &&\
-    apk --no-cache update
+    apk --no-cache update &&\
+    apk add apparmor
 
 COPY --chown=appuser:appgroup --from=builder /go/bin/app /app
 COPY --chown=appuser:appgroup ./profiles ./profiles
