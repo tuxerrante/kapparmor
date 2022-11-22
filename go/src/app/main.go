@@ -118,7 +118,7 @@ func loadNewProfiles() ([]string, error) {
 	if err != nil {
 		log.Fatalf(">> Error reading new profiles in the configmap!\n%v", err)
 	}
-	fmt.Println("> newProfiles", strings.Join(maps.Keys(newProfiles), "\n"))
+	fmt.Println("> newProfiles\n", strings.Join(maps.Keys(newProfiles), "\n- "))
 
 	filteredNewProfiles := make([]string, len(newProfiles))
 	for k := range newProfiles {
@@ -126,7 +126,7 @@ func loadNewProfiles() ([]string, error) {
 			filteredNewProfiles = append(filteredNewProfiles, k)
 		}
 	}
-	fmt.Println("> filteredNewProfiles", strings.Join(filteredNewProfiles, "\n"))
+	fmt.Println("> filteredNewProfiles\n", strings.Join(filteredNewProfiles, "\n- "))
 
 	obsoleteProfiles := []string{}
 	for k := range loadedProfiles {
@@ -134,7 +134,7 @@ func loadNewProfiles() ([]string, error) {
 			obsoleteProfiles = append(obsoleteProfiles, k)
 		}
 	}
-	fmt.Println("> obsoleteProfiles", strings.Join(obsoleteProfiles, "\n"))
+	fmt.Println("> obsoleteProfiles\n", strings.Join(obsoleteProfiles, "\n- "))
 
 	// Execute apparmor_parser --replace --verbose filteredNewProfiles
 	fmt.Println("============================================================")
