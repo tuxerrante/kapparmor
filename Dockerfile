@@ -9,6 +9,7 @@ RUN go build -o /go/bin/app -v ./go/src/app/
 # --- final stage ---
 FROM alpine:latest
 LABEL Name=kapparmor Version=0.0.1
+LABEL Author="Affinito Alessandro"
 
 WORKDIR /app
 
@@ -27,4 +28,4 @@ ENV PROFILES_DIR=$PROFILES_DIR
 ENV POLL_TIME=$POLL_TIME
 
 # USER appuser
-ENTRYPOINT ./app
+CMD ./app
