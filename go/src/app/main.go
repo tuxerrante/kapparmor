@@ -4,12 +4,14 @@ package main
 // TODO:
 //  - unload profiles present only in loadedProfiles and not in NewProfiles
 //  - manage symlinks: on the node there could be already some custom profile
-//
+//  - how to manage all default profiles present on the nodes after installing apparmor?
+//      they're too many to have them all in one configmap
 import (
 	"bufio"
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"golang.org/x/exp/maps"
 	"io"
 	"log"
 	"os"
@@ -86,13 +88,14 @@ func areProfilesReadable(FOLDER_NAME string) (bool, []string) {
 func pollProfiles(delay int) {
 
 	ticker := time.NewTicker(time.Duration(delay) * time.Second)
-	for range ticker.C {
+	pollNow := func() {
 		newProfiles, err := loadNewProfiles()
 		if err != nil {
 			log.Fatalf(">> Error retrieving profiles: %v\n%v", newProfiles, err)
 		}
-
-		// TODO: unload removed profiles
+	}
+	for range ticker.C {
+		pollNow()
 	}
 }
 
@@ -103,14 +106,16 @@ func loadNewProfiles() ([]string, error) {
 		log.Fatalf(">> Error reading existing profiles.\n%v", err)
 	}
 
-	for _, profile := range loadedProfiles {
-		fmt.Println(profile)
+	fmt.Println("Profiles already on this node:")
+	for profileName := range loadedProfiles {
+		fmt.Printf("- %s", profileName)
 	}
 
 	newProfiles, err := getNewProfiles()
 	if err != nil {
 		log.Fatalf(">> Error reading new profiles in the configmap!\n%v", err)
 	}
+	fmt.Println("> newProfiles", strings.Join(maps.Keys(newProfiles), "\n"))
 
 	filteredNewProfiles := make([]string, len(newProfiles))
 	for k := range newProfiles {
@@ -118,6 +123,7 @@ func loadNewProfiles() ([]string, error) {
 			filteredNewProfiles = append(filteredNewProfiles, k)
 		}
 	}
+	fmt.Println("> filteredNewProfiles", strings.Join(filteredNewProfiles, "\n"))
 
 	obsoleteProfiles := make([]string, len(loadedProfiles))
 	for k := range loadedProfiles {
@@ -125,6 +131,7 @@ func loadNewProfiles() ([]string, error) {
 			obsoleteProfiles = append(obsoleteProfiles, k)
 		}
 	}
+	fmt.Println("> obsoleteProfiles", strings.Join(obsoleteProfiles, "\n"))
 
 	// Execute apparmor_parser --replace --verbose filteredNewProfiles
 	fmt.Println("> TODO: apparmor_parser --replace ", filteredNewProfiles)
