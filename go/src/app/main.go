@@ -94,6 +94,9 @@ func pollProfiles(delay int) {
 			log.Fatalf(">> Error retrieving profiles: %v\n%v", newProfiles, err)
 		}
 	}
+
+	pollNow()
+
 	for range ticker.C {
 		pollNow()
 	}
@@ -108,7 +111,7 @@ func loadNewProfiles() ([]string, error) {
 
 	fmt.Println("Profiles already on this node:")
 	for profileName := range loadedProfiles {
-		fmt.Printf("- %s", profileName)
+		fmt.Printf("- %s\n", profileName)
 	}
 
 	newProfiles, err := getNewProfiles()
@@ -125,7 +128,7 @@ func loadNewProfiles() ([]string, error) {
 	}
 	fmt.Println("> filteredNewProfiles", strings.Join(filteredNewProfiles, "\n"))
 
-	obsoleteProfiles := make([]string, len(loadedProfiles))
+	obsoleteProfiles := []string{}
 	for k := range loadedProfiles {
 		if newProfiles[k] == nil {
 			obsoleteProfiles = append(obsoleteProfiles, k)
@@ -134,9 +137,11 @@ func loadNewProfiles() ([]string, error) {
 	fmt.Println("> obsoleteProfiles", strings.Join(obsoleteProfiles, "\n"))
 
 	// Execute apparmor_parser --replace --verbose filteredNewProfiles
+	fmt.Println("============================================================")
 	fmt.Println("> TODO: apparmor_parser --replace ", filteredNewProfiles)
 
 	// Execute apparmor_parser -R obsoleteProfiles
+	fmt.Println("============================================================")
 	fmt.Println("> TODO: apparmor_parser -R ", obsoleteProfiles)
 
 	return filteredNewProfiles, nil
