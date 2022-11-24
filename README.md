@@ -9,7 +9,7 @@ This work is heavily inspired by [kubernetes/apparmor-loader](https://github.com
 	- deploy a configmap in the security namespace containing all the profiles versioned in the current project
 	- it will apply a daemonset on the linux nodes
 2. The configmap will contain multiple apparmor profiles  
-   -  The custom profiles HAVE to start with the same PROFILE_NAME_PREFIX, currently this deafults to "custom.". 
+   -  The custom profiles HAVE to start with the same PROFILE_NAME_PREFIX, currently this defaults to "custom.". 
    - The name of the file should be the same as the name of the profile.
 3. The configmap will be polled every POLL_TIME seconds to move them into PROFILES_DIR host path and then enable them.
 
