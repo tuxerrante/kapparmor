@@ -1,20 +1,15 @@
 package main
 
-//
-// TODO:
-//  - unload profiles present only in loadedProfiles and not in NewProfiles
-//  - manage symlinks: on the node there could be already some custom profile
-//  - how to manage all default profiles present on the nodes after installing apparmor?
-//      they're too many to have them all in one configmap
 import (
 	"bufio"
 	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"golang.org/x/exp/maps"
 	"io"
 	"log"
 	"os"
+	"os/exec"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -26,8 +21,9 @@ var (
 )
 
 const (
-	KERNEL_PATH  = "/sys/kernel/security/apparmor/profiles"
-	PROFILER_BIN = "/sbin/apparmor_parser"
+	KERNEL_PATH         = "/sys/kernel/security/apparmor/profiles"
+	PROFILER_BIN        = "/sbin/apparmor_parser"
+	PROFILE_NAME_PREFIX = "custom."
 )
 
 func main() {
@@ -45,28 +41,21 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Check profile directory accessibility
-	profilesAreReadable, _ := areProfilesReadable(CONFIGMAP_PATH)
-	if !profilesAreReadable {
-		log.Fatalf(">> There was an error accessing the files in %s.\n", CONFIGMAP_PATH)
-	}
-
 	// Poll configmap forever every POLL_TIME seconds
 	pollProfiles(POLL_TIME)
 }
 
-func areProfilesReadable(FOLDER_NAME string) (bool, []string) {
+func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 
-	filenames := []string{}
-	files, err := os.ReadDir(CONFIGMAP_PATH)
+	filenames := map[string]bool{}
+	files, err := os.ReadDir(FOLDER_NAME)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	// TODO: Should the app terminate if no profiles are present?
 	if len(files) == 0 {
 		fmt.Printf("No files were found in the given folder!\n")
-		return true, nil
+		return false, nil
 	}
 
 	fmt.Printf("Found files in given folder:\n")
@@ -76,7 +65,7 @@ func areProfilesReadable(FOLDER_NAME string) (bool, []string) {
 			continue
 		}
 		fmt.Printf("- %s\n", file.Name())
-		filenames = append(filenames, file.Name())
+		filenames[file.Name()] = true
 	}
 
 	return true, filenames
@@ -84,7 +73,6 @@ func areProfilesReadable(FOLDER_NAME string) (bool, []string) {
 
 // Profiles will probably change content while keeping the same name, so a digest comparison
 // can be very useful if we don't want to load everything every time.
-// https://pkg.go.dev/github.com/opencontainers/go-digest#section-readme
 func pollProfiles(delay int) {
 
 	ticker := time.NewTicker(time.Duration(delay) * time.Second)
@@ -102,86 +90,114 @@ func pollProfiles(delay int) {
 	}
 }
 
-// Check if the current profiles are really new
+// Check if the current profiles are really new and loads them after verifying some conditions
 func loadNewProfiles() ([]string, error) {
-	loadedProfiles, err := getLoadedProfiles()
+
+	// Check profiles directory accessibility
+	profilesAreReadable, newProfiles := getNewProfiles()
+	if !profilesAreReadable {
+		log.Fatalf(">> There was an error accessing the files in %s.\n", CONFIGMAP_PATH)
+	}
+
+	loadedProfiles, customLoadedProfiles, err := getLoadedProfiles()
 	if err != nil {
 		log.Fatalf(">> Error reading existing profiles.\n%v", err)
 	}
 
 	fmt.Println("Profiles already on this node:")
-	for profileName := range loadedProfiles {
-		fmt.Printf("- %s\n", profileName)
+	for loadedProfileName := range loadedProfiles {
+		fmt.Printf("- %s\n", loadedProfileName)
 	}
 
-	newProfiles, err := getNewProfiles()
-	if err != nil {
-		log.Fatalf(">> Error reading new profiles in the configmap!\n%v", err)
-	}
-	fmt.Println("> newProfiles\n", strings.Join(maps.Keys(newProfiles), "\n- "))
+	// Check if it exists a profile already loaded with the same name
+	newProfilesToApply := make([]string, 0, len(newProfiles))
 
-	filteredNewProfiles := make([]string, len(newProfiles))
-	for k := range newProfiles {
-		if loadedProfiles[k] == nil || !bytes.Equal(newProfiles[k], loadedProfiles[k]) {
-			filteredNewProfiles = append(filteredNewProfiles, k)
+	for newProfileName := range newProfiles {
+
+		filePath1 := path.Join(CONFIGMAP_PATH, newProfileName)
+
+		// It exists a loaded profile with the same name
+		if customLoadedProfiles[newProfileName] {
+
+			// If the profile is exactly the same skip the apply
+			filePath2 := path.Join(KERNEL_PATH, newProfileName)
+			contentIsTheSame, err := hasTheSameContent(filePath1, filePath2)
+			if err != nil {
+				fmt.Printf(">> Error in checking the content of %s VS %s", filePath1, filePath2)
+				return nil, err
+			}
+			if contentIsTheSame {
+				fmt.Printf("Content of  %s and %s seems the same, skipping.", filePath1, filePath2)
+				continue
+			}
+		}
+		newProfilesToApply = append(newProfilesToApply, filePath1)
+	}
+
+	// TODO: check for profiles to unload
+	loadedProfilesToUnload := make([]string, 0, len(customLoadedProfiles))
+	for customLoadedProfile := range customLoadedProfiles {
+		if !newProfiles[customLoadedProfile] {
+			loadedProfilesToUnload = append(loadedProfilesToUnload, customLoadedProfile)
 		}
 	}
-	fmt.Println("> filteredNewProfiles\n", strings.Join(filteredNewProfiles, "\n- "))
-
-	obsoleteProfiles := []string{}
-	for k := range loadedProfiles {
-		if newProfiles[k] == nil {
-			obsoleteProfiles = append(obsoleteProfiles, k)
-		}
-	}
-	fmt.Println("> obsoleteProfiles\n", strings.Join(obsoleteProfiles, "\n- "))
 
 	// Execute apparmor_parser --replace --verbose filteredNewProfiles
 	fmt.Println("============================================================")
-	fmt.Println("> TODO: apparmor_parser --replace ", filteredNewProfiles)
+	fmt.Println("> Apparmor replace and apply new profiles..")
+	for _, profilePath := range newProfilesToApply {
+		loadProfile(profilePath)
+	}
 
 	// Execute apparmor_parser -R obsoleteProfiles
 	fmt.Println("============================================================")
-	fmt.Println("> TODO: apparmor_parser -R ", obsoleteProfiles)
+	fmt.Println("> TODO: apparmor_parser -R ...")
+	for _, profilePath := range loadedProfilesToUnload {
+		unloadProfile(profilePath)
+	}
 
-	return filteredNewProfiles, nil
+	return newProfilesToApply, nil
 }
 
-func getNewProfiles() (map[string][]byte, error) {
-	return getProfiles(CONFIGMAP_PATH)
+// It reads the files provided in the CONFIGMAP_PATH
+func getNewProfiles() (bool, map[string]bool) {
+	return areProfilesReadable(CONFIGMAP_PATH)
 }
-func getLoadedProfiles() (map[string][]byte, error) {
-	return getProfiles(KERNEL_PATH)
+
+// It reads a list of profile names from a singe file under KERNEL_PATH
+func getLoadedProfiles() (map[string]bool, map[string]bool, error) {
+	return getProfilesNamesFromFile(KERNEL_PATH, PROFILE_NAME_PREFIX)
 }
 
 // Search for profiles already present on the current node in '$apparmorfs/profiles' folder
-// - to be more efficient I could create a profiles map with a capacity as big as the number of files in the folder
-func getProfiles(profilesPath string) (map[string][]byte, error) {
+// It returns two maps to split the custom profiles introduced by us and the built-ins in the node OS
+// Output
+//   - profiles{} map containing all the loaded profiles
+//   - customProfiles{} map containing only the profiles starting with the given PREFIX
+func getProfilesNamesFromFile(profilesPath, profileNamePrefix string) (map[string]bool, map[string]bool, error) {
 
 	profilesFile, err := os.Open(profilesPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open %s: %v", profilesPath, err)
+		return nil, nil, fmt.Errorf("failed to open %s: %v", profilesPath, err)
 	}
 	defer profilesFile.Close()
 
-	profiles := map[string][]byte{}
-	currentHash := sha256.New()
+	profiles := map[string]bool{}
+	customProfiles := map[string]bool{}
+
 	scanner := bufio.NewScanner(profilesFile)
 
 	for scanner.Scan() {
 		profileName := parseProfileName(scanner.Text())
 		if profileName == "" {
-			// Unknown line format; skip it.
 			continue
 		}
-		// TODO: save the digest of the profile in the new map
-		if _, err := io.Copy(currentHash, profilesFile); err != nil {
-			log.Fatal(err)
+		if strings.HasPrefix(profileName, PROFILE_NAME_PREFIX) {
+			customProfiles[profileName] = true
 		}
-		// profiles[profileName] = true
-		profiles[profileName] = currentHash.Sum(nil)
+		profiles[profileName] = true
 	}
-	return profiles, nil
+	return profiles, customProfiles, nil
 }
 
 // The profiles file is formatted with one profile per line, matching a form:
@@ -197,4 +213,74 @@ func parseProfileName(profileLine string) string {
 		return ""
 	}
 	return strings.TrimSpace(profileLine[:modeIndex])
+}
+
+func hasTheSameContent(filePath1, filePath2 string) (bool, error) {
+	// compare sizes
+	file1, openErr1 := os.Open(filePath1)
+	if openErr1 != nil {
+		return false, openErr1
+	}
+	defer file1.Close()
+
+	file1_info, err := file1.Stat()
+	if err != nil {
+		log.Fatal("> Error accessing stats from file ", filePath1)
+	}
+
+	file2, openErr2 := os.Open(filePath2)
+	if openErr2 != nil {
+		return false, openErr2
+	}
+	defer file2.Close()
+
+	file2_info, err := file2.Stat()
+	if err != nil {
+		log.Fatal("> Error accessing stats from file ", filePath2)
+	}
+
+	if file1_info.Size() != file2_info.Size() {
+		return false, nil
+	}
+
+	// compare content through a sha256 hash
+	h1 := sha256.New()
+	if _, err := io.Copy(h1, file1); err != nil {
+		log.Fatal("Error in generating a hash for ", filePath1)
+	}
+
+	h2 := sha256.New()
+	if _, err := io.Copy(h2, file2); err != nil {
+		log.Fatal("Error in generating a hash for ", filePath2)
+	}
+
+	// Sum appends the current hash to nil and returns the resulting slice
+	if bytes.Equal(h1.Sum(nil), h2.Sum(nil)) {
+		fmt.Printf("> Hashes are different\n %s: %s\n %s: %s", filePath1, h1, filePath2, h2)
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func loadProfile(path string) error {
+	return execApparmor(path, "--verbose --replace")
+}
+func unloadProfile(path string) error {
+	return execApparmor(path, "--verbose --remove")
+}
+func execApparmor(path, args string) error {
+	cmd := exec.Command("apparmor_parser", args, path)
+	stderr := &bytes.Buffer{}
+	cmd.Stderr = stderr
+	out, err := cmd.Output()
+	fmt.Printf("Loading profiles from %s:\n%s", path, out)
+	if err != nil {
+		if stderr.Len() > 0 {
+			fmt.Println(stderr.String())
+		}
+		return fmt.Errorf("error loading profiles from %s: %v", path, err)
+	}
+	// TODO: copy the profile in the KERNEL_PATH ?
+	return nil
 }
