@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -266,11 +267,18 @@ func hasTheSameContent(filePath1, filePath2 string) (bool, error) {
 }
 
 func loadProfile(path string) error {
-	return execApparmor("--verbose", "--replace", path)
+	execApparmor("--verbose", "--replace", path)
+	// Copy the profile definition in the apparmor configuration standard directory
+	return CopyFile(path, ETC_APPARMORD)
 }
-func unloadProfile(path string) error {
-	return execApparmor("--verbose", "--remove", path)
+
+func unloadProfile(profilPath string) error {
+	execApparmor("--verbose", "--remove", profilPath)
+	// Remove the profile definition file
+	profileName := filepath.Base(profilPath)
+	return os.Remove(path.Join(ETC_APPARMORD, profileName))
 }
+
 func execApparmor(args ...string) error {
 	cmd := exec.Command("apparmor_parser", args...)
 	stderr := &bytes.Buffer{}
@@ -285,8 +293,6 @@ func execApparmor(args ...string) error {
 		return fmt.Errorf("error loading profile! %v", err)
 	}
 
-	// Copy the profile definition in the apparmor configuration standard directory
-	CopyFile(path, ETC_APPARMORD)
 	return nil
 }
 
