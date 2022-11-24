@@ -151,11 +151,12 @@ func loadNewProfiles() ([]string, error) {
 
 	// Execute apparmor_parser -R obsoleteProfiles
 	fmt.Println("============================================================")
-	fmt.Println("> TODO: apparmor_parser -R ...")
+	fmt.Println("> AppArmor REMOVE orphans profiles..")
 	for _, profilePath := range loadedProfilesToUnload {
 		unloadProfile(profilePath)
 	}
 
+	fmt.Println("> Done!\n> Waiting next poll..")
 	return newProfilesToApply, nil
 }
 
@@ -264,22 +265,22 @@ func hasTheSameContent(filePath1, filePath2 string) (bool, error) {
 }
 
 func loadProfile(path string) error {
-	return execApparmor(path, "--verbose --replace")
+	return execApparmor("--verbose", "--replace", path)
 }
 func unloadProfile(path string) error {
-	return execApparmor(path, "--verbose --remove")
+	return execApparmor("--verbose", "--remove", path)
 }
-func execApparmor(path, args string) error {
-	cmd := exec.Command("apparmor_parser", args, path)
+func execApparmor(args ...string) error {
+	cmd := exec.Command("apparmor_parser", args...)
 	stderr := &bytes.Buffer{}
 	cmd.Stderr = stderr
 	out, err := cmd.Output()
-	fmt.Printf("Loading profiles from %s:\n%s", path, out)
+	fmt.Printf("Loading profiles from %s:\n%s", args[len(args)-1], out)
 	if err != nil {
 		if stderr.Len() > 0 {
 			fmt.Println(stderr.String())
 		}
-		return fmt.Errorf("error loading profiles from %s: %v", path, err)
+		return fmt.Errorf("error loading profile! %v", err)
 	}
 	// TODO: copy the profile in the KERNEL_PATH ?
 	return nil
