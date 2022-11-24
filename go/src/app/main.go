@@ -112,6 +112,7 @@ func loadNewProfiles() ([]string, error) {
 	}
 
 	// Check if it exists a profile already loaded with the same name
+	// TODO: it should contains filenames and not paths to be consistent with loadedProfilesToUnload
 	newProfilesToApply := make([]string, 0, len(newProfiles))
 
 	for newProfileName := range newProfiles {
@@ -151,11 +152,11 @@ func loadNewProfiles() ([]string, error) {
 		loadProfile(profilePath)
 	}
 
-	// Execute apparmor_parser -R obsoleteProfiles
+	// Execute apparmor_parser --remove obsoleteProfilePath
 	fmt.Println("============================================================")
 	fmt.Println("> AppArmor REMOVE orphans profiles..")
-	for _, profilePath := range loadedProfilesToUnload {
-		unloadProfile(profilePath)
+	for _, profileFileName := range loadedProfilesToUnload {
+		unloadProfile(profileFileName)
 	}
 
 	fmt.Println("> Done!\n> Waiting next poll..")
@@ -266,17 +267,16 @@ func hasTheSameContent(filePath1, filePath2 string) (bool, error) {
 	return true, nil
 }
 
-func loadProfile(path string) error {
-	execApparmor("--verbose", "--replace", path)
+func loadProfile(profilePath string) error {
+	execApparmor("--verbose", "--replace", profilePath)
 	// Copy the profile definition in the apparmor configuration standard directory
-	return CopyFile(path, ETC_APPARMORD)
+	return CopyFile(profilePath, ETC_APPARMORD)
 }
 
-func unloadProfile(profilPath string) error {
-	execApparmor("--verbose", "--remove", profilPath)
-	// Remove the profile definition file
-	profileName := filepath.Base(profilPath)
-	return os.Remove(path.Join(ETC_APPARMORD, profileName))
+func unloadProfile(fileName string) error {
+	filePath := path.Join(ETC_APPARMORD, fileName)
+	execApparmor("--verbose", "--remove", filePath)
+	return os.Remove(filePath)
 }
 
 func execApparmor(args ...string) error {
