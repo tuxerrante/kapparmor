@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -40,6 +41,14 @@ func main() {
 	// Check profiler binary
 	if _, err := os.Stat(PROFILER_BIN); os.IsNotExist(err) {
 		log.Fatal(err)
+	}
+
+	// Check if custom directory exists
+	if _, err := os.Stat(ETC_APPARMORD); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir(ETC_APPARMORD, os.ModePerm)
+		if err != nil {
+			log.Println(err)
+		}
 	}
 
 	// Poll configmap forever every POLL_TIME seconds
@@ -122,7 +131,7 @@ func loadNewProfiles() ([]string, error) {
 		if customLoadedProfiles[newProfileName] {
 
 			// If the profile is exactly the same skip the apply
-			filePath2 := path.Join(KERNEL_PATH, newProfileName)
+			filePath2 := path.Join(ETC_APPARMORD, newProfileName)
 			contentIsTheSame, err := hasTheSameContent(filePath1, filePath2)
 			if err != nil {
 				fmt.Printf(">> Error in checking the content of %s VS %s", filePath1, filePath2)
@@ -284,12 +293,12 @@ func execApparmor(args ...string) error {
 	cmd.Stderr = stderr
 	out, err := cmd.Output()
 	path := args[len(args)-1]
-	fmt.Printf("Loading profiles from %s:\n%s", path, out)
+	fmt.Printf(" Loading profiles from %s:\n%s", path, out)
 	if err != nil {
 		if stderr.Len() > 0 {
 			fmt.Println(stderr.String())
 		}
-		return fmt.Errorf("error loading profile! %v", err)
+		return fmt.Errorf(" error loading profile! %v", err)
 	}
 
 	return nil

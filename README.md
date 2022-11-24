@@ -31,7 +31,7 @@ go mod init ./go/src/app/
 # Build and run the container image
 docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . &&\
   echo &&\
-  docker run --rm -it --privileged --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security',readonly test-kapparmor
+  docker run --rm -it --privileged --mount type=bind,source='/sys/kernel/security/apparmor',target='/sys/kernel/security/apparmor' test-kapparmor
 ```
 
 
