@@ -1,6 +1,6 @@
-profile custom.deny-write-outside-home flags=(attach_disconnected) {
+profile custom.deny-write-outside-app flags=(attach_disconnected) {
   file,       # access all filesystem
-  /home/** rw,
+  /app/** rw,
   deny /bin/** w, # deny writes in all subdirectories
   deny /etc/** w,
   deny /usr/** w,
