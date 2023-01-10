@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -47,8 +48,9 @@ func main() {
 	if _, err := os.Stat(ETC_APPARMORD); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(ETC_APPARMORD, os.ModePerm)
 		if err != nil {
-			log.Println(err)
+			log.Fatal(err)
 		}
+		fmt.Printf("> Directory %s created.", ETC_APPARMORD)
 	}
 
 	// Poll configmap forever every POLL_TIME seconds
@@ -82,7 +84,7 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 }
 
 // Profiles will probably change content while keeping the same name, so a digest comparison
-// can be very useful if we don't want to load everything every time.
+// can be useful if we don't want to load everything every time.
 func pollProfiles(delay int) {
 
 	ticker := time.NewTicker(time.Duration(delay) * time.Second)
@@ -109,18 +111,25 @@ func loadNewProfiles() ([]string, error) {
 		log.Fatalf(">> There was an error accessing the files in %s.\n", CONFIGMAP_PATH)
 	}
 
+	// TODO: improvable, customLoadedProfiles will always contain the new profiles recently created
 	loadedProfiles, customLoadedProfiles, err := getLoadedProfiles()
 	if err != nil {
 		log.Fatalf(">> Error reading existing profiles.\n%v", err)
 	}
 
-	fmt.Println("Profiles already on this node:")
+	// Sort alphabetically the profiles and print them
+	log.Println("Profiles already on this node:")
+	loadedProfileNames := make([]string, len(loadedProfiles))
 	for loadedProfileName := range loadedProfiles {
-		fmt.Printf("- %s\n", loadedProfileName)
+		loadedProfileNames = append(loadedProfileNames, loadedProfileName)
+	}
+	sort.Strings(loadedProfileNames)
+	for _, p := range loadedProfileNames {
+		log.Printf("- %s\n", p)
 	}
 
 	// Check if it exists a profile already loaded with the same name
-	// TODO: it should contains filenames and not paths to be consistent with loadedProfilesToUnload
+	// TODO: it should contain filenames and not paths to be consistent with loadedProfilesToUnload
 	newProfilesToApply := make([]string, 0, len(newProfiles))
 
 	for newProfileName := range newProfiles {
@@ -131,10 +140,11 @@ func loadNewProfiles() ([]string, error) {
 		if customLoadedProfiles[newProfileName] {
 
 			// If the profile is exactly the same skip the apply
+			// ERROR: it checks profiles still not applied
 			filePath2 := path.Join(ETC_APPARMORD, newProfileName)
 			contentIsTheSame, err := hasTheSameContent(filePath1, filePath2)
 			if err != nil {
-				fmt.Printf(">> Error in checking the content of %s VS %s", filePath1, filePath2)
+				fmt.Printf(">> Error in checking the content of %s VS %s\n", filePath1, filePath2)
 				return nil, err
 			}
 			if contentIsTheSame {
