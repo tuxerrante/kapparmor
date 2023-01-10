@@ -37,7 +37,7 @@ func main() {
 		log.Fatalf(">> It was not possible to convert env var POLL_TIME %v to an integer.\n%v", POLL_TIME, err)
 	}
 
-	fmt.Printf("> Polling directory %s every %d seconds.\n", CONFIGMAP_PATH, POLL_TIME)
+	log.Printf("> Polling directory %s every %d seconds.\n", CONFIGMAP_PATH, POLL_TIME)
 
 	// Check profiler binary
 	if _, err := os.Stat(PROFILER_BIN); os.IsNotExist(err) {
@@ -50,7 +50,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("> Directory %s created.", ETC_APPARMORD)
+		log.Printf("> Directory %s created.", ETC_APPARMORD)
 	}
 
 	// Poll configmap forever every POLL_TIME seconds
@@ -66,17 +66,17 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 	}
 
 	if len(files) == 0 {
-		fmt.Printf("No files were found in the given folder!\n")
+		log.Printf("No files were found in the given folder!\n")
 		return false, nil
 	}
 
-	fmt.Printf("Found files in given folder:\n")
+	log.Printf("Found files in given folder:\n")
 	for _, file := range files {
 		if file.IsDir() {
-			fmt.Printf("Directory '%s' will be skipped.\n", file.Name())
+			log.Printf("Directory '%s' will be skipped.\n", file.Name())
 			continue
 		}
-		fmt.Printf("- %s\n", file.Name())
+		log.Printf("- %s\n", file.Name())
 		filenames[file.Name()] = true
 	}
 
@@ -144,11 +144,11 @@ func loadNewProfiles() ([]string, error) {
 			filePath2 := path.Join(ETC_APPARMORD, newProfileName)
 			contentIsTheSame, err := hasTheSameContent(filePath1, filePath2)
 			if err != nil {
-				fmt.Printf(">> Error in checking the content of %s VS %s\n", filePath1, filePath2)
+				log.Printf(">> Error in checking the content of %s VS %s\n", filePath1, filePath2)
 				return nil, err
 			}
 			if contentIsTheSame {
-				fmt.Printf("Content of  %s and %s seems the same, skipping.", filePath1, filePath2)
+				log.Printf("Content of  %s and %s seems the same, skipping.", filePath1, filePath2)
 				continue
 			}
 		}
@@ -278,7 +278,7 @@ func hasTheSameContent(filePath1, filePath2 string) (bool, error) {
 
 	// Sum appends the current hash to nil and returns the resulting slice
 	if bytes.Equal(h1.Sum(nil), h2.Sum(nil)) {
-		fmt.Printf("> Hashes are different\n %s: %s\n %s: %s", filePath1, h1, filePath2, h2)
+		log.Printf("> Hashes are different\n %s: %s\n %s: %s", filePath1, h1, filePath2, h2)
 		return false, nil
 	}
 
@@ -303,7 +303,7 @@ func execApparmor(args ...string) error {
 	cmd.Stderr = stderr
 	out, err := cmd.Output()
 	path := args[len(args)-1]
-	fmt.Printf(" Loading profiles from %s:\n%s", path, out)
+	log.Printf(" Loading profiles from %s:\n%s", path, out)
 	if err != nil {
 		if stderr.Len() > 0 {
 			fmt.Println(stderr.String())
