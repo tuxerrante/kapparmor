@@ -40,7 +40,7 @@ jobs:
       - name: Archive go bin artifact
         uses: actions/upload-artifact@v3
         with:
-          name: 'go/bin/app'
+          name: 'app'
           path: 'go/bin/app'
 
       - name: Check binary
