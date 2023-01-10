@@ -144,18 +144,18 @@ func loadNewProfiles() ([]string, error) {
 			filePath2 := path.Join(ETC_APPARMORD, newProfileName)
 			contentIsTheSame, err := hasTheSameContent(filePath1, filePath2)
 			if err != nil {
-				log.Printf(">> Error in checking the content of %s VS %s\n", filePath1, filePath2)
+				log.Printf(">> Error in checking the content of %q VS %q\n", filePath1, filePath2)
 				return nil, err
 			}
 			if contentIsTheSame {
-				log.Printf("Content of  %s and %s seems the same, skipping.", filePath1, filePath2)
+				log.Printf("Content of  %q and %q seems the same, skipping.", filePath1, filePath2)
 				continue
 			}
 		}
 		newProfilesToApply = append(newProfilesToApply, filePath1)
 	}
 
-	// TODO: check for profiles to unload
+	// Unload custom profiles if they're in the filesystem but not in the configmap list
 	loadedProfilesToUnload := make([]string, 0, len(customLoadedProfiles))
 	for customLoadedProfile := range customLoadedProfiles {
 		if !newProfiles[customLoadedProfile] {
@@ -164,20 +164,23 @@ func loadNewProfiles() ([]string, error) {
 	}
 
 	// Execute apparmor_parser --replace --verbose filteredNewProfiles
-	fmt.Println("============================================================")
-	fmt.Println("> Apparmor replace and apply new profiles..")
+	log.Println("============================================================")
+	log.Println("> Apparmor replace and apply new profiles..")
 	for _, profilePath := range newProfilesToApply {
 		loadProfile(profilePath)
 	}
 
 	// Execute apparmor_parser --remove obsoleteProfilePath
-	fmt.Println("============================================================")
-	fmt.Println("> AppArmor REMOVE orphans profiles..")
+	log.Println("============================================================")
+	log.Println("> AppArmor REMOVE orphans profiles..")
 	for _, profileFileName := range loadedProfilesToUnload {
-		unloadProfile(profileFileName)
+		err := unloadProfile(profileFileName)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
-	fmt.Println("> Done!\n> Waiting next poll..")
+	log.Println("> Done!\n> Waiting next poll..")
 	return newProfilesToApply, nil
 }
 
@@ -306,7 +309,7 @@ func execApparmor(args ...string) error {
 	log.Printf(" Loading profiles from %s:\n%s", path, out)
 	if err != nil {
 		if stderr.Len() > 0 {
-			fmt.Println(stderr.String())
+			log.Println(stderr.String())
 		}
 		return fmt.Errorf(" error loading profile! %v", err)
 	}
