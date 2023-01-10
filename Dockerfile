@@ -14,12 +14,11 @@ LABEL Author="Affinito Alessandro"
 
 WORKDIR /app
 
-RUN set +x &&\
-    addgroup --system appgroup &&\
+RUN addgroup --system appgroup &&\
     adduser  --system appuser -G appgroup &&\
     apk --no-cache update &&\
-    apk add apparmor &&\
-    ls -lah
+    apk add apparmor
+RUN ls -lah
 
 COPY --chown=appuser:appgroup app /app
 COPY --chown=appuser:appgroup ./profiles ./profiles
