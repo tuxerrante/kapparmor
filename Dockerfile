@@ -17,9 +17,10 @@ WORKDIR /app
 RUN addgroup --system appgroup &&\
     adduser  --system appuser -G appgroup &&\
     apk --no-cache update &&\
-    apk add apparmor
+    apk add apparmor &&\
+    ls -lah
 
-COPY --chown=appuser:appgroup ./go/bin/app /app
+COPY --chown=appuser:appgroup app /app
 COPY --chown=appuser:appgroup ./profiles ./profiles
 
 ARG PROFILES_DIR
