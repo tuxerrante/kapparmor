@@ -39,8 +39,10 @@ jobs:
 
       - name: Check binary
         run: |
+          echo $(pwd)
           ls -la
-          ls -la ./go/bin/app
+          echo "go/bin/"
+          ls -la go/bin/
 
       - name: Log in to the Container registry
         uses: docker/login-action@v2.1.0
