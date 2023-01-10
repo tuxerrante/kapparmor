@@ -14,7 +14,8 @@ LABEL Author="Affinito Alessandro"
 
 WORKDIR /app
 
-RUN addgroup --system appgroup &&\
+RUN set +x &&\
+    addgroup --system appgroup &&\
     adduser  --system appuser -G appgroup &&\
     apk --no-cache update &&\
     apk add apparmor &&\
