@@ -8,8 +8,8 @@ Check if the current profiles are really new:
 3. get the list of loaded profile names
 4. calculate digests of loaded profiles  
     if the name starts with a given prefix like "custom."  
-    and the definition is under /etc/apparmor.d  
-    ignore it otwerwise
+    and the definition is under /etc/apparmor.d,
+    ignore it otherwise
 5. If a new profile has changed content or it is not present under /etc/apparmor.d then load it  
      and copy its definition into that folder
 6. If a profile is in the 'loaded' list   
