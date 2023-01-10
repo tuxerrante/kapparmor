@@ -1,9 +1,9 @@
 # --- build stage
-FROM golang:1.19-alpine AS builder
-RUN apk add --no-cache git
-WORKDIR /go/src/app
-COPY . .
-# Done by the pipeline/workflow
+# --- Done by the pipeline/workflow
+# FROM golang:1.19-alpine AS builder
+# RUN apk add --no-cache git
+# WORKDIR /go/src/app
+# COPY . .
 # RUN go get -d -v ./go/src/app/
 # RUN go build -o /go/bin/app -v ./go/src/app/
 
@@ -19,7 +19,7 @@ RUN addgroup --system appgroup &&\
     apk --no-cache update &&\
     apk add apparmor
 
-COPY --chown=appuser:appgroup --from=builder /go/bin/app /app
+COPY --chown=appuser:appgroup ./go/bin/app /app
 COPY --chown=appuser:appgroup ./profiles ./profiles
 
 ARG PROFILES_DIR
