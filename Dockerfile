@@ -3,8 +3,9 @@ FROM golang:1.19-alpine AS builder
 RUN apk add --no-cache git
 WORKDIR /go/src/app
 COPY . .
-RUN go get -d -v ./go/src/app/
-RUN go build -o /go/bin/app -v ./go/src/app/
+# Done by the pipeline/workflow
+# RUN go get -d -v ./go/src/app/
+# RUN go build -o /go/bin/app -v ./go/src/app/
 
 # --- final stage ---
 FROM alpine:latest
