@@ -19,8 +19,8 @@ RUN addgroup --system appgroup &&\
     apk --no-cache update &&\
     apk add apparmor
 
-COPY --chown=appuser:appgroup /go/bin/app /app
-COPY --chown=appuser:appgroup /profiles ./profiles
+COPY --chown=appuser:appgroup ./go/bin/app /app
+COPY --chown=appuser:appgroup ./profiles ./profiles
 
 ARG PROFILES_DIR
 ARG POLL_TIME

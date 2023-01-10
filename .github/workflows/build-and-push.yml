@@ -37,6 +37,12 @@ jobs:
       # - name: Test with the Go CLI
       #   run: go test
 
+      - name: Archive go bin artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'go/bin/app'
+          path: 'go/bin/app'
+
       - name: Check binary
         run: |
           echo $(pwd)
