@@ -37,6 +37,11 @@ jobs:
       # - name: Test with the Go CLI
       #   run: go test
 
+      - name: Check binary
+        run: |
+          ls -la
+          ls -la ./go/bin/app
+
       - name: Log in to the Container registry
         uses: docker/login-action@v2.1.0
         with:
