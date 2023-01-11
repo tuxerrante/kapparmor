@@ -4,15 +4,16 @@ LABEL Author="Affinito Alessandro"
 
 WORKDIR /app
 
+RUN addgroup --system appgroup &&\
+    adduser  --system appuser -G appgroup &&\
+    apk --no-cache update &&\
+    apk add apparmor
+
 # app is download as an artifact by the pipeline
 COPY --chown=appuser:appgroup ./go/bin/app /app/app
 COPY --chown=appuser:appgroup ./profiles   /app/profiles
 
-RUN addgroup --system appgroup &&\
-    adduser  --system appuser -G appgroup &&\
-    apk --no-cache update &&\
-    apk add apparmor &&\
-    chmod 550 app
+RUN chmod 550 app
 
 ARG PROFILES_DIR
 ARG POLL_TIME

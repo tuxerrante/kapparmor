@@ -71,7 +71,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # will create and boot a builder that can be used in the build-push action.
+      # Will create and boot a builder that can be used in the build-push action.
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
