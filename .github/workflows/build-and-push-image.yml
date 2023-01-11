@@ -1,14 +1,9 @@
-name: Create and publish a Docker image
+name: Create and publish Docker image
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "go/src/app/**.go"
-      - Dockerfile
-      - ".github/workflows/build-and-push.yml"
-  pull_request:
-    branches: [main]
+  workflow_run:
+    workflows: ['Create app']
+    types: [completed]
   workflow_dispatch:
 
 env:
@@ -19,38 +14,16 @@ env:
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Install dependencies
-        run: go get -d -v ./go/src/app/
-      - name: Build
-        run: go build -v -o ./go/bin/app ./go/src/app/
-      # - name: Test with the Go CLI
-      #   run: go test
-
-      - name: Archive go bin artifact
+      - name: Download go bin artifact
         uses: actions/upload-artifact@v3
         with:
           name: 'app'
-          path: 'go/bin/app'
-
-      - name: Check binary
-        run: |
-          echo $(pwd)
-          ls -lah
-          echo "go/bin/"
-          ls -lah go/bin/
 
       - name: Log in to the Container registry
         uses: docker/login-action@v2.1.0

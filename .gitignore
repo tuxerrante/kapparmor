@@ -1,0 +1,22 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Docker image files
+*.tar.gz
+*.tar.xz
+
+# Ignore all logfiles and databases 
+*.log 
+*.sql 
+*.bkp
+
+# OS generated files 
+.DS_Store 
+
+# Editor configs 
+.idea/
+.vscode/
