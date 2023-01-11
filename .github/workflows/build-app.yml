@@ -80,8 +80,15 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
       - name: Check downloaded artifact
-        run: ls -lah
+        run: |
+          pwd
+          ls -lah
+          echo "./go/bin"
+          ls -lah ./go/bin
 
+      # Any file mutation in the steps that precede the build step will be ignored, 
+      # since the context is based on the Git reference. Use the Path context to remove this restriction. 
+      # https://github.com/marketplace/actions/build-and-push-docker-images#git-context
       - name: Build and push Docker image
         uses: docker/build-push-action@v3.2.0
         with:
