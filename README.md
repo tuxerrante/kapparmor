@@ -1,3 +1,5 @@
+[![Create and publish a Docker image](https://github.com/tuxerrante/kapparmor/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/tuxerrante/kapparmor/actions/workflows/build-and-push.yml)
+
 # Kapparmor
 Apparmor-loader project to deploy profiles through a kubernetes daemonset.  
 
