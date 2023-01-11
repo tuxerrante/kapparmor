@@ -9,6 +9,7 @@ on:
       - ".github/workflows/build-and-push.yml"
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 env:
   GO_VERSION: '1.19'
@@ -71,3 +72,4 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: "--progress=plain"
