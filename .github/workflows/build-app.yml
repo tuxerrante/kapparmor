@@ -1,4 +1,4 @@
-name: Create app
+name: "1. Create app"
 
 on:
   push:
@@ -39,8 +39,11 @@ jobs:
       # - name: Test with the Go CLI
       #   run: go test
 
-      - name: Archive go bin artifact
+      - name: 'Tar files'
+        run: tar -czvf app.tar.gz ./go/bin/app
+
+      - name: Archive go artifact
         uses: actions/upload-artifact@v3
         with:
-          name: 'app'
-          path: 'go/bin/app'
+          name: 'app.tar.gz'
+          path: 'app.tar.gz'
