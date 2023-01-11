@@ -20,8 +20,8 @@ RUN addgroup --system appgroup &&\
     apk add apparmor
 RUN ls -lah
 
-COPY --chown=appuser:appgroup app /app
-COPY --chown=appuser:appgroup ./profiles ./profiles
+COPY --chown=appuser:appgroup ./go/bin/app /app/app
+COPY --chown=appuser:appgroup ./profiles   /app/profiles
 
 ARG PROFILES_DIR
 ARG POLL_TIME
