@@ -64,7 +64,7 @@ jobs:
           name: 'app.tar.gz'
       
       - name: 'UnTar files'
-        run: tar -xvf app.tar.gz -C go/bin/
+        run: tar -xvf app.tar.gz -C /go/bin/
 
       - name: Log in to the Container registry
         uses: docker/login-action@v2.1.0
