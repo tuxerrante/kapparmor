@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "go/src/app/**.go"
+      - Dockerfile
       - ".github/workflows/build-and-push.yml"
   pull_request:
     branches: [main]
