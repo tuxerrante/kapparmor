@@ -12,8 +12,7 @@ RUN addgroup --system appgroup &&\
     adduser  --system appuser -G appgroup &&\
     apk --no-cache update &&\
     apk add apparmor &&\
-    chmod 550 app &&\
-    ls -lah
+    chmod 550 app
 
 ARG PROFILES_DIR
 ARG POLL_TIME

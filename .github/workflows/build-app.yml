@@ -79,6 +79,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
+      - name: Check downloaded artifact
+        run: ls -lah
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v3.2.0
         with:
