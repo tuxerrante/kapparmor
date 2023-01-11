@@ -54,13 +54,19 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      # Security scanner
+      - name: Run container image vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          format: 'table'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+          timeout: 5m
+          output: 'trivy-results.sarif'
 
-      # - name: Run container image vulnerability scanner
-      #   uses: aquasecurity/trivy-action@9ab158e8597f3b310480b9a69402b419bc03dbd5
-      #   with:
-      #     image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
-      #     format: 'table'
-      #     ignore-unfixed: true
-      #     vuln-type: 'os,library'
-      #     severity: 'CRITICAL,HIGH'
-      #     timeout: 5m
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
