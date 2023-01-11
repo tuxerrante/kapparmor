@@ -63,6 +63,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: ['build-app']
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       # Security scanner
       # https://github.com/aquasecurity/trivy-action
       - name: Run container image vulnerability scanner
