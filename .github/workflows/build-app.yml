@@ -54,6 +54,9 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+  image-scan:
+    runs-on: ubuntu-latest
+    steps:
       # Security scanner
       - name: Run container image vulnerability scanner
         uses: aquasecurity/trivy-action@master
