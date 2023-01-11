@@ -47,9 +47,12 @@ jobs:
         with:
           name: 'app.tar.gz'
           path: 'app.tar.gz'
+
   build-and-push-image:
     needs: 'build-app'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
