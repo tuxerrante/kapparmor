@@ -96,6 +96,19 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v3.2.0
         with:
+          file: Dockerfile
+          context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          load: true
+
+      - name: Run container image vulnerability scanner
+        uses: aquasecurity/trivy-action@9ab158e8597f3b310480b9a69402b419bc03dbd5
+        with:
+          image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+          format: 'table'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+          timeout: 5m
