@@ -1,3 +1,12 @@
+# --- build stage
+FROM golang:1.19-alpine AS builder
+RUN apk add --no-cache git
+WORKDIR /go/src/app
+COPY . .
+RUN go get -d -v ./go/src/app/
+RUN go build -o /go/bin/app -v ./go/src/app/
+
+# ---
 FROM alpine:latest
 LABEL Name=kapparmor Version=0.0.1
 LABEL Author="Affinito Alessandro"
@@ -9,8 +18,7 @@ RUN addgroup --system appgroup &&\
     apk --no-cache update &&\
     apk add apparmor
 
-# app is download as an artifact by the pipeline
-COPY --chown=appuser:appgroup ./go/bin/app /app/app
+COPY --chown=appuser:appgroup --from=builder ./go/bin/app /app/
 COPY --chown=appuser:appgroup ./profiles   /app/profiles
 
 RUN chmod 550 app
