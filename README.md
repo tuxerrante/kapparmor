@@ -1,4 +1,4 @@
-[![Create and publish a Docker image](https://github.com/tuxerrante/kapparmor/actions/workflows/build-and-push.yml/badge.svg)](https://github.com/tuxerrante/kapparmor/actions/workflows/build-and-push.yml)
+[![1. Create app](https://github.com/tuxerrante/kapparmor/actions/workflows/build-app.yml/badge.svg)](https://github.com/tuxerrante/kapparmor/actions/workflows/build-app.yml)
 
 # Kapparmor
 Apparmor-loader project to deploy profiles through a kubernetes daemonset.  
