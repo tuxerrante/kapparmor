@@ -81,29 +81,55 @@ jobs:
           timeout: 5m
           output: 'trivy-results.sarif'
 
-  # Done by GitHub 
   # Pages https://github.com/tuxerrante/kapparmor/settings/pages
   # https://helm.sh/docs/topics/chart_repository/#github-pages-example
-  # release-chart:
-  #   needs: ['build-app']
-  #   permissions:
-  #     contents: write
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
-  #       with:
-  #         fetch-depth: 0
+  # https://helm.sh/docs/howto/chart_releaser_action/
+  release-chart:
+    needs: ['build-app']
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-  #     - name: Configure Git
-  #       run: |
-  #         git config user.name "$GITHUB_ACTOR"
-  #         git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-  #     - name: Install Helm
-  #       uses: azure/setup-helm@v3
+      - name: Install Helm
+        uses: azure/setup-helm@v3
 
-  #     - name: Run chart-releaser
-  #       uses: helm/chart-releaser-action@v1.5.0
-  #       env:
-  #         CR_TOKEN: "${{ env.GITHUB_TOKEN }}"
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          check-latest: true
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.3.1
+
+      - name: Run chart-testing (list-changed)
+        id: list-changed
+        run: |
+          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
+          if [[ -n "$changed" ]]; then
+            echo "::set-output name=changed::true"
+          fi
+
+      - name: Run chart-testing (lint)
+        run: ct lint --target-branch ${{ github.event.repository.default_branch }}
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.4.0
+        if: steps.list-changed.outputs.changed == 'true'
+
+      - name: Run chart-testing (install)
+        run: ct install
+
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.5.0
+        env:
+          CR_TOKEN: "${{ env.GITHUB_TOKEN }}"
