@@ -1,7 +1,0 @@
-apiVersion: v2
-name: kapparmor
-description: A project to deploy profiles through a kubernetes daemonset and a configmap
-type: application
-
-version: 0.1.0
-appVersion: "0.1.0"

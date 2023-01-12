@@ -1,0 +1,29 @@
+apiVersion: v2
+name: kapparmor
+description: A project to deploy profiles through a kubernetes daemonset and a configmap
+type: application
+home: https://artifacthub.io
+kubeVersion: ">= 1.23.0-0"
+
+version: 0.1.0
+appVersion: "0.1.0"
+
+keywords:
+  - kubernetes
+  - helm
+  - security
+  - apparmor
+
+maintainers:
+  - name: Alessandro Affinito
+    url: https://github.com/sponsors/tuxerrante
+
+annotations:
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/changes: |
+    - kind: added
+      description: Load new profiles in the configmap
+    - kind: added
+      description: Unload old profiles in the filesystem
+    - kind: added
+      description: Update profiles with same name and different content
