@@ -4,7 +4,7 @@
 # Kapparmor
 Apparmor-loader project to deploy profiles through a kubernetes daemonset.  
 
-This work is heavily inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
+This work is inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
 
 ![architecture](./docs/kapparmor-architecture.png)
 
@@ -42,7 +42,7 @@ docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROF
 
 
 # External useful links
-- https://emn178.github.io/online-tools/sha256.html
-- https://github.com/udhos/equalfile/blob/v0.3.0/equalfile.go
-- https://github.com/kubernetes-sigs/security-profiles-operator/
-- https://github.com/kubernetes/kubernetes/blob/master/test/images/apparmor-loader/loader.go
+- [https://emn178.github.io/online-tools/sha256.html](https://emn178.github.io/online-tools/sha256.html)
+- [https://github.com/udhos/equalfile/blob/v0.3.0/equalfile.go](https://github.com/udhos/equalfile/blob/v0.3.0/equalfile.go)
+- [https://github.com/kubernetes-sigs/security-profiles-operator/](https://github.com/kubernetes-sigs/security-profiles-operator/)
+- [https://github.com/kubernetes/kubernetes/blob/master/test/images/apparmor-loader/loader.go](https://github.com/kubernetes/kubernetes/blob/master/test/images/apparmor-loader/loader.go)

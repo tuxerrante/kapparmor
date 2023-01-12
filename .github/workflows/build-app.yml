@@ -15,6 +15,7 @@ env:
   GO_VERSION: '1.19'
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   build-app:
@@ -80,27 +81,29 @@ jobs:
           timeout: 5m
           output: 'trivy-results.sarif'
 
+  # Done by GitHub 
+  # Pages https://github.com/tuxerrante/kapparmor/settings/pages
   # https://helm.sh/docs/topics/chart_repository/#github-pages-example
-  release-chart:
-    needs: ['build-app']
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+  # release-chart:
+  #   needs: ['build-app']
+  #   permissions:
+  #     contents: write
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0
 
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+  #     - name: Configure Git
+  #       run: |
+  #         git config user.name "$GITHUB_ACTOR"
+  #         git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - name: Install Helm
-        uses: azure/setup-helm@v3
+  #     - name: Install Helm
+  #       uses: azure/setup-helm@v3
 
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.5.0
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+  #     - name: Run chart-releaser
+  #       uses: helm/chart-releaser-action@v1.5.0
+  #       env:
+  #         CR_TOKEN: "${{ env.GITHUB_TOKEN }}"
