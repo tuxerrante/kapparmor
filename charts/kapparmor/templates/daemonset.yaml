@@ -1,13 +1,10 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: Daemonset
 metadata:
   name: {{ include "kapparmor.fullname" . }}
   labels:
     {{- include "kapparmor.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
       {{- include "kapparmor.selectorLabels" . | nindent 6 }}
