@@ -86,7 +86,7 @@ jobs:
   # https://helm.sh/docs/howto/chart_releaser_action/
   release-chart:
     needs: ['build-app']
-    if: $GITHUB_REF_NAME == 'main' || startsWith(github.event.ref, 'refs/tags/v')
+    if: github.ref_name == 'main' || startsWith(github.event.ref, 'refs/tags/v')
     permissions:
       contents: write
     runs-on: ubuntu-latest
