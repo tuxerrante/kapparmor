@@ -47,6 +47,7 @@ jobs:
             type=ref,event=branch
             type=ref,event=pr
             type=ref,event=tag
+            type=ref,event=merge
             type=sha,format=long
 
       # Any file mutation in the steps that precede the build step will be ignored, 
