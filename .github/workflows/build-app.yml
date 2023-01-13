@@ -2,7 +2,7 @@ name: "1. Create app"
 
 on:
   push:
-    branches: [main]
+    branches: [main,dev]
     paths:
       - "go/src/app/**.go"
       - Dockerfile
@@ -86,6 +86,7 @@ jobs:
   # https://helm.sh/docs/howto/chart_releaser_action/
   release-chart:
     needs: ['build-app']
+    if: github.ref_name == 'main' || startsWith(github.event.ref, 'refs/tags/v')
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -127,7 +128,7 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install
+        run: ct install --print-config --target-branch ${{ github.event.repository.default_branch }}
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.5.0
