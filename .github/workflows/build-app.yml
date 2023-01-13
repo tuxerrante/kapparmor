@@ -134,4 +134,3 @@ jobs:
         uses: helm/chart-releaser-action@v1.5.0
         env:
           CR_TOKEN: "${{ env.GITHUB_TOKEN }}"
-          --generate-release-notes 
