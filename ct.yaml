@@ -7,6 +7,4 @@ chart-repos:
   - kapparmor=https://tuxerrante.github.io/kapparmor/
 helm-extra-args: --timeout 600s
 validate-maintainers: false
-
 generate-release-notes: true
-make-release-latest: false
