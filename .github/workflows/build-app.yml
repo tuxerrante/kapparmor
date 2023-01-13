@@ -127,7 +127,7 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install
+        run: ct install --print-config
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.5.0
