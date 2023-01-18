@@ -2,7 +2,7 @@
 remote: origin
 target-branch: main
 chart-dirs:
-  - charts/kapparmor
+  - ./charts
 chart-repos:
   - kapparmor=https://tuxerrante.github.io/kapparmor/
 helm-extra-args: --timeout 600s

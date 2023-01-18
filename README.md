@@ -3,18 +3,25 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/tuxerrante/kapparmor)](https://goreportcard.com/report/github.com/tuxerrante/kapparmor)
 
 # Kapparmor
+- [Kapparmor](#kapparmor)
+  - [Prerequisites](#prerequisites)
+    - [How to initialize this project again](#how-to-initialize-this-project-again)
+    - [Test the app locally](#test-the-app-locally)
+  - [TO-DO](#to-do)
+- [External useful links](#external-useful-links)
+- -----
 Apparmor-loader project to deploy profiles through a kubernetes daemonset.  
 
 This work is inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
 
 ![architecture](./docs/kapparmor-architecture.png)
 
-1. Azure pipelines will
+1. The CD pipeline will
 	- deploy a configmap in the security namespace containing all the profiles versioned in the current project
 	- it will apply a daemonset on the linux nodes
 2. The configmap will contain multiple apparmor profiles  
-   -  The custom profiles HAVE to start with the same PROFILE_NAME_PREFIX, currently this defaults to "custom.". 
-   - The name of the file should be the same as the name of the profile.
+  - The custom profiles HAVE to start with the same PROFILE_NAME_PREFIX, currently this defaults to "custom.". 
+  - The name of the file should be the same as the name of the profile.
 3. The configmap will be polled every POLL_TIME seconds to move them into PROFILES_DIR host path and then enable them.
 
 ## Prerequisites
@@ -30,16 +37,39 @@ go mod init github.com/tuxerrante/kapparmor
 go mod init ./go/src/app/
 ```
 
-### Test the app
+### Test the app locally
 ```sh
-# Build and run the container image
+# --- Check the Helm chart
+# https://github.com/helm/chart-testing/issues/464
+echo Linting the Helm chart
+
+helm lint --debug --strict  charts/kapparmor/
+
+docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kube/config:ro \
+  --volume $(pwd):/data quay.io/helmpack/chart-testing:latest \
+  /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
+
+export GITHUB_SHA=42
+helm install --dry-run --atomic --generate-name --timeout 30s --debug --set image.tag=$GITHUB_SHA  charts/kapparmor/
+
+
+# --- Build and run the container image
 docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . &&\
   echo &&\
   docker run --rm -it --privileged \
   --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security'  \
   --mount type=bind,source='/etc',target='/etc'\
   test-kapparmor
+
+
 ```
+## TO-DO
+1. Go unit tests  
+    - [ ] Create a new profile
+    - [ ] Update an existing profile
+    - [ ] Remove an existing profile
+    - [ ] Remove a non existing profile
+1. Remove kubernetes Service and DaemonSet exposed ports if useless
 
 
 # External useful links

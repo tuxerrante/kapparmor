@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Daemonset
+kind: DaemonSet
 metadata:
   name: {{ include "kapparmor.fullname" . }}
   labels:
@@ -44,6 +44,17 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          # mount a configmap as read only in the container's filesystem.  
+          volumeMounts :
+            - name : {{ include "kapparmor.fullname" . }}
+              mountPath : /app/profiles
+              readOnly : false
+
+      volumes:
+        - name: {{ include "kapparmor.fullname" . }}
+          configMap:
+            name: {{ include "kapparmor.fullname" . }}
+
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
