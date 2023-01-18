@@ -6,7 +6,7 @@
 - [Kapparmor- Kapparmor](#kapparmor--kapparmor)
   - [Prerequisites](#prerequisites)
     - [How to initialize this project again](#how-to-initialize-this-project-again)
-    - [Test the app](#test-the-app)
+    - [Test the app locally](#test-the-app-locally)
   - [TO-DO](#to-do)
 - [External useful links](#external-useful-links)
 - -----
@@ -37,10 +37,9 @@ go mod init github.com/tuxerrante/kapparmor
 go mod init ./go/src/app/
 ```
 
-### Test the app
-
+### Test the app locally
 ```sh
-# Check the Helm chart
+# --- Check the Helm chart
 # https://github.com/helm/chart-testing/issues/464
 echo Linting the Helm chart
 
@@ -50,10 +49,11 @@ docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kub
   --volume $(pwd):/data quay.io/helmpack/chart-testing:latest \
   /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
 
-helm install --dry-run --atomic --generate-name --timeout 30s --debug charts/kapparmor/
+export GITHUB_SHA=42
+helm install --dry-run --atomic --generate-name --timeout 30s --debug --set image.tag=$GITHUB_SHA  charts/kapparmor/
 
 
-# Build and run the container image
+# --- Build and run the container image
 docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . &&\
   echo &&\
   docker run --rm -it --privileged \

@@ -5,7 +5,7 @@ chart-dirs:
   - charts/kapparmor
 chart-repos:
   - kapparmor=https://tuxerrante.github.io/kapparmor/
-helm-extra-args: --timeout 600s
+helm-extra-args: --timeout 600s --set image.tag=${GITHUB_SHA}
 validate-maintainers: true
 generate-release-notes: true
 make-release-latest: false
