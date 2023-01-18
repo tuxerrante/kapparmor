@@ -19,7 +19,7 @@ RUN addgroup --system appgroup &&\
     apk add apparmor
 
 COPY --chown=appuser:appgroup --from=builder ./go/bin/app /app/
-COPY --chown=appuser:appgroup ./profiles   /app/profiles
+COPY --chown=appuser:appgroup ./charts/kapparmor/profiles   /app/profiles
 
 RUN chmod 550 app
 

@@ -1,0 +1,6 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "kapparmor.fullname" . }}
+data:
+{{ (.Files.Glob "profiles/*").AsConfig | indent 2 }}
