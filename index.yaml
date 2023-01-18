@@ -101,6 +101,36 @@ entries:
           description: Update profiles with same name and different content
       artifacthub.io/containsSecurityUpdates: "false"
     apiVersion: v2
+    appVersion: 0.0.1-alpha
+    created: "2023-01-18T18:43:23.921717385Z"
+    description: A project to deploy profiles through a kubernetes daemonset and a
+      configmap
+    digest: 71e0d401da23949f136fee677bacc952e4afd603259664080b06dc87eae7abf9
+    home: https://artifacthub.io
+    keywords:
+    - kubernetes
+    - helm
+    - security
+    - apparmor
+    kubeVersion: '>= 1.23.0-0'
+    maintainers:
+    - name: tuxerrante
+      url: https://github.com/sponsors/tuxerrante
+    name: kapparmor
+    type: application
+    urls:
+    - https://github.com/tuxerrante/kapparmor/releases/download/kapparmor-0.0.4-alpha/kapparmor-0.0.4-alpha.tgz
+    version: 0.0.4-alpha
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: added
+          description: Load new profiles in the configmap
+        - kind: added
+          description: Unload old profiles in the filesystem
+        - kind: added
+          description: Update profiles with same name and different content
+      artifacthub.io/containsSecurityUpdates: "false"
+    apiVersion: v2
     appVersion: 0.0.3-alpha
     created: "2023-01-18T17:46:44.830392559Z"
     description: A project to deploy profiles through a kubernetes daemonset and a
@@ -271,4 +301,4 @@ entries:
     urls:
     - https://github.com/tuxerrante/kapparmor/releases/download/kapparmor-0.0.1-alpha/kapparmor-0.0.1-alpha.tgz
     version: 0.0.1-alpha
-generated: "2023-01-18T18:15:55.93011729Z"
+generated: "2023-01-18T18:43:23.921753986Z"
