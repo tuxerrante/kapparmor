@@ -129,7 +129,7 @@ jobs:
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
-        run: ct install --print-config --target-branch ${{ github.event.repository.default_branch }} --set image.tag=$GITHUB_SHA --debug
+        run: ct install --print-config --target-branch ${{ github.event.repository.default_branch }} --debug
 
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.5.0
