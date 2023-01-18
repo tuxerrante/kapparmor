@@ -2,8 +2,8 @@
 [![1. CodeQL](https://github.com/tuxerrante/kapparmor/actions/workflows/codeql.yml/badge.svg)](https://github.com/tuxerrante/kapparmor/actions/workflows/codeql.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tuxerrante/kapparmor)](https://goreportcard.com/report/github.com/tuxerrante/kapparmor)
 
-# Kapparmor- [Kapparmor](#kapparmor)
-- [Kapparmor- Kapparmor](#kapparmor--kapparmor)
+# Kapparmor
+- [Kapparmor](#kapparmor)
   - [Prerequisites](#prerequisites)
     - [How to initialize this project again](#how-to-initialize-this-project-again)
     - [Test the app locally](#test-the-app-locally)
