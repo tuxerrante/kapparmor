@@ -3,7 +3,8 @@ image:
   repository: ghcr.io/tuxerrante/kapparmor
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  # tag: ""
+  tag: ${{ github.sha }}
 
 imagePullSecrets: []
 nameOverride: "kapparmor"
