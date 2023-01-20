@@ -9,3 +9,4 @@ helm-extra-args: --timeout 600s
 validate-maintainers: true
 generate-release-notes: true
 make-release-latest: false
+release-notes-file: CHANGELOG.md
