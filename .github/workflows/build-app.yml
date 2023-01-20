@@ -142,4 +142,4 @@ jobs:
         env:
           CR_TOKEN: "${{ env.GITHUB_TOKEN }}"
         with:
-          config: ct.yaml
+          config: cr.yaml
