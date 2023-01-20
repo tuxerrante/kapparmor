@@ -13,15 +13,11 @@ LABEL Author="Affinito Alessandro"
 
 WORKDIR /app
 
-RUN addgroup --system appgroup &&\
-    adduser  --system appuser -G appgroup &&\
-    apk --no-cache update &&\
+RUN apk --no-cache update &&\
     apk add apparmor
 
-COPY --chown=appuser:appgroup --from=builder ./go/bin/app /app/
-COPY --chown=appuser:appgroup ./charts/kapparmor/profiles   /app/profiles
-
-RUN chmod 550 app
+COPY --from=builder ./go/bin/app /app/
+COPY ./charts/kapparmor/profiles   /app/profiles
 
 ARG PROFILES_DIR
 ARG POLL_TIME
@@ -29,5 +25,5 @@ ARG POLL_TIME
 ENV PROFILES_DIR=$PROFILES_DIR
 ENV POLL_TIME=$POLL_TIME
 
-USER appuser
+USER root
 CMD ./app
