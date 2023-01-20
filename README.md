@@ -4,10 +4,9 @@
 
 # Kapparmor
 - [Kapparmor](#kapparmor)
-  - [Prerequisites](#prerequisites)
-    - [How to initialize this project again](#how-to-initialize-this-project-again)
+  - [Testing](#testing)
+    - [How to initialize this project](#how-to-initialize-this-project)
     - [Test the app locally](#test-the-app-locally)
-  - [TO-DO](#to-do)
 - [External useful links](#external-useful-links)
 - -----
 Apparmor-loader project to deploy profiles through a kubernetes daemonset.  
@@ -24,10 +23,10 @@ This work is inspired by [kubernetes/apparmor-loader](https://github.com/kuberne
   - The name of the file should be the same as the name of the profile.
 3. The configmap will be polled every POLL_TIME seconds to move them into PROFILES_DIR host path and then enable them.
 
-## Prerequisites
+## Testing
 [Set up a Microk8s environment](./docs/microk8s.md).
 
-### How to initialize this project again
+### How to initialize this project
 ```sh
 helm create kapparmor
 sudo usermod -aG docker $USER
@@ -63,13 +62,6 @@ docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROF
 
 
 ```
-## TO-DO
-1. Go unit tests  
-    - [ ] Create a new profile
-    - [ ] Update an existing profile
-    - [ ] Remove an existing profile
-    - [ ] Remove a non existing profile
-1. Remove kubernetes Service and DaemonSet exposed ports if useless
 
 
 # External useful links
