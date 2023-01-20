@@ -17,13 +17,3 @@ keywords:
 maintainers:
   - name: tuxerrante
     url: https://github.com/sponsors/tuxerrante
-
-annotations:
-  artifacthub.io/containsSecurityUpdates: "false"
-  artifacthub.io/changes: |
-    - kind: added
-      description: Load new profiles in the configmap
-    - kind: added
-      description: Unload old profiles in the filesystem
-    - kind: added
-      description: Update profiles with same name and different content
