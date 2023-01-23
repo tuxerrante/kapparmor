@@ -1,0 +1,80 @@
+package main
+
+import (
+	"testing"
+	"testing/fstest"
+)
+
+const (
+	testProfileData = `
+#include <tunables/global>
+
+# a comment naming the application to confine
+/usr/bin/foo {
+#include <abstractions/base>
+
+link /etc/sysconfig/foo -> /etc/foo.conf,
+}`
+
+	testProfileDataExtraNewLine = `
+#include <tunables/global>
+
+# a comment naming the application to confine
+/usr/bin/foo {
+#include <abstractions/base>
+
+link /etc/sysconfig/foo -> /etc/foo.conf,
+}
+`
+	testProfileDataDifferent = `
+#include <tunables/global>
+
+# a comment naming the application to confine
+/usr/bin/bar {
+#include <abstractions/base>
+
+link /etc/sysconfig/foo -> /etc/foo.conf,
+}
+`
+)
+
+func TestHasTheSameContent(t *testing.T) {
+
+	fs := fstest.MapFS{
+		"foo.profile":         {Data: []byte(testProfileData)},
+		"foo.profile.copy":    {Data: []byte(testProfileData)},
+		"foo.newline.profile": {Data: []byte(testProfileDataExtraNewLine)},
+		"bar.profile":         {Data: []byte(testProfileDataDifferent)},
+	}
+
+	// The current directory should change to allow mocking the filesystem
+	got, err := HasTheSameContent(fs, "foo.profile", "foo.profile.copy")
+	want := true
+	ok(t, err)
+	assertBool(t, got, want)
+
+	// We don't forgive newlines
+	got, err = HasTheSameContent(fs, "foo.profile", "foo.newline.profile")
+	want = false
+	ok(t, err)
+	assertBool(t, got, want)
+
+	// Very different profiles
+	got, err = HasTheSameContent(fs, "foo.profile", "bar.profile")
+	want = false
+	ok(t, err)
+	assertBool(t, got, want)
+}
+
+func ok(t testing.TB, err error) {
+	if err != nil {
+		t.Fatalf("Function call returned an error:\n %s", err)
+	}
+}
+
+func assertBool(t *testing.T, got, want bool) {
+	t.Helper()
+	if got != want {
+		t.Fatalf("Bool check failed! Got %t, expected %t", got, want)
+	}
+}

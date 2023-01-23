@@ -3,10 +3,11 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -141,14 +142,13 @@ func loadNewProfiles() ([]string, error) {
 
 			// If the profile is exactly the same skip the apply
 			// ERROR: it checks profiles still not applied
-			filePath2 := path.Join(ETC_APPARMORD, newProfileName)
-			contentIsTheSame, err := hasTheSameContent(filePath1, filePath2)
+			contentIsTheSame, err := HasTheSameContent(os.DirFS(ETC_APPARMORD), filePath1, newProfileName)
 			if err != nil {
-				log.Printf(">> Error in checking the content of %q VS %q\n", filePath1, filePath2)
+				log.Printf(">> Error in checking the content of %q VS %q\n", filePath1, newProfileName)
 				return nil, err
 			}
 			if contentIsTheSame {
-				log.Printf("Content of  %q and %q seems the same, skipping.", filePath1, filePath2)
+				log.Printf("Content of  %q and %q seems the same, skipping.", filePath1, newProfileName)
 				continue
 			}
 		}
@@ -240,48 +240,53 @@ func parseProfileName(profileLine string) string {
 	return strings.TrimSpace(profileLine[:modeIndex])
 }
 
-func hasTheSameContent(filePath1, filePath2 string) (bool, error) {
-	// compare sizes
-	file1, openErr1 := os.Open(filePath1)
-	if openErr1 != nil {
-		return false, openErr1
-	}
-	defer file1.Close()
+func HasTheSameContent(fsys fs.FS, filePath1, filePath2 string) (bool, error) {
 
-	file1_info, err := file1.Stat()
+	var file1, file2 os.FileInfo
+	dir, err := fs.ReadDir(fsys, ".")
 	if err != nil {
-		log.Fatal("> Error accessing stats from file ", filePath1)
+		return false, err
 	}
 
-	file2, openErr2 := os.Open(filePath2)
-	if openErr2 != nil {
-		return false, openErr2
-	}
-	defer file2.Close()
-
-	file2_info, err := file2.Stat()
-	if err != nil {
-		log.Fatal("> Error accessing stats from file ", filePath2)
+	for _, file := range dir {
+		if filePath1 == file.Name() {
+			file1, _ = file.Info()
+		} else if filePath2 == file.Name() {
+			file2, _ = file.Info()
+		}
 	}
 
-	if file1_info.Size() != file2_info.Size() {
+	if file1 == nil || file2 == nil {
+		return false, fmt.Errorf("files not found")
+	}
+
+	if file1.Size() != file2.Size() {
 		return false, nil
 	}
 
-	// compare content through a sha256 hash
-	h1 := sha256.New()
-	if _, err := io.Copy(h1, file1); err != nil {
-		log.Fatal("Error in generating a hash for ", filePath1)
+	f1, err := fsys.Open(file1.Name())
+	if err != nil {
+		return false, err
+	}
+	defer f1.Close()
+
+	data1, err := io.ReadAll(f1)
+	if err != nil {
+		return false, err
 	}
 
-	h2 := sha256.New()
-	if _, err := io.Copy(h2, file2); err != nil {
-		log.Fatal("Error in generating a hash for ", filePath2)
+	f2, err := fsys.Open(file2.Name())
+	if err != nil {
+		return false, err
+	}
+	defer f2.Close()
+
+	data2, err := ioutil.ReadAll(f2)
+	if err != nil {
+		return false, err
 	}
 
-	// Sum appends the current hash to nil and returns the resulting slice
-	if bytes.Equal(h1.Sum(nil), h2.Sum(nil)) {
-		log.Printf("> Hashes are different\n %s: %s\n %s: %s", filePath1, h1, filePath2, h2)
+	if !bytes.Equal(data1, data2) {
 		return false, nil
 	}
 
