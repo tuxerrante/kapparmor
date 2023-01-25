@@ -3,5 +3,5 @@ kind: ConfigMap
 metadata:
   name: kapparmor-settings
 data:
-  PROFILES_DIR: {{ Values.app.profiles_dir }}
-  POLL_TIME: {{ Values.app.poll_time }}
+  PROFILES_DIR: {{ .Values.app.profiles_dir }}
+  POLL_TIME: {{ .Values.app.poll_time }}

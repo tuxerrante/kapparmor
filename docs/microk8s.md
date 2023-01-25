@@ -80,9 +80,10 @@ microk8s start
 ## Install the helm chart
 ```
 export GITHUB_SHA="sha-554d8c92bf9738467ee433ad88e4ba22debf7f6b"
-helm install --atomic --generate-name --timeout 30s --debug --set image.tag=$GITHUB_SHA  charts/kapparmor/
+helm upgrade --install --atomic --generate-name --timeout 30s --debug --set image.tag=$GITHUB_SHA  charts/kapparmor/
 
 kubectl get events --sort-by .LastTimestamp
+
 ```
 
 ## Test profiles
