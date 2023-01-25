@@ -47,23 +47,30 @@ func TestHasTheSameContent(t *testing.T) {
 		"bar.profile":         {Data: []byte(testProfileDataDifferent)},
 	}
 
-	// The current directory should change to allow mocking the filesystem
-	got, err := HasTheSameContent(fs, "foo.profile", "foo.profile.copy")
-	want := true
-	ok(t, err)
-	assertBool(t, got, want)
+	t.Parallel()
 
-	// We don't forgive newlines
-	got, err = HasTheSameContent(fs, "foo.profile", "foo.newline.profile")
-	want = false
-	ok(t, err)
-	assertBool(t, got, want)
+	t.Run("Two profiles with same content", func(t *testing.T) {
+		got, err := HasTheSameContent(fs, "foo.profile", "foo.profile.copy")
+		want := true
+		ok(t, err)
+		assertBool(t, got, want)
+	})
 
-	// Very different profiles
-	got, err = HasTheSameContent(fs, "foo.profile", "bar.profile")
-	want = false
-	ok(t, err)
-	assertBool(t, got, want)
+	t.Run("A profile with an extra newline", func(t *testing.T) {
+		// We don't forgive newlines
+		got, err := HasTheSameContent(fs, "foo.profile", "foo.newline.profile")
+		want := false
+		ok(t, err)
+		assertBool(t, got, want)
+	})
+
+	t.Run("Two different profiles", func(t *testing.T) {
+		// Very different profiles
+		got, err := HasTheSameContent(fs, "foo.profile", "bar.profile")
+		want := false
+		ok(t, err)
+		assertBool(t, got, want)
+	})
 }
 
 func ok(t testing.TB, err error) {
