@@ -62,9 +62,9 @@ spec:
                   key: POLL_TIME
 
       volumes:
-        - name: {{ include "kapparmor.fullname" . }}
+        - name: kapparmor-profiles
           configMap:
-            name: {{ include "kapparmor.fullname" . }}
+            name: kapparmor-profiles
 
       {{- with .Values.nodeSelector }}
       nodeSelector:
