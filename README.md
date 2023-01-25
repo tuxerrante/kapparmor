@@ -49,6 +49,7 @@ docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kub
   --volume $(pwd):/data quay.io/helmpack/chart-testing:latest \
   /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
 
+# Replace here a commit id being part of an image tag, like "sha-554d8c92bf9738467ee433ad88e4ba22debf7f6b"
 export GITHUB_SHA=42
 helm install --dry-run --atomic --generate-name --timeout 30s --debug --set image.tag=$GITHUB_SHA  charts/kapparmor/
 
@@ -62,7 +63,6 @@ docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROF
   --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security'  \
   --mount type=bind,source='/etc',target='/etc'\
   test-kapparmor
-
 
 ```
 
