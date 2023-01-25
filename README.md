@@ -37,6 +37,7 @@ go mod init ./go/src/app/
 ```
 
 ### Test the app locally
+Test Helm Chart creation
 ```sh
 # --- Check the Helm chart
 # https://github.com/helm/chart-testing/issues/464
@@ -51,7 +52,9 @@ docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kub
 export GITHUB_SHA=42
 helm install --dry-run --atomic --generate-name --timeout 30s --debug --set image.tag=$GITHUB_SHA  charts/kapparmor/
 
-
+```
+Test the app inside a container:
+```sh
 # --- Build and run the container image
 docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . &&\
   echo &&\
