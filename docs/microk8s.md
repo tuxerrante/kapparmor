@@ -13,7 +13,7 @@ restart
 # Install microk8s and check the status
 sudo snap install microk8s --classic --channel=latest/stable
 microk8s inspect
-aa-status |grep microk8s
+sudo aa-status |grep microk8s
 
 # Check if the current machine results as an active node with apparmor enabled
 microk8s kubectl get nodes -o=jsonpath='{range .items[*]}{@.metadata.name}: {.status.conditions[?(@.reason=="KubeletReady")].message}{"\n"}{end}'
@@ -33,6 +33,46 @@ Verify pods have some syscall blocked
     Seccomp: disabled
     Blocked Syscalls (24):
             MSGRCV SYSLOG SETPGID SETSID VHANGUP PIVOT_ROOT ACCT SETTIMEOFDAY UMOUNT2 SWAPON SWAPOFF REBOOT SETHOSTNAME SETDOMAINNAME INIT_MODULE DELETE_MODULE LOOKUP_DCOOKIE KEXEC_LOAD PERF_EVENT_OPEN FANOTIFY_INIT OPEN_BY_HANDLE_AT FINIT_MODULE KEXEC_FILE_LOAD BPF
+
+### HA setup
+Microk8s doesn't support dynamic ips for nodes, so remember to fix it manually after machines reboot.
+```sh
+microk8s stop
+
+ip addr show enp0s8 |grep "inet " |awk '{print $2}'
+
+# Modify this with your ip config
+cat >/tmp/00-netplan.yml <<EOF
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp0s8:
+      addresses:
+        - 192.168.100.100/24
+        addresses: [8.8.8.8, 4.4.4.4]
+      routes:
+        - to: default
+          via: 192.168.48.1
+EOF
+mv /tmp/00-netplan.yml /etc/netplan/00-microk8s.yml
+
+sudo netplan apply
+
+ip addr show
+
+# Update IP addresses
+sudo vim /etc/hosts
+```
+
+On every node (including the master(s)):
+Get the IP of the node, e.g. 10.x.y.z. Command ip a show dev tun1 will show info for interface tun1.
+Add this to the bottom of /var/snap/microk8s/current/args/kubelet:
+--node-ip=10.x.y.z
+Add this to the bottom of /var/snap/microk8s/current/args/kube-apiserver:
+--advertise-address=10.x.y.z
+
+microk8s start
 
 ## Test profiles
 
@@ -71,7 +111,7 @@ spec:
 ```
 
 ```bash
-# Run the pod on the node withou profile and check if it fails
+# Run the pod on the node without profile and check if it fails
 microk8s kubectl apply -f busybox_dontwrite_pod.yml
 microk8s kubectl get pods -o wide
 microk8s kubectl get events --sort-by=.lastTimestamp
