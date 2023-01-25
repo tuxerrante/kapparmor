@@ -9,6 +9,10 @@ imagePullSecrets: []
 nameOverride: "kapparmor"
 fullnameOverride: ""
 
+app:
+  profiles_dir: "/app/profiles" 
+  poll_time: 60
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: false

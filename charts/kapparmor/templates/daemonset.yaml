@@ -46,9 +46,20 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           # mount a configmap as read only in the container's filesystem.  
           volumeMounts :
-            - name : {{ include "kapparmor.fullname" . }}
-              mountPath : /app/profiles
+            - name : kapparmor-profiles
+              mountPath : {{ .Values.app.profiles_dir }}
               readOnly : false
+          env:
+            - name: PROFILES_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: kapparmor-settings
+                  key: PROFILES_DIR
+            - name: POLL_TIME
+              valueFrom:
+                configMapKeyRef:
+                  name: kapparmor-settings
+                  key: POLL_TIME
 
       volumes:
         - name: {{ include "kapparmor.fullname" . }}

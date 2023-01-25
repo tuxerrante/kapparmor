@@ -12,7 +12,12 @@ restart
 
 # Install microk8s and check the status
 sudo snap install microk8s --classic --channel=latest/stable
+microk8s enable dns hostpath-storage
+
 microk8s inspect
+
+microk8s config > $HOME/.kube/microk8s.config
+
 sudo aa-status |grep microk8s
 
 # Check if the current machine results as an active node with apparmor enabled
@@ -42,26 +47,24 @@ microk8s stop
 ip addr show enp0s8 |grep "inet " |awk '{print $2}'
 
 # Modify this with your ip config
-cat >/tmp/00-netplan.yml <<EOF
+cat >/etc/netplan/00-microk8s.yaml <<EOF
 network:
   version: 2
   renderer: networkd
   ethernets:
     enp0s8:
-      addresses:
-        - 192.168.100.100/24
+      dhcp4: false
+      addresses: [192.168.100.100/24]
+      nameservers:
         addresses: [8.8.8.8, 4.4.4.4]
-      routes:
-        - to: default
-          via: 192.168.48.1
 EOF
-mv /tmp/00-netplan.yml /etc/netplan/00-microk8s.yml
 
+sudo systemctl start systemd-networkd
 sudo netplan apply
 
-ip addr show
+ip addr show enp0s8
 
-# Update IP addresses
+# Update node names for the other nodes
 sudo vim /etc/hosts
 ```
 
@@ -73,6 +76,14 @@ Add this to the bottom of /var/snap/microk8s/current/args/kube-apiserver:
 --advertise-address=10.x.y.z
 
 microk8s start
+
+## Install the helm chart
+```
+export GITHUB_SHA="sha-554d8c92bf9738467ee433ad88e4ba22debf7f6b"
+helm install --atomic --generate-name --timeout 30s --debug --set image.tag=$GITHUB_SHA  charts/kapparmor/
+
+kubectl get events --sort-by .LastTimestamp
+```
 
 ## Test profiles
 

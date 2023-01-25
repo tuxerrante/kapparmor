@@ -37,6 +37,7 @@ go mod init ./go/src/app/
 ```
 
 ### Test the app locally
+
 Test Helm Chart creation
 ```sh
 # --- Check the Helm chart
@@ -50,10 +51,11 @@ docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kub
   /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
 
 # Replace here a commit id being part of an image tag, like "sha-554d8c92bf9738467ee433ad88e4ba22debf7f6b"
-export GITHUB_SHA=42
+export GITHUB_SHA="sha-554d8c92bf9738467ee433ad88e4ba22debf7f6b"
 helm install --dry-run --atomic --generate-name --timeout 30s --debug --set image.tag=$GITHUB_SHA  charts/kapparmor/
 
 ```
+
 Test the app inside a container:
 ```sh
 # --- Build and run the container image
@@ -65,6 +67,9 @@ docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROF
   test-kapparmor
 
 ```
+
+To test Helm chart installation in a MicroK8s cluster, follow docs/microk8s.md instructions if you don't have any local cluster.
+
 
 
 # External useful links
