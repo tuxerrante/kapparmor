@@ -15,7 +15,7 @@ WORKDIR /app
 
 RUN apk --no-cache update           &&\
     apk add apparmor libapparmor    &&\
-    mkdir --parent --verbose /etc/apparmor.d/custom /sys/kernel/security/apparmor
+    mkdir --parent --verbose /etc/apparmor.d/custom
 
 COPY --from=builder ./go/bin/app /app/
 COPY ./charts/kapparmor/profiles   /app/profiles
