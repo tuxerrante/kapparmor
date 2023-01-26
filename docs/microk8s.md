@@ -81,8 +81,7 @@ microk8s start
 Run this on your linux node:
 ```sh
 # Assume last commit triggered a building pipeline, we'll have this as last docker image tag
-git log --online --no-abbrev-commit |head 1
-export GITHUB_SHA="sha-554d8c92bf9738467ee433ad88e4ba22debf7f6b"
+export GITHUB_SHA="sha-$(git log --online --no-abbrev-commit |head 1 |cut -d' ' -f1)"
 
 # Move on the right branch before
 git pull &&\
