@@ -11,7 +11,7 @@
 - -----
 Apparmor-loader project to deploy profiles through a kubernetes daemonset.  
 
-This work is inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
+This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
 
 ![architecture](./docs/kapparmor-architecture.png)
 
@@ -22,6 +22,9 @@ This work is inspired by [kubernetes/apparmor-loader](https://github.com/kuberne
   - The custom profiles HAVE to start with the same PROFILE_NAME_PREFIX, currently this defaults to "custom.". 
   - The name of the file should be the same as the name of the profile.
 3. The configmap will be polled every POLL_TIME seconds to move them into PROFILES_DIR host path and then enable them.
+
+You can view which profiles are loaded on a node by checking the /sys/kernel/security/apparmor/profiles, so this will need to be mounted in the pod.
+
 
 ## Testing
 [Set up a Microk8s environment](./docs/microk8s.md).
