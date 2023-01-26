@@ -30,18 +30,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: 80
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
+
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           # mount a configmap as read only in the container's filesystem.  
@@ -49,6 +38,11 @@ spec:
             - name : kapparmor-profiles
               mountPath : {{ .Values.app.profiles_dir }}
               readOnly : false
+            - name: profiles-kernel-path
+              mountPath: /sys/kernel/security/apparmor/profiles
+            - name: etc-apparmor
+              mountPath: /etc/apparmor.d/
+
           env:
             - name: PROFILES_DIR
               valueFrom:
@@ -65,6 +59,12 @@ spec:
         - name: kapparmor-profiles
           configMap:
             name: kapparmor-profiles
+        - name: profiles-kernel-path
+          hostPath:
+            path: /sys/kernel/security/apparmor/profiles
+        - name: etc-apparmor
+          hostPath:
+            path: /etc/apparmor.d/
 
       {{- with .Values.nodeSelector }}
       nodeSelector:
