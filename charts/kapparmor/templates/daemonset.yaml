@@ -10,10 +10,10 @@ spec:
       {{- include "kapparmor.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with .Values.podAnnotations }}
       annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        container.apparmor.security.beta.kubernetes.io/kapparmor: unconfined
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+
       labels:
         {{- include "kapparmor.selectorLabels" . | nindent 8 }}
     spec:
