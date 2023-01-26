@@ -11,7 +11,7 @@
 - -----
 Apparmor-loader project to deploy profiles through a kubernetes daemonset.  
 
-This work is inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
+This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
 
 ![architecture](./docs/kapparmor-architecture.png)
 
@@ -22,6 +22,9 @@ This work is inspired by [kubernetes/apparmor-loader](https://github.com/kuberne
   - The custom profiles HAVE to start with the same PROFILE_NAME_PREFIX, currently this defaults to "custom.". 
   - The name of the file should be the same as the name of the profile.
 3. The configmap will be polled every POLL_TIME seconds to move them into PROFILES_DIR host path and then enable them.
+
+You can view which profiles are loaded on a node by checking the /sys/kernel/security/apparmor/profiles, so its parent will need to be mounted in the pod.
+
 
 ## Testing
 [Set up a Microk8s environment](./docs/microk8s.md).
@@ -37,6 +40,8 @@ go mod init ./go/src/app/
 ```
 
 ### Test the app locally
+
+Test Helm Chart creation
 ```sh
 # --- Check the Helm chart
 # https://github.com/helm/chart-testing/issues/464
@@ -48,10 +53,14 @@ docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kub
   --volume $(pwd):/data quay.io/helmpack/chart-testing:latest \
   /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
 
-export GITHUB_SHA=42
+# Replace here a commit id being part of an image tag, like "sha-554d8c92bf9738467ee433ad88e4ba22debf7f6b"
+export GITHUB_SHA="sha-554d8c92bf9738467ee433ad88e4ba22debf7f6b"
 helm install --dry-run --atomic --generate-name --timeout 30s --debug --set image.tag=$GITHUB_SHA  charts/kapparmor/
 
+```
 
+Test the app inside a container:
+```sh
 # --- Build and run the container image
 docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . &&\
   echo &&\
@@ -60,8 +69,10 @@ docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROF
   --mount type=bind,source='/etc',target='/etc'\
   test-kapparmor
 
-
 ```
+
+To test Helm chart installation in a MicroK8s cluster, follow docs/microk8s.md instructions if you don't have any local cluster.
+
 
 
 # External useful links

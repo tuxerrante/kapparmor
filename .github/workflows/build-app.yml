@@ -2,7 +2,7 @@ name: "1. Create app"
 
 on:
   push:
-    branches: [main,dev]
+    branches: [main,dev,feature/*]
     paths:
       - "go/src/app/**.go"
       - Dockerfile

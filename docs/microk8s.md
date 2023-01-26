@@ -12,8 +12,13 @@ restart
 
 # Install microk8s and check the status
 sudo snap install microk8s --classic --channel=latest/stable
+microk8s enable dns hostpath-storage
+
 microk8s inspect
-aa-status |grep microk8s
+
+microk8s config > $HOME/.kube/microk8s.config
+
+sudo aa-status |grep microk8s
 
 # Check if the current machine results as an active node with apparmor enabled
 microk8s kubectl get nodes -o=jsonpath='{range .items[*]}{@.metadata.name}: {.status.conditions[?(@.reason=="KubeletReady")].message}{"\n"}{end}'
@@ -33,6 +38,63 @@ Verify pods have some syscall blocked
     Seccomp: disabled
     Blocked Syscalls (24):
             MSGRCV SYSLOG SETPGID SETSID VHANGUP PIVOT_ROOT ACCT SETTIMEOFDAY UMOUNT2 SWAPON SWAPOFF REBOOT SETHOSTNAME SETDOMAINNAME INIT_MODULE DELETE_MODULE LOOKUP_DCOOKIE KEXEC_LOAD PERF_EVENT_OPEN FANOTIFY_INIT OPEN_BY_HANDLE_AT FINIT_MODULE KEXEC_FILE_LOAD BPF
+
+### HA setup
+Microk8s doesn't support dynamic ips for nodes, so remember to fix it manually after machines reboot.
+```sh
+microk8s stop
+
+ip addr show enp0s8 |grep "inet " |awk '{print $2}'
+
+# Modify this with your ip config
+cat >/etc/netplan/00-microk8s.yaml <<EOF
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp0s8:
+      dhcp4: false
+      addresses: [192.168.100.100/24]
+      nameservers:
+        addresses: [8.8.8.8, 4.4.4.4]
+EOF
+
+sudo systemctl start systemd-networkd
+sudo netplan apply
+
+ip addr show enp0s8
+
+# Update node names for the other nodes
+sudo vim /etc/hosts
+```
+
+On every node (including the master(s)):
+Get the IP of the node, e.g. 10.x.y.z. Command ip a show dev tun1 will show info for interface tun1.
+Add this to the bottom of /var/snap/microk8s/current/args/kubelet:
+--node-ip=10.x.y.z
+Add this to the bottom of /var/snap/microk8s/current/args/kube-apiserver:
+--advertise-address=10.x.y.z
+
+microk8s start
+
+## Install the helm chart
+Run this on your linux node:
+```sh
+# Assume the last commit triggered a building pipeline, we'll have this as last docker image tag
+# Move on the right branch before
+git pull && export GITHUB_SHA="sha-$(git log --online --no-abbrev-commit |head 1 |cut -d' ' -f1)"
+
+helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=$GITHUB_SHA charts/kapparmor/ --wait &&\
+  echo            &&\
+  echo --- EVENTS &&\
+  sleep 10        &&\
+  kubectl get events --sort-by .lastTimestamp &&\
+  kubectl get pods -l app.kubernetes.io/name=kapparmor &&\
+  echo              &&\
+  echo --- POD LOGS &&\
+  kubectl logs -l app.kubernetes.io/name=kapparmor --follow
+
+```
 
 ## Test profiles
 
@@ -71,7 +133,7 @@ spec:
 ```
 
 ```bash
-# Run the pod on the node withou profile and check if it fails
+# Run the pod on the node without profile and check if it fails
 microk8s kubectl apply -f busybox_dontwrite_pod.yml
 microk8s kubectl get pods -o wide
 microk8s kubectl get events --sort-by=.lastTimestamp
