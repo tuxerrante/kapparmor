@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+1. **Unable to replace profiles**. Permission denied, app seems still confined.
 1. Go unit tests  
     - [ ] Create a new profile
     - [ ] Update an existing profile
@@ -14,14 +16,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 1. Remove kubernetes Service and DaemonSet exposed ports if useless
 1. Evaluate an automatic changelog generation from commits like [googleapis/release-please](https://github.com/googleapis/release-please)
 1. Add daemonset commands for checking readiness
+1. Add tests for all the main functions
+1. Add test for checking current confinement state of the app
+1. Test on multiple nodes cluster
 
 ## [0.0.6]() - 
 
 ### Added 
-
 Helm:
+- Added SYS_ADMIN capabilities to the daemonset
+- Mounted needed folders in the Dockerfile and in the daemonset
+- Added POLL_TIME and profiles files as configurable options through configmaps
 
 Go:
+- Added first testing function
+- Moved file operations functions to dedicated module
+  - Fixed POLL_TIME value passing from configmap
 
 CI/CD:
 - Explicit changelog to help users understanding the project features
