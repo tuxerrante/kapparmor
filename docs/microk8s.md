@@ -80,14 +80,17 @@ microk8s start
 ## Install the helm chart
 Run this on your linux node:
 ```sh
-# Assume last commit triggered a building pipeline, we'll have this as last docker image tag
+# Assume the last commit triggered a building pipeline, we'll have this as last docker image tag
 # Move on the right branch before
 git pull && export GITHUB_SHA="sha-$(git log --online --no-abbrev-commit |head 1 |cut -d' ' -f1)"
 
 helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=$GITHUB_SHA charts/kapparmor/ --wait &&\
+  echo            &&\
   echo --- EVENTS &&\
+  sleep 10        &&\
   kubectl get events --sort-by .lastTimestamp &&\
   kubectl get pods -l app.kubernetes.io/name=kapparmor &&\
+  echo              &&\
   echo --- POD LOGS &&\
   kubectl logs -l app.kubernetes.io/name=kapparmor --follow
 

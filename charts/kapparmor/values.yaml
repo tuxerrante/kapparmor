@@ -28,9 +28,10 @@ podSecurityContext: {}
   # fsGroup: 2000
 
 securityContext:
-  # capabilities:
-  #   drop:
-  #   - ALL
+  capabilities:
+    add:
+      - SYS_ADMIN
+  allowPrivilegeEscalation: true
   readOnlyRootFilesystem: false
   runAsUser: 0
 
