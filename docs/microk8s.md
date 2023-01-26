@@ -78,14 +78,20 @@ Add this to the bottom of /var/snap/microk8s/current/args/kube-apiserver:
 microk8s start
 
 ## Install the helm chart
-```
+Run this on your linux node:
+```sh
+# Assume last commit triggered a building pipeline, we'll have this as last docker image tag
+git log --online --no-abbrev-commit |head 1
 export GITHUB_SHA="sha-554d8c92bf9738467ee433ad88e4ba22debf7f6b"
 
+# Move on the right branch before
 git pull &&\
   helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=$GITHUB_SHA charts/kapparmor/ --wait &&\
+  echo > EVENTS &&\
   kubectl get events --sort-by .lastTimestamp &&\
   kubectl get pods -l app.kubernetes.io/name=kapparmor &&\
-  kubectl logs -l app.kubernetes.io/name=kapparmor
+  echo > POD LOGS &&\
+  kubectl logs -l app.kubernetes.io/name=kapparmor --follow
 
 ```
 

@@ -39,7 +39,7 @@ spec:
               mountPath : {{ .Values.app.profiles_dir }}
               readOnly : false
             - name: profiles-kernel-path
-              mountPath: /sys/kernel/security/apparmor/profiles
+              mountPath: /sys/kernel/security/apparmor
             - name: etc-apparmor
               mountPath: /etc/apparmor.d/
 
@@ -61,7 +61,7 @@ spec:
             name: kapparmor-profiles
         - name: profiles-kernel-path
           hostPath:
-            path: /sys/kernel/security/apparmor/profiles
+            path: /sys/kernel/security/apparmor
         - name: etc-apparmor
           hostPath:
             path: /etc/apparmor.d/
