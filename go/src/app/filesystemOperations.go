@@ -11,13 +11,14 @@ import (
 	"strconv"
 )
 
-func preFlightChecks() {
+func preFlightChecks() int {
 
 	// Environment variable type check
 	POLL_TIME, err := strconv.Atoi(POLL_TIME_ARG)
 	if err != nil {
 		log.Fatalf(">> It was not possible to convert env var POLL_TIME %v to an integer.\n%v", POLL_TIME, err)
 	}
+	log.Printf("POLL_TIME set to %d sec.", POLL_TIME)
 
 	// Check profiler binary
 	if _, err := os.Stat(PROFILER_BIN); os.IsNotExist(err) {
@@ -32,6 +33,8 @@ func preFlightChecks() {
 		}
 		log.Printf("> Directory %s created.", ETC_APPARMORD)
 	}
+
+	return POLL_TIME
 }
 
 func HasTheSameContent(fsys fs.FS, filePath1, filePath2 string) (bool, error) {

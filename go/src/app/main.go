@@ -28,7 +28,7 @@ const (
 
 func main() {
 
-	preFlightChecks()
+	POLL_TIME = preFlightChecks()
 
 	log.Printf("> Polling directory %s every %d seconds.\n", CONFIGMAP_PATH, POLL_TIME)
 

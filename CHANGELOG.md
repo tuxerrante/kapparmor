@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [ ] Remove a non existing profile
 1. Remove kubernetes Service and DaemonSet exposed ports if useless
 1. Evaluate an automatic changelog generation from commits like [googleapis/release-please](https://github.com/googleapis/release-please)
+1. Add daemonset commands for checking readiness
 
 ## [0.0.6]() - 
 
@@ -25,7 +26,7 @@ Go:
 CI/CD:
 - Explicit changelog to help users understanding the project features
   - Automatic generation of release notes based on changelog file
-
+- Configurable poll time and profiles directory in the helm values file
 
 ## [0.0.5](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.0.5-alpha) - 2023-01-23
 
