@@ -13,9 +13,10 @@ LABEL Author="Affinito Alessandro"
 
 WORKDIR /app
 
-RUN apk --no-cache update &&\
-    apk add apparmor &&\
-    mkdir -p /etc/apparmor.d/custom
+RUN apk --no-cache update           &&\
+    apk add apparmor libapparmor    &&\
+    mkdir -p /etc/apparmor.d/custom &&\
+    mkdir -p /sys/kernel/security/apparmor/profiles
 
 COPY --from=builder ./go/bin/app /app/
 COPY ./charts/kapparmor/profiles   /app/profiles
