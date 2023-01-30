@@ -92,9 +92,9 @@ func loadNewProfiles() ([]string, error) {
 		if customLoadedProfiles[newProfileName] {
 
 			// If the profile is exactly the same skip the apply
-			// ERROR: it checks profiles still not applied
-			contentIsTheSame, err := HasTheSameContent(os.DirFS(ETC_APPARMORD), filePath1, newProfileName)
+			contentIsTheSame, err := HasTheSameContent(os.DirFS(ETC_APPARMORD), filePath1, path.Join(ETC_APPARMORD, newProfileName))
 			if err != nil {
+				// Error in checking the content of "/app/profiles/custom.deny-write-outside-app" VS "custom.deny-write-outside-app"
 				log.Printf(">> Error in checking the content of %q VS %q\n", filePath1, newProfileName)
 				return nil, err
 			}
