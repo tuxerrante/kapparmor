@@ -1,6 +1,6 @@
 # --- build stage
-FROM golang:1.19-alpine AS builder
-RUN apk add --no-cache git
+FROM golang:1.19 AS builder
+
 WORKDIR /go/src/app
 COPY . .
 RUN go get -d -v ./go/src/app/
