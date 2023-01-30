@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 1. Add tests for all the main functions
 1. Add test for checking current confinement state of the app
 1. Test on multiple nodes cluster
+1. helm diff in CD
 
 ## [0.0.6]() - 
 

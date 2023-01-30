@@ -84,6 +84,9 @@ Run this on your linux node:
 # Move on the right branch before
 git pull && export GITHUB_SHA="sha-$(git log --online --no-abbrev-commit |head 1 |cut -d' ' -f1)"
 
+# https://github.com/databus23/helm-diff
+helm diff upgrade kapparmor --install --debug --set image.tag=$GITHUB_SHA charts/kapparmor
+
 helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=$GITHUB_SHA charts/kapparmor/ &&\
   echo            &&\
   echo "--- EVENTS (wait 10 sec..)"&&\

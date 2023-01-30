@@ -28,9 +28,6 @@ podSecurityContext: {}
   # fsGroup: 2000
 
 securityContext:
-  capabilities:
-    add:
-      - SYS_ADMIN
   readOnlyRootFilesystem: false
   privileged: true
 
