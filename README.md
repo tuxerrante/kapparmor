@@ -53,8 +53,8 @@ docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kub
   --volume $(pwd):/data quay.io/helmpack/chart-testing:latest \
   /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
 
-# Replace here a commit id being part of an image tag, like "sha-554d8c92bf9738467ee433ad88e4ba22debf7f6b"
-export GITHUB_SHA="sha-554d8c92bf9738467ee433ad88e4ba22debf7f6b"
+# Replace here a commit id being part of an image tag
+export GITHUB_SHA="sha-93d0dc4c597a8ae8a9febe1d68e674daf1fa919a"
 helm install --dry-run --atomic --generate-name --timeout 30s --debug --set image.tag=$GITHUB_SHA  charts/kapparmor/
 
 ```

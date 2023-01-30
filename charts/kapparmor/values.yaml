@@ -31,9 +31,8 @@ securityContext:
   capabilities:
     add:
       - SYS_ADMIN
-  allowPrivilegeEscalation: true
   readOnlyRootFilesystem: false
-  runAsUser: 0
+  privileged: true
 
 service:
   type: ClusterIP
