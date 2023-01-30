@@ -7,18 +7,20 @@ RUN go get -d -v ./go/src/app/
 RUN go build -o /go/bin/app -v ./go/src/app/
 
 # ---
-FROM alpine:latest
+FROM ubuntu:latest
 LABEL Name=kapparmor Version=0.0.1
 LABEL Author="Affinito Alessandro"
 
 WORKDIR /app
 
-RUN apk --no-cache update           &&\
-    apk add apparmor libapparmor    &&\
-    mkdir --parent --verbose /etc/apparmor.d/custom
+RUN apt-get update &&\
+    apt-get upgrade -y &&\
+    apt-get install --no-install-recommends --yes apparmor &&\
+    rm -rf /var/lib/apt/lists/* &&\
+    mkdir --parent --verbose /etc/apparmor.d/custom 
 
-COPY --from=builder ./go/bin/app /app/
-COPY ./charts/kapparmor/profiles   /app/profiles
+COPY --from=builder /go/bin/app /app/
+COPY ./charts/kapparmor/profiles /app/profiles/
 
 ARG PROFILES_DIR
 ARG POLL_TIME

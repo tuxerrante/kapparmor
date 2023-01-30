@@ -84,9 +84,9 @@ Run this on your linux node:
 # Move on the right branch before
 git pull && export GITHUB_SHA="sha-$(git log --online --no-abbrev-commit |head 1 |cut -d' ' -f1)"
 
-helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=$GITHUB_SHA charts/kapparmor/ --wait &&\
+helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=$GITHUB_SHA charts/kapparmor/ &&\
   echo            &&\
-  echo --- EVENTS &&\
+  echo "--- EVENTS (wait 10 sec..)"&&\
   sleep 10        &&\
   kubectl get events --sort-by .lastTimestamp &&\
   kubectl get pods -l app.kubernetes.io/name=kapparmor &&\
@@ -94,6 +94,19 @@ helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=
   echo --- POD LOGS &&\
   kubectl logs -l app.kubernetes.io/name=kapparmor --follow
 
+```
+
+If the pod is running you can go inside to run some extra command, like:
+```sh
+POD_NAME=kubectl get pods -l app.kubernetes.io/name=kapparmor --no-headers |cut -d' ' -f1
+kubectl exec -ti $POD_NAME -- sh
+  cat /proc/1/attr/current
+  ps -ef
+  apparmor_parser --replace --verbose profiles/custom.deny-write-outside-app
+
+
+# Run a new pod for extra testing
+kubectl run ubuntu --rm --privileged -v /lib/modules/:/lib/modules/:ro 
 ```
 
 ## Test profiles
