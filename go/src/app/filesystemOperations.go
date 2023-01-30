@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func preFlightChecks() int {
@@ -105,12 +106,16 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 
 	log.Printf("Found files in given folder:\n")
 	for _, file := range files {
+		filename := file.Name()
 		if file.IsDir() {
-			log.Printf("Directory '%s' will be skipped.\n", file.Name())
+			log.Printf("Directory '%s' will be skipped.\n", filename)
+			continue
+		} else if strings.HasPrefix(filename, ".") {
+			log.Printf("'%s' will be skipped.\n", filename)
 			continue
 		}
-		log.Printf("- %s\n", file.Name())
-		filenames[file.Name()] = true
+		log.Printf("- %s\n", filename)
+		filenames[filename] = true
 	}
 
 	return true, filenames
