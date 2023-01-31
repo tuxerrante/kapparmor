@@ -15,7 +15,7 @@ WORKDIR /app
 
 RUN apt-get update &&\
     apt-get upgrade -y &&\
-    apt-get install --no-install-recommends --yes apparmor &&\
+    apt-get install --no-install-recommends --yes apparmor apparmor-utils &&\
     rm -rf /var/lib/apt/lists/* &&\
     mkdir --parent --verbose /etc/apparmor.d/custom 
 

@@ -67,7 +67,7 @@ docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROF
   docker run --rm -it --privileged \
   --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security'  \
   --mount type=bind,source='/etc',target='/etc'\
-  test-kapparmor
+  --name kapparmor  test-kapparmor
 
 ```
 

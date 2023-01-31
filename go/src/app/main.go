@@ -69,11 +69,16 @@ func loadNewProfiles() ([]string, error) {
 		log.Fatalf(">> Error reading existing profiles.\n%v", err)
 	}
 
+	// Clean eventually empty keys
+	delete(customLoadedProfiles, "")
+	delete(loadedProfiles, "")
+
 	// Sort alphabetically the profiles and print them
 	log.Println("Profiles already on this node:")
 	loadedProfileNames := make([]string, len(loadedProfiles))
 	for loadedProfileName := range loadedProfiles {
 		loadedProfileNames = append(loadedProfileNames, loadedProfileName)
+		log.Println(loadedProfileNames)
 	}
 	sort.Strings(loadedProfileNames)
 	for _, p := range loadedProfileNames {
@@ -90,6 +95,8 @@ func loadNewProfiles() ([]string, error) {
 
 		// It exists a loaded profile with the same name
 		if customLoadedProfiles[newProfileName] {
+
+			log.Printf("Checking %s profile..", path.Join(ETC_APPARMORD, newProfileName))
 
 			// If the profile is exactly the same skip the apply
 			contentIsTheSame, err := HasTheSameContent(os.DirFS(ETC_APPARMORD), filePath1, path.Join(ETC_APPARMORD, newProfileName))
