@@ -74,15 +74,16 @@ func loadNewProfiles() ([]string, error) {
 	delete(loadedProfiles, "")
 
 	// Sort alphabetically the profiles and print them
-	log.Println("Profiles already on this node:")
+	log.Printf("%d Profiles already on this node:", len(loadedProfiles))
 	loadedProfileNames := make([]string, len(loadedProfiles))
 	for loadedProfileName := range loadedProfiles {
 		loadedProfileNames = append(loadedProfileNames, loadedProfileName)
-		log.Println(loadedProfileNames)
 	}
 	sort.Strings(loadedProfileNames)
 	for _, p := range loadedProfileNames {
-		log.Printf("- %s\n", p)
+		if p != "" {
+			log.Printf("- %s\n", p)
+		}
 	}
 
 	// Check if it exists a profile already loaded with the same name
@@ -96,17 +97,16 @@ func loadNewProfiles() ([]string, error) {
 		// It exists a loaded profile with the same name
 		if customLoadedProfiles[newProfileName] {
 
-			log.Printf("Checking %s profile..", path.Join(ETC_APPARMORD, newProfileName))
-
 			// If the profile is exactly the same skip the apply
-			contentIsTheSame, err := HasTheSameContent(os.DirFS(ETC_APPARMORD), filePath1, path.Join(ETC_APPARMORD, newProfileName))
+			log.Printf("Checking %s profile..", path.Join(CONFIGMAP_PATH, newProfileName))
+			contentIsTheSame, err := HasTheSameContent(nil, filePath1, path.Join(CONFIGMAP_PATH, newProfileName))
 			if err != nil {
 				// Error in checking the content of "/app/profiles/custom.deny-write-outside-app" VS "custom.deny-write-outside-app"
 				log.Printf(">> Error in checking the content of %q VS %q\n", filePath1, newProfileName)
 				return nil, err
 			}
 			if contentIsTheSame {
-				log.Printf("Content of  %q and %q seems the same, skipping.", filePath1, newProfileName)
+				log.Print("Contents seems the same, skipping..")
 				continue
 			}
 		}
@@ -125,16 +125,21 @@ func loadNewProfiles() ([]string, error) {
 	log.Println("============================================================")
 	log.Println("> Apparmor replace and apply new profiles..")
 	for _, profilePath := range newProfilesToApply {
-		loadProfile(profilePath)
+		err := loadProfile(profilePath)
+		if err != nil {
+			log.Printf("ERROR: %s", err)
+		}
 	}
 
 	// Execute apparmor_parser --remove obsoleteProfilePath
-	log.Println("============================================================")
-	log.Println("> AppArmor REMOVE orphans profiles..")
-	for _, profileFileName := range loadedProfilesToUnload {
-		err := unloadProfile(profileFileName)
-		if err != nil {
-			log.Fatal(err)
+	if len(loadedProfilesToUnload) > 0 {
+		log.Println("============================================================")
+		log.Println("> AppArmor REMOVE orphans profiles..")
+		for _, profileFileName := range loadedProfilesToUnload {
+			err := unloadProfile(profileFileName)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 
@@ -199,8 +204,13 @@ func parseProfileName(profileLine string) string {
 }
 
 func loadProfile(profilePath string) error {
-	execApparmor("--verbose", "--replace", profilePath)
+	err := execApparmor("--verbose", "--replace", profilePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Copy the profile definition in the apparmor configuration standard directory
+	log.Printf("Copying profile in %s", ETC_APPARMORD)
 	return CopyFile(profilePath, ETC_APPARMORD)
 }
 
@@ -216,7 +226,7 @@ func execApparmor(args ...string) error {
 	cmd.Stderr = stderr
 	out, err := cmd.Output()
 	path := args[len(args)-1]
-	log.Printf(" Loading profiles from %s:\n%s", path, out)
+	log.Printf("Loading profiles from %s:\n%s", path, out)
 	if err != nil {
 		if stderr.Len() > 0 {
 			log.Println(stderr.String())

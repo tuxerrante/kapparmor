@@ -8,6 +8,8 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -19,7 +21,7 @@ func preFlightChecks() int {
 	if err != nil {
 		log.Fatalf(">> It was not possible to convert env var POLL_TIME %v to an integer.\n%v", POLL_TIME, err)
 	}
-	log.Printf("POLL_TIME set to %d sec.", POLL_TIME)
+	log.Printf("POLL_TIME=%d sec.\n CONFIGMAP_PATH='%s'", POLL_TIME, CONFIGMAP_PATH)
 
 	// Check profiler binary
 	if _, err := os.Stat(PROFILER_BIN); os.IsNotExist(err) {
@@ -38,13 +40,36 @@ func preFlightChecks() int {
 	return POLL_TIME
 }
 
+// Compare the byte content of two given files
+// The function supports also an external filesystem for testing and future usages
 func HasTheSameContent(fsys fs.FS, filePath1, filePath2 string) (bool, error) {
 
 	var file1, file2 os.FileInfo
+
+	// Checking files on current filesystem
+	if fsys == nil {
+		fileBytes1, err := os.ReadFile(filePath1)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fileBytes2, err := os.ReadFile(filePath2)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if !bytes.Equal(fileBytes1, fileBytes2) {
+			return false, nil
+		}
+		return true, nil
+	}
+
+	// dir will contain the files in given filesystem
 	dir, err := fs.ReadDir(fsys, ".")
 	if err != nil {
+		log.Printf("ERROR in opening directory %v\n", fsys)
 		return false, err
 	}
+
+	log.Printf(" dir: %v, First file path: %v, Second file path: %v", dir, filePath1, filePath2)
 
 	for _, file := range dir {
 		if filePath1 == file.Name() {
@@ -55,7 +80,7 @@ func HasTheSameContent(fsys fs.FS, filePath1, filePath2 string) (bool, error) {
 	}
 
 	if file1 == nil || file2 == nil {
-		return false, fmt.Errorf("files not found")
+		return false, fmt.Errorf("ERROR: files not found")
 	}
 
 	if file1.Size() != file2.Size() {
@@ -68,16 +93,21 @@ func HasTheSameContent(fsys fs.FS, filePath1, filePath2 string) (bool, error) {
 	}
 	defer f1.Close()
 
-	data1, err := io.ReadAll(f1)
-	if err != nil {
-		return false, err
-	}
-
 	f2, err := fsys.Open(file2.Name())
 	if err != nil {
 		return false, err
 	}
 	defer f2.Close()
+
+	return compareBytes(f1, f2)
+}
+
+func compareBytes(f1, f2 fs.File) (bool, error) {
+
+	data1, err := io.ReadAll(f1)
+	if err != nil {
+		return false, err
+	}
 
 	data2, err := io.ReadAll(f2)
 	if err != nil {
@@ -104,7 +134,7 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 		return false, nil
 	}
 
-	log.Printf("Found files in given folder:\n")
+	log.Printf("Found files in %s:\n", FOLDER_NAME)
 	for _, file := range files {
 		filename := file.Name()
 		if file.IsDir() {
@@ -125,33 +155,42 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 // the same, then return success. Otherwise, attempt to create a hard link
 // between the two files. If that fail, copy the file contents from src to dst.
 // Credits: https://stackoverflow.com/a/21067803/3673430
-func CopyFile(src, dst string) (err error) {
+func CopyFile(src, dst string) error {
+
+	// dst is the destination directory
+	srcFileName := filepath.Base(src)
+	dstCompleteFileName := path.Join(ETC_APPARMORD, srcFileName)
+
 	sfi, err := os.Stat(src)
 	if err != nil {
-		return
+		log.Fatal(err)
 	}
+
 	if !sfi.Mode().IsRegular() {
 		// cannot copy non-regular files (e.g., directories symlinks, devices, etc.)
 		return fmt.Errorf("CopyFile: non-regular source file %s (%q)", sfi.Name(), sfi.Mode().String())
 	}
-	dfi, err := os.Stat(dst)
+
+	dfi, err := os.Stat(dstCompleteFileName)
 	if err != nil {
-		if !os.IsNotExist(err) {
-			return
-		}
+		log.Print(err)
 	} else {
 		if !(dfi.Mode().IsRegular()) {
 			return fmt.Errorf("CopyFile: non-regular destination file %s (%q)", dfi.Name(), dfi.Mode().String())
 		}
 		if os.SameFile(sfi, dfi) {
-			return
+			log.Printf("File %s is already present", dstCompleteFileName)
+			return nil
 		}
 	}
-	if err = os.Link(src, dst); err == nil {
-		return
+
+	log.Print(" Creating link..")
+	if err = os.Link(src, dstCompleteFileName); err == nil {
+		log.Printf("Hard link creation failed in %s", dstCompleteFileName)
 	}
-	err = copyFileContents(src, dst)
-	return
+
+	log.Printf("Copying %s in %s", src, dstCompleteFileName)
+	return copyFileContents(src, dstCompleteFileName)
 }
 
 // copyFileContents copies the contents of the file named src to the file named
@@ -161,11 +200,14 @@ func CopyFile(src, dst string) (err error) {
 func copyFileContents(src, dst string) (err error) {
 	in, err := os.Open(src)
 	if err != nil {
+		log.Print(err)
 		return
 	}
 	defer in.Close()
+
 	out, err := os.Create(dst)
 	if err != nil {
+		log.Print(err)
 		return
 	}
 	defer func() {
@@ -174,9 +216,12 @@ func copyFileContents(src, dst string) (err error) {
 			err = cerr
 		}
 	}()
+
 	if _, err = io.Copy(out, in); err != nil {
+		log.Print(err)
 		return
 	}
+
 	err = out.Sync()
 	return
 }
