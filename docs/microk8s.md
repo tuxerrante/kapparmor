@@ -77,6 +77,19 @@ Add this to the bottom of /var/snap/microk8s/current/args/kube-apiserver:
 
 microk8s start
 
+## Test the container locally 
+While working on the app code it could be convenient avoid the pipelines building and pushing overload by using a local container registry where we will push directly our testing container.
+See [microk8s.io registry-built-in](https://microk8s.io/docs/registry-built-in)
+
+Run this in you VM linux host:
+```sh
+docker build -t localhost:32000/kapparmor-local --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . 
+docker push localhost:32000/kapparmor-local
+
+kubectl set image daemonset/kapparmor kapparmor=localhost:32000/kapparmor-local
+
+```
+
 ## Install the helm chart
 Run this on your linux node:
 ```sh
