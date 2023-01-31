@@ -90,12 +90,23 @@ kubectl set image daemonset/kapparmor kapparmor=localhost:32000/kapparmor-local
 
 ```
 
+Otherwise you can run it directly as root on your bash. Remember to take a snapshot of the VM before ;)
+```bash
+sudo -i
+export POLL_TIME=60
+export PROFILES_DIR=../../../charts/kapparmor/profiles/
+cd kapparmor/go/src/app
+rm /etc/apparmor.d/custom/custom.*
+apparmor_parser --remove --verbose $PROFILES_DIR
+go run .
+```
+
 ## Install the helm chart
 Run this on your linux node:
 ```sh
 # Assume the last commit triggered a building pipeline, we'll have this as last docker image tag
 # Move on the right branch before
-git pull && export GITHUB_SHA="sha-$(git log --online --no-abbrev-commit |head 1 |cut -d' ' -f1)"
+git pull && export GITHUB_SHA="sha-$(git log --oneline --no-abbrev-commit -n 1 |cut -d' ' -f1)"
 
 # https://github.com/databus23/helm-diff
 helm diff upgrade kapparmor --install --debug --set image.tag=$GITHUB_SHA charts/kapparmor
@@ -105,6 +116,7 @@ helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=
   echo "--- EVENTS (wait 10 sec..)"&&\
   sleep 10        &&\
   kubectl get events --sort-by .lastTimestamp &&\
+  echo              &&\
   kubectl get pods -l app.kubernetes.io/name=kapparmor &&\
   echo              &&\
   echo --- POD LOGS &&\
