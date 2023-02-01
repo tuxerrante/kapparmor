@@ -31,6 +31,27 @@ entries:
     urls:
     - https://github.com/tuxerrante/kapparmor/releases/download/kapparmor-0.1.0/kapparmor-0.1.0.tgz
     version: 0.1.0
+  - apiVersion: v2
+    appVersion: 0.0.2
+    created: "2023-02-01T10:39:02.93560753Z"
+    description: A project to deploy profiles through a kubernetes daemonset and a
+      configmap
+    digest: 3a96e30f352e0fb40908a30d19c53504a5dc6b2316bfeaf1e16bd3f113ecb50e
+    home: https://artifacthub.io
+    keywords:
+    - kubernetes
+    - helm
+    - security
+    - apparmor
+    kubeVersion: '>= 1.23.0-0'
+    maintainers:
+    - name: tuxerrante
+      url: https://github.com/sponsors/tuxerrante
+    name: kapparmor
+    type: application
+    urls:
+    - https://github.com/tuxerrante/kapparmor/releases/download/kapparmor-0.0.6/kapparmor-0.0.6.tgz
+    version: 0.0.6
   - annotations:
       artifacthub.io/changes: |
         - kind: added
@@ -361,4 +382,4 @@ entries:
     urls:
     - https://github.com/tuxerrante/kapparmor/releases/download/kapparmor-0.0.1-alpha/kapparmor-0.0.1-alpha.tgz
     version: 0.0.1-alpha
-generated: "2023-01-18T19:23:26.86361851Z"
+generated: "2023-02-01T10:39:02.935873203Z"
