@@ -96,6 +96,7 @@ sudo -i
 export POLL_TIME=60
 export PROFILES_DIR=../../../charts/kapparmor/profiles/
 cd kapparmor/go/src/app
+
 rm /etc/apparmor.d/custom/custom.*
 apparmor_parser --remove --verbose $PROFILES_DIR
 go run .
