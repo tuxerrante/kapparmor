@@ -7,7 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-1. **Unable to replace profiles**. Permission denied, app seems still confined.
 1. Go unit tests  
     - [ ] Create a new profile
     - [ ] Update an existing profile
@@ -19,9 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 1. Add tests for all the main functions
 1. Add test for checking current confinement state of the app
 1. Test on multiple nodes cluster
-1. helm diff in CD
 
-## [0.0.6]() - 
+
+## [0.1.0]() - 2023-02-01
+### Fixed
+1. "Unable to replace profiles. Permission denied, app seems still confined." - Switched to ubuntu image
+1. No need for SYS_ADMIN capabilities 
+1. Ignore hidden and system folders while scanning for profiles
+
+### Added
+1. Instructions to test the app in a virtual machine directly running the go app or in microk8s pushing the built container to the local registry
+
+
+## 0.0.6 - 2023-01-26
 
 ### Added 
 Helm:

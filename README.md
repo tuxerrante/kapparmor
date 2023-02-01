@@ -11,9 +11,13 @@
 - -----
 Apparmor-loader project to deploy profiles through a kubernetes daemonset.  
 
-This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
 
 ![architecture](./docs/kapparmor-architecture.png)
+
+This app provide dynamic loading and unloading of AppArmor profiles to a Kubernetes cluster through a configmap.  
+The app doesn't need an operator and it will be managed by a DaemonSet filtering the linux nodes to schedule the app pod.  
+The custom profiles deployed in the configmap will be copied in a directory (`/etc/apparmor.d/custom` by default) since apparmor_parser needs the profiles definitions also to remove them. Once you will deploy a configmap with different profiles, Kapparmor will notice the missing ones and it will remove them from the apparmor cache and from the node directory.  
+If you modify only the content of a profile leaving the same name, Kapparmor should notice it anyway since a byte comparison is done when configmap profiles names and local profiles names match.
 
 1. The CD pipeline will
 	- deploy a configmap in the security namespace containing all the profiles versioned in the current project
@@ -25,6 +29,7 @@ This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubern
 
 You can view which profiles are loaded on a node by checking the /sys/kernel/security/apparmor/profiles, so its parent will need to be mounted in the pod.
 
+This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
 
 ## Testing
 [Set up a Microk8s environment](./docs/microk8s.md).

@@ -112,6 +112,9 @@ git pull && export GITHUB_SHA="sha-$(git log --oneline --no-abbrev-commit -n 1 |
 # https://github.com/databus23/helm-diff
 helm diff upgrade kapparmor --install --debug --set image.tag=$GITHUB_SHA charts/kapparmor
 
+rm /etc/apparmor.d/custom/custom.*
+apparmor_parser --remove --verbose $PROFILES_DIR
+
 helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=$GITHUB_SHA charts/kapparmor/ &&\
   echo            &&\
   echo "--- EVENTS (wait 10 sec..)"&&\

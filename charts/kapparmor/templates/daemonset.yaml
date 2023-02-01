@@ -37,13 +37,16 @@ spec:
 
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          # mount a configmap as read only in the container's filesystem.  
+
           volumeMounts :
+            # Folder containing profiles files mounted from the configmap
             - name : kapparmor-profiles
               mountPath : {{ .Values.app.profiles_dir }}
               readOnly : false
+            # Folder used by the kernel to store loaded profiles names
             - name: profiles-kernel-path
               mountPath: /sys/kernel/security
+            # Folder used by the app to store custom profiles definitions
             - name: etc-apparmor
               mountPath: /etc/apparmor.d/
 
