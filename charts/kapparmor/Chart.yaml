@@ -5,8 +5,8 @@ type: application
 home: https://artifacthub.io
 kubeVersion: ">= 1.23.0-0"
 
-version: "0.0.6"
-appVersion: "0.0.2"
+version: "0.1.0"
+appVersion: "0.1.0"
 
 keywords:
   - kubernetes
