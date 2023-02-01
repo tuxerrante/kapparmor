@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kapparmor-settings
+data:
+  PROFILES_DIR: "{{ .Values.app.profiles_dir }}"
+  POLL_TIME: "{{ .Values.app.poll_time }}"

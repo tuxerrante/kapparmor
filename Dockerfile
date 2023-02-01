@@ -1,27 +1,26 @@
 # --- build stage
-FROM golang:1.19-alpine AS builder
-RUN apk add --no-cache git
+FROM golang:1.19 AS builder
+
 WORKDIR /go/src/app
 COPY . .
 RUN go get -d -v ./go/src/app/
 RUN go build -o /go/bin/app -v ./go/src/app/
 
 # ---
-FROM alpine:latest
+FROM ubuntu:latest
 LABEL Name=kapparmor Version=0.0.1
 LABEL Author="Affinito Alessandro"
 
 WORKDIR /app
 
-RUN addgroup --system appgroup &&\
-    adduser  --system appuser -G appgroup &&\
-    apk --no-cache update &&\
-    apk add apparmor
+RUN apt-get update &&\
+    apt-get upgrade -y &&\
+    apt-get install --no-install-recommends --yes apparmor apparmor-utils &&\
+    rm -rf /var/lib/apt/lists/* &&\
+    mkdir --parent --verbose /etc/apparmor.d/custom 
 
-COPY --chown=appuser:appgroup --from=builder ./go/bin/app /app/
-COPY --chown=appuser:appgroup ./charts/kapparmor/profiles   /app/profiles
-
-RUN chmod 550 app
+COPY --from=builder /go/bin/app /app/
+COPY ./charts/kapparmor/profiles /app/profiles/
 
 ARG PROFILES_DIR
 ARG POLL_TIME
@@ -29,5 +28,5 @@ ARG POLL_TIME
 ENV PROFILES_DIR=$PROFILES_DIR
 ENV POLL_TIME=$POLL_TIME
 
-USER appuser
+USER root
 CMD ./app

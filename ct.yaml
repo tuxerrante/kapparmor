@@ -1,11 +1,7 @@
-# See https://github.com/helm/chart-testing#configuration
-remote: origin
-target-branch: main
+# See https://github.com/helm/chart-releaser
 chart-dirs:
   - ./charts
 chart-repos:
   - kapparmor=https://tuxerrante.github.io/kapparmor/
 helm-extra-args: --timeout 600s
 validate-maintainers: true
-generate-release-notes: true
-make-release-latest: false
