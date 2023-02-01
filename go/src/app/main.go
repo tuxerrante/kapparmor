@@ -216,7 +216,11 @@ func loadProfile(profilePath string) error {
 
 func unloadProfile(fileName string) error {
 	filePath := path.Join(ETC_APPARMORD, fileName)
-	execApparmor("--verbose", "--remove", filePath)
+
+	err := execApparmor("--verbose", "--remove", filePath)
+	if err != nil {
+		return err
+	}
 	return os.Remove(filePath)
 }
 
