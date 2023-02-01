@@ -9,6 +9,10 @@ imagePullSecrets: []
 nameOverride: "kapparmor"
 fullnameOverride: ""
 
+app:
+  profiles_dir: "/app/profiles" 
+  poll_time: 60
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: false
@@ -24,11 +28,8 @@ podSecurityContext: {}
   # fsGroup: 2000
 
 securityContext:
-  # capabilities:
-  #   drop:
-  #   - ALL
   readOnlyRootFilesystem: false
-  runAsUser: 0
+  privileged: true
 
 service:
   type: ClusterIP

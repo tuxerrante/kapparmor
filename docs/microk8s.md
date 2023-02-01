@@ -12,8 +12,13 @@ restart
 
 # Install microk8s and check the status
 sudo snap install microk8s --classic --channel=latest/stable
+microk8s enable dns hostpath-storage
+
 microk8s inspect
-aa-status |grep microk8s
+
+microk8s config > $HOME/.kube/microk8s.config
+
+sudo aa-status |grep microk8s
 
 # Check if the current machine results as an active node with apparmor enabled
 microk8s kubectl get nodes -o=jsonpath='{range .items[*]}{@.metadata.name}: {.status.conditions[?(@.reason=="KubeletReady")].message}{"\n"}{end}'
@@ -33,6 +38,108 @@ Verify pods have some syscall blocked
     Seccomp: disabled
     Blocked Syscalls (24):
             MSGRCV SYSLOG SETPGID SETSID VHANGUP PIVOT_ROOT ACCT SETTIMEOFDAY UMOUNT2 SWAPON SWAPOFF REBOOT SETHOSTNAME SETDOMAINNAME INIT_MODULE DELETE_MODULE LOOKUP_DCOOKIE KEXEC_LOAD PERF_EVENT_OPEN FANOTIFY_INIT OPEN_BY_HANDLE_AT FINIT_MODULE KEXEC_FILE_LOAD BPF
+
+### HA setup
+Microk8s doesn't support dynamic ips for nodes, so remember to fix it manually after machines reboot.
+```sh
+microk8s stop
+
+ip addr show enp0s8 |grep "inet " |awk '{print $2}'
+
+# Modify this with your ip config
+cat >/etc/netplan/00-microk8s.yaml <<EOF
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    enp0s8:
+      dhcp4: false
+      addresses: [192.168.100.100/24]
+      nameservers:
+        addresses: [8.8.8.8, 4.4.4.4]
+EOF
+
+sudo systemctl start systemd-networkd
+sudo netplan apply
+
+ip addr show enp0s8
+
+# Update node names for the other nodes
+sudo vim /etc/hosts
+```
+
+On every node (including the master(s)):
+Get the IP of the node, e.g. 10.x.y.z. Command ip a show dev tun1 will show info for interface tun1.
+Add this to the bottom of /var/snap/microk8s/current/args/kubelet:
+--node-ip=10.x.y.z
+Add this to the bottom of /var/snap/microk8s/current/args/kube-apiserver:
+--advertise-address=10.x.y.z
+
+microk8s start
+
+## Test the container locally 
+While working on the app code it could be convenient avoid the pipelines building and pushing overload by using a local container registry where we will push directly our testing container.
+See [microk8s.io registry-built-in](https://microk8s.io/docs/registry-built-in)
+
+Run this in you VM linux host:
+```sh
+docker build -t localhost:32000/kapparmor-local --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . 
+docker push localhost:32000/kapparmor-local
+
+kubectl set image daemonset/kapparmor kapparmor=localhost:32000/kapparmor-local
+
+```
+
+Otherwise you can run it directly as root on your bash. Remember to take a snapshot of the VM before ;)
+```bash
+sudo -i
+export POLL_TIME=60
+export PROFILES_DIR=../../../charts/kapparmor/profiles/
+cd kapparmor/go/src/app
+
+rm /etc/apparmor.d/custom/custom.*
+apparmor_parser --remove --verbose $PROFILES_DIR
+go run .
+```
+
+## Install the helm chart
+Run this on your linux node:
+```sh
+# Assume the last commit triggered a building pipeline, we'll have this as last docker image tag
+# Move on the right branch before
+git pull && export GITHUB_SHA="sha-$(git log --oneline --no-abbrev-commit -n 1 |cut -d' ' -f1)"
+
+# https://github.com/databus23/helm-diff
+helm diff upgrade kapparmor --install --debug --set image.tag=$GITHUB_SHA charts/kapparmor
+
+rm /etc/apparmor.d/custom/custom.*
+apparmor_parser --remove --verbose $PROFILES_DIR
+
+helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=$GITHUB_SHA charts/kapparmor/ &&\
+  echo            &&\
+  echo "--- EVENTS (wait 10 sec..)"&&\
+  sleep 10        &&\
+  kubectl get events --sort-by .lastTimestamp &&\
+  echo              &&\
+  kubectl get pods -l app.kubernetes.io/name=kapparmor &&\
+  echo              &&\
+  echo --- POD LOGS &&\
+  kubectl logs -l app.kubernetes.io/name=kapparmor --follow
+
+```
+
+If the pod is running you can go inside to run some extra command, like:
+```sh
+POD_NAME=kubectl get pods -l app.kubernetes.io/name=kapparmor --no-headers |cut -d' ' -f1
+kubectl exec -ti $POD_NAME -- sh
+  cat /proc/1/attr/current
+  ps -ef
+  apparmor_parser --replace --verbose profiles/custom.deny-write-outside-app
+
+
+# Run a new pod for extra testing
+kubectl run ubuntu --rm --privileged -v /lib/modules/:/lib/modules/:ro 
+```
 
 ## Test profiles
 
@@ -71,7 +178,7 @@ spec:
 ```
 
 ```bash
-# Run the pod on the node withou profile and check if it fails
+# Run the pod on the node without profile and check if it fails
 microk8s kubectl apply -f busybox_dontwrite_pod.yml
 microk8s kubectl get pods -o wide
 microk8s kubectl get events --sort-by=.lastTimestamp

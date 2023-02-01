@@ -2,7 +2,7 @@ name: "1. Create app"
 
 on:
   push:
-    branches: [main,dev]
+    branches: [main,dev,feature/*]
     paths:
       - "go/src/app/**.go"
       - Dockerfile
@@ -142,4 +142,4 @@ jobs:
         env:
           CR_TOKEN: "${{ env.GITHUB_TOKEN }}"
         with:
-          config: ct.yaml
+          config: cr.yaml

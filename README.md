@@ -4,17 +4,20 @@
 
 # Kapparmor
 - [Kapparmor](#kapparmor)
-  - [Prerequisites](#prerequisites)
-    - [How to initialize this project again](#how-to-initialize-this-project-again)
+  - [Testing](#testing)
+    - [How to initialize this project](#how-to-initialize-this-project)
     - [Test the app locally](#test-the-app-locally)
-  - [TO-DO](#to-do)
 - [External useful links](#external-useful-links)
 - -----
 Apparmor-loader project to deploy profiles through a kubernetes daemonset.  
 
-This work is inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
 
 ![architecture](./docs/kapparmor-architecture.png)
+
+This app provide dynamic loading and unloading of AppArmor profiles to a Kubernetes cluster through a configmap.  
+The app doesn't need an operator and it will be managed by a DaemonSet filtering the linux nodes to schedule the app pod.  
+The custom profiles deployed in the configmap will be copied in a directory (`/etc/apparmor.d/custom` by default) since apparmor_parser needs the profiles definitions also to remove them. Once you will deploy a configmap with different profiles, Kapparmor will notice the missing ones and it will remove them from the apparmor cache and from the node directory.  
+If you modify only the content of a profile leaving the same name, Kapparmor should notice it anyway since a byte comparison is done when configmap profiles names and local profiles names match.
 
 1. The CD pipeline will
 	- deploy a configmap in the security namespace containing all the profiles versioned in the current project
@@ -24,10 +27,14 @@ This work is inspired by [kubernetes/apparmor-loader](https://github.com/kuberne
   - The name of the file should be the same as the name of the profile.
 3. The configmap will be polled every POLL_TIME seconds to move them into PROFILES_DIR host path and then enable them.
 
-## Prerequisites
+You can view which profiles are loaded on a node by checking the /sys/kernel/security/apparmor/profiles, so its parent will need to be mounted in the pod.
+
+This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
+
+## Testing
 [Set up a Microk8s environment](./docs/microk8s.md).
 
-### How to initialize this project again
+### How to initialize this project
 ```sh
 helm create kapparmor
 sudo usermod -aG docker $USER
@@ -38,6 +45,8 @@ go mod init ./go/src/app/
 ```
 
 ### Test the app locally
+
+Test Helm Chart creation
 ```sh
 # --- Check the Helm chart
 # https://github.com/helm/chart-testing/issues/464
@@ -49,27 +58,26 @@ docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kub
   --volume $(pwd):/data quay.io/helmpack/chart-testing:latest \
   /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
 
-export GITHUB_SHA=42
+# Replace here a commit id being part of an image tag
+export GITHUB_SHA="sha-93d0dc4c597a8ae8a9febe1d68e674daf1fa919a"
 helm install --dry-run --atomic --generate-name --timeout 30s --debug --set image.tag=$GITHUB_SHA  charts/kapparmor/
 
+```
 
+Test the app inside a container:
+```sh
 # --- Build and run the container image
 docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . &&\
   echo &&\
   docker run --rm -it --privileged \
   --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security'  \
   --mount type=bind,source='/etc',target='/etc'\
-  test-kapparmor
-
+  --name kapparmor  test-kapparmor
 
 ```
-## TO-DO
-1. Go unit tests  
-    - [ ] Create a new profile
-    - [ ] Update an existing profile
-    - [ ] Remove an existing profile
-    - [ ] Remove a non existing profile
-1. Remove kubernetes Service and DaemonSet exposed ports if useless
+
+To test Helm chart installation in a MicroK8s cluster, follow docs/microk8s.md instructions if you don't have any local cluster.
+
 
 
 # External useful links
