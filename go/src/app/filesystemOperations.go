@@ -21,7 +21,6 @@ func preFlightChecks() int {
 	if err != nil {
 		log.Fatalf(">> It was not possible to convert env var POLL_TIME %v to an integer.\n%v", POLL_TIME, err)
 	}
-	log.Printf("POLL_TIME=%d sec.\n CONFIGMAP_PATH='%s'", POLL_TIME, CONFIGMAP_PATH)
 
 	// Check profiler binary
 	if _, err := os.Stat(PROFILER_BIN); os.IsNotExist(err) {
@@ -184,9 +183,9 @@ func CopyFile(src, dst string) error {
 		}
 	}
 
-	log.Print(" Creating link..")
 	if err = os.Link(src, dstCompleteFileName); err == nil {
-		log.Printf("Hard link creation failed in %s", dstCompleteFileName)
+		log.Printf("Hard link created in %s", dstCompleteFileName)
+		return nil
 	}
 
 	log.Printf("Copying %s in %s", src, dstCompleteFileName)
