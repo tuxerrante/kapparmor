@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 1. Test on multiple nodes cluster
 
 
-## [0.1.0]() - 2023-02-01
+## [0.1.0](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.0) - 2023-02-01
 ### Fixed
 1. "Unable to replace profiles. Permission denied, app seems still confined." - Switched to ubuntu image
 1. No need for SYS_ADMIN capabilities 
