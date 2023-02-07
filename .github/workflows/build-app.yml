@@ -50,17 +50,35 @@ jobs:
             type=ref,event=tag
             type=sha,format=long
 
+      # Run the build and outputs a test coverage file
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4.0.0
+        with:
+          file: Dockerfile
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          target: test-coverage
+          outputs: |
+            type=local,dest=.
+
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.out
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true          # optional (default = false)
+
       # Any file mutation in the steps that precede the build step will be ignored, 
       # since the context is based on the Git reference. Use the Path context to remove this restriction. 
       # https://github.com/marketplace/actions/build-and-push-docker-images#git-context
       - name: Build and push Docker image
-        uses: docker/build-push-action@v3.2.0
+        uses: docker/build-push-action@v4.0.0
         with:
           file: Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
 
   image-scan:
     runs-on: ubuntu-latest

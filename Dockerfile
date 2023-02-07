@@ -1,14 +1,25 @@
 # --- build stage
 FROM golang:1.19 AS builder
 
-WORKDIR /go/src/app
-COPY . .
-RUN go get -d -v ./go/src/app/
-RUN go build -o /go/bin/app -v ./go/src/app/
+WORKDIR /builder/app
+COPY go/src/app/ .
+COPY go.mod .
 
-# ---
+RUN go get -d -v . &&\
+    go build  -v -o /go/bin/app .
+
+RUN go test -v -coverprofile=coverage.out -covermode=atomic
+#    go tool cover -func=coverage.out
+
+
+# --- Publish test coverage results
+FROM scratch as test-coverage
+COPY --from=builder /builder/app/coverage.out .
+
+
+# --- Production image
 FROM ubuntu:latest
-LABEL Name=kapparmor Version=0.0.1
+LABEL Name=kapparmor
 LABEL Author="Affinito Alessandro"
 
 WORKDIR /app
