@@ -21,3 +21,6 @@
 .idea/
 .vscode/
 .errors/
+
+# Go tests
+coverage.out
