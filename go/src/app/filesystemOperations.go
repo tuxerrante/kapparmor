@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
@@ -27,7 +28,7 @@ func preFlightChecks() int {
 		log.Fatal(err)
 	}
 
-	// Check if custom directory exists
+	// Check if custom directory exists, creates it otherwise
 	if _, err := os.Stat(ETC_APPARMORD); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(ETC_APPARMORD, os.ModePerm)
 		if err != nil {
@@ -68,7 +69,7 @@ func HasTheSameContent(fsys fs.FS, filePath1, filePath2 string) (bool, error) {
 		return false, err
 	}
 
-	log.Printf(" dir: %v, First file path: %v, Second file path: %v", dir, filePath1, filePath2)
+	log.Printf(" First file path: %v, Second file path: %v", filePath1, filePath2)
 
 	for _, file := range dir {
 		if filePath1 == file.Name() {
@@ -143,11 +144,40 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 			log.Printf("'%s' will be skipped.\n", filename)
 			continue
 		}
+
+		if err := IsProfileNameCorrect(FOLDER_NAME, filename); err != nil {
+			log.Fatalf("Profile name and filename '%s'are not the same!", filename)
+		}
+
 		log.Printf("- %s\n", filename)
 		filenames[filename] = true
 	}
 
 	return true, filenames
+}
+
+// isProfileNameCorrect returns true if the filename is the same as the profile name
+func IsProfileNameCorrect(directory, filename string) error {
+
+	fileReader, err := os.Open(path.Join(directory, filename))
+	if err != nil {
+		return err
+	}
+	scanner := bufio.NewScanner(fileReader)
+	// Read only first line
+	scanner.Scan()
+	fileFirstLine := scanner.Text()
+	fileProfileNameSlice := strings.SplitAfterN(fileFirstLine, " ", 3)
+	if len(fileProfileNameSlice) < 2 {
+		return fmt.Errorf("there is an issue with the '%s' profile name, please check if the syntax is 'profile custom.YourName { ... }' or check again Unattached Profiles definition at https://documentation.suse.com/sles/15-SP1/html/SLES-all/cha-apparmor-profiles.html#sec-apparmor-profiles-types-unattached", filename)
+	}
+	fileProfileName := strings.TrimSpace(fileProfileNameSlice[1])
+
+	if filename != fileProfileName {
+		return fmt.Errorf("filename '%s' and profile name '%s' seems to be different", filename, fileProfileName)
+	}
+
+	return nil
 }
 
 // CopyFile copies a file from src to dst. If src and dst files exist, and are

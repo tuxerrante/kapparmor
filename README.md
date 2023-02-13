@@ -5,6 +5,8 @@
 
 # Kapparmor
 - [Kapparmor](#kapparmor)
+  - [Features and constraints](#features-and-constraints)
+  - [Install](#install)
   - [Testing](#testing)
     - [How to initialize this project](#how-to-initialize-this-project)
     - [Test the app locally](#test-the-app-locally)
@@ -32,6 +34,16 @@ You can view which profiles are loaded on a node by checking the /sys/kernel/sec
 
 This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
 
+## Features and constraints
+- Profile names have to start with 'custom.' and to be equal as the filename containing it
+
+## Install
+You can install the helm chart like this
+```sh
+helm repo add tuxerrante https://tuxerrante.github.io/kapparmor
+helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=dev tuxerrante/kapparmor
+
+```
 ## Testing
 [Set up a Microk8s environment](./docs/microk8s.md).
 
@@ -52,7 +64,6 @@ Test Helm Chart creation
 # --- Check the Helm chart
 # https://github.com/helm/chart-testing/issues/464
 echo Linting the Helm chart
-
 helm lint --debug --strict  charts/kapparmor/
 
 docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kube/config:ro \
