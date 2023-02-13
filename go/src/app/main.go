@@ -69,7 +69,7 @@ func loadNewProfiles() ([]string, error) {
 		log.Fatalf(">> Error reading existing profiles.\n%v", err)
 	}
 
-	// Clean eventually empty keys
+	// Clean possible empty keys
 	delete(customLoadedProfiles, "")
 	delete(loadedProfiles, "")
 

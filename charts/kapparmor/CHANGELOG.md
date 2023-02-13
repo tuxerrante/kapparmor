@@ -12,13 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [ ] Update an existing profile
     - [ ] Remove an existing profile
     - [ ] Remove a non existing profile
-1. Enforce profiles filenames to be the same as the profile names
+    - [ ] check current confinement state of the app
 2. Remove kubernetes Service and DaemonSet exposed ports if useless
-3. Evaluate an automatic changelog generation from commits like [googleapis/release-please](https://github.com/googleapis/release-please)
 4. Add daemonset commands for checking readiness
-5. Add tests for all the main functions
-6. Add test for checking current confinement state of the app
 7. Test on multiple nodes cluster
+
+## [0.1.1]() - 2023-02-13
+### Fixed
+- Moved shared testing functions to a dedicated module
+- Minor documentation and readme fixes
+### Added
+- Enforce profiles filenames to be the same as the profile names
+- Changelog automatically read by chart-releaser
 
 
 ## [0.1.0](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.0) - 2023-02-01
