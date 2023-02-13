@@ -32,6 +32,9 @@ You can view which profiles are loaded on a node by checking the /sys/kernel/sec
 
 This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
 
+## Features and constraints
+- Profile names have to start with 'custom.' and to be equal as the filename containing it
+
 ## Testing
 [Set up a Microk8s environment](./docs/microk8s.md).
 
@@ -52,7 +55,6 @@ Test Helm Chart creation
 # --- Check the Helm chart
 # https://github.com/helm/chart-testing/issues/464
 echo Linting the Helm chart
-
 helm lint --debug --strict  charts/kapparmor/
 
 docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kube/config:ro \
