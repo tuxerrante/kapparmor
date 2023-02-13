@@ -5,6 +5,8 @@
 
 # Kapparmor
 - [Kapparmor](#kapparmor)
+  - [Features and constraints](#features-and-constraints)
+  - [Install](#install)
   - [Testing](#testing)
     - [How to initialize this project](#how-to-initialize-this-project)
     - [Test the app locally](#test-the-app-locally)
@@ -35,6 +37,13 @@ This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubern
 ## Features and constraints
 - Profile names have to start with 'custom.' and to be equal as the filename containing it
 
+## Install
+You can install the helm chart like this
+```sh
+helm repo add tuxerrante https://tuxerrante.github.io/kapparmor
+helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=dev tuxerrante/kapparmor
+
+```
 ## Testing
 [Set up a Microk8s environment](./docs/microk8s.md).
 
