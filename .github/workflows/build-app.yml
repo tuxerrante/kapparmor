@@ -68,7 +68,6 @@ jobs:
           files: ./coverage.out
           fail_ci_if_error: true # optional (default = false)
           verbose: true          # optional (default = false)
-          working-directory: "go/src/app"
 
       # Any file mutation in the steps that precede the build step will be ignored, 
       # since the context is based on the Git reference. Use the Path context to remove this restriction. 
