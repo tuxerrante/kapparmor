@@ -1,3 +1,4 @@
+# https://docs.codecov.com/docs/codecov-yaml
 coverage:
   # Display coverage percentage with 1 decimal point (XX.X%).
   precision: 1
