@@ -41,7 +41,7 @@ This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubern
 You can install the helm chart like this
 ```sh
 helm repo add tuxerrante https://tuxerrante.github.io/kapparmor
-helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=dev tuxerrante/kapparmor
+helm upgrade kapparmor --install --atomic --timeout 100s --debug --set image.tag=dev tuxerrante/kapparmor
 
 ```
 ## Testing
