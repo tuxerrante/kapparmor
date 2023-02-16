@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "kapparmor.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kapparmor.labels" . | nindent 4 }}
 spec:

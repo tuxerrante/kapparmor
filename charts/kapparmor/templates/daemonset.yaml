@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: {{ include "kapparmor.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "kapparmor.labels" . | nindent 4 }}
 spec:
@@ -48,7 +49,7 @@ spec:
               mountPath: /sys/kernel/security
             # Folder used by the app to store custom profiles definitions
             - name: etc-apparmor
-              mountPath: /etc/apparmor.d/
+              mountPath: /etc/apparmor.d/custom
 
           env:
             - name: PROFILES_DIR
@@ -69,9 +70,11 @@ spec:
         - name: profiles-kernel-path
           hostPath:
             path: /sys/kernel/security
+            type: DirectoryOrCreate
         - name: etc-apparmor
           hostPath:
-            path: /etc/apparmor.d/
+            path: /etc/apparmor.d/custom
+            type: DirectoryOrCreate
 
       {{- with .Values.nodeSelector }}
       nodeSelector:
