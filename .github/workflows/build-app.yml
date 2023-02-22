@@ -2,13 +2,14 @@ name: "1. Create app"
 
 on:
   push:
-    branches: [main,dev,feature/*]
+    branches: [dev,feature/*]
     paths:
       - "go/src/app/**.go"
       - Dockerfile
       - ".github/workflows/*"
-  pull_request:
-    branches: [main]
+  # Avoid duplicate running
+  # pull_request:
+  #   branches: [main]
   workflow_dispatch:
 
 env:

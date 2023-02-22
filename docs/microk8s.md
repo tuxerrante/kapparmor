@@ -138,6 +138,8 @@ kubectl exec -ti $POD_NAME -- sh
 
 
 # Run a new pod for extra testing
+kubectl debug node/XXX -it --image=busybox
+# or
 kubectl run ubuntu --rm --privileged -v /lib/modules/:/lib/modules/:ro 
 ```
 

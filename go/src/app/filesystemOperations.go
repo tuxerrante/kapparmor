@@ -159,19 +159,38 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 // isProfileNameCorrect returns true if the filename is the same as the profile name
 func IsProfileNameCorrect(directory, filename string) error {
 
+	var isProfileWordPresent bool = false
+	var fileProfileName string
+
 	fileReader, err := os.Open(path.Join(directory, filename))
 	if err != nil {
 		return err
 	}
 	scanner := bufio.NewScanner(fileReader)
-	// Read only first line
-	scanner.Scan()
-	fileFirstLine := scanner.Text()
-	fileProfileNameSlice := strings.SplitAfterN(fileFirstLine, " ", 3)
-	if len(fileProfileNameSlice) < 2 {
+
+	// Search for line starting with 'profile' word
+	for scanner.Scan() {
+		fileLine := scanner.Text()
+		fileProfileNameSlice := strings.Split(fileLine, " ")
+
+		// log.Printf("Checking line: %s", fileLine)
+		// log.Println(fileProfileNameSlice)
+
+		// searching for a line with a least three tokens
+		if len(fileProfileNameSlice) < 2 || fileProfileNameSlice[0] != "profile" {
+			continue
+		} else {
+			// If the line starts with 'profile' check the following name
+			fileProfileName = strings.TrimSpace(fileProfileNameSlice[1])
+			isProfileWordPresent = true
+			log.Printf("Found profile name: %s", fileProfileName)
+			break
+		}
+	}
+
+	if !isProfileWordPresent {
 		return fmt.Errorf("there is an issue with the '%s' profile name, please check if the syntax is 'profile custom.YourName { ... }' or check again Unattached Profiles definition at https://documentation.suse.com/sles/15-SP1/html/SLES-all/cha-apparmor-profiles.html#sec-apparmor-profiles-types-unattached", filename)
 	}
-	fileProfileName := strings.TrimSpace(fileProfileNameSlice[1])
 
 	if filename != fileProfileName {
 		return fmt.Errorf("filename '%s' and profile name '%s' seems to be different", filename, fileProfileName)

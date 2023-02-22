@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-1. Go unit tests  
+1. E2E tests  
     - [ ] Create a new profile
     - [ ] Update an existing profile
     - [ ] Remove an existing profile
@@ -15,7 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [ ] check current confinement state of the app
 2. Remove kubernetes Service and DaemonSet exposed ports if useless
 4. Add daemonset commands for checking readiness
-7. Test on multiple nodes cluster
+7. Add different logging levels
+
+## [0.1.2]() - 2023-02-22
+### Fixed
+- Support for profile names after comments and include lines
+### Added
+- Tested on multiple nodes cluster
+- Base images switched to go 1.20
+
+
 
 ## [0.1.1]() - 2023-02-13
 ### Fixed

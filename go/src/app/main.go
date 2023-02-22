@@ -123,7 +123,7 @@ func loadNewProfiles() ([]string, error) {
 
 	// Execute apparmor_parser --replace --verbose filteredNewProfiles
 	log.Println("============================================================")
-	log.Println("> Apparmor replace and apply new profiles..")
+	log.Println("> Apparmor REPLACE and apply new profiles..")
 	for _, profilePath := range newProfilesToApply {
 		err := loadProfile(profilePath)
 		if err != nil {

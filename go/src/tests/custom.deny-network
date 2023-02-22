@@ -1,0 +1,4 @@
+profile custom.deny-network {
+    deny network,
+    file
+}
