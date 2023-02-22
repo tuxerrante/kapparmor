@@ -2,13 +2,8 @@ package main
 
 import (
 	"errors"
-	"log"
-	"os"
-	"path"
 	"testing"
 )
-
-const directory string = "."
 
 /*
 		TestIsProfileNameCorrect checks if profile names and filenames match
@@ -19,42 +14,34 @@ const directory string = "."
 */
 func TestIsProfileNameCorrect(t *testing.T) {
 
+	const testsDirectory string = "../tests"
 	t.Parallel()
 
 	// table-driven tests
 	var tests = []struct {
-		name, filename, profileFirstLine string
-		want                             error
+		name, filename string
+		want           error
 	}{
 		{
-			name:             "Confirm a filename equal as profile name is OK",
-			filename:         "custom.myValidProfile",
-			profileFirstLine: "profile custom.myValidProfile flags=(attach_disconnected) {",
-			want:             nil,
+			name:     "OK: filename and profile name are the same",
+			filename: "custom.myValidProfile",
+			want:     nil,
 		},
 		{
-			name:             "Deny a filename different from profile name",
-			filename:         "custom.myNotValidProfile",
-			profileFirstLine: "profile myNotValidProfile flags=(attach_disconnected) {",
-			want:             errors.New("filename 'custom.myNotValidProfile' and profile name 'myNotValidProfile' seems to be different"),
+			name:     "Deny a filename different from profile name",
+			filename: "custom.myNotValidProfile",
+			want:     errors.New("filename 'custom.myNotValidProfile' and profile name 'myNotValidProfile' seems to be different"),
 		},
 		{
-			name:             "Deny a filename different from profile name",
-			filename:         "custom.myNotValidProfile.bkp",
-			profileFirstLine: "profile custom.myNotValidProfile flags=(attach_disconnected) {",
-			want:             errors.New("filename 'custom.myNotValidProfile.bkp' and profile name 'custom.myNotValidProfile' seems to be different"),
+			name:     "OK: filename and profile name are the same",
+			filename: "custom.bin.foo",
+			want:     nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := os.WriteFile(path.Join(directory, tt.filename), []byte(tt.profileFirstLine), 0666)
-			if err != nil {
-				log.Fatal(err)
-			}
-			defer os.Remove(path.Join(directory, tt.filename))
-
-			got := IsProfileNameCorrect(directory, tt.filename)
+			got := IsProfileNameCorrect(testsDirectory, tt.filename)
 			assertError(t, got, tt.want)
 		})
 	}

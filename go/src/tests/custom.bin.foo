@@ -1,0 +1,45 @@
+# https://documentation.suse.com/sles/15-SP1/html/SLES-all/cha-apparmor-profiles.html#sec-apparmor-profiles-parts
+#include <tunables/global>
+
+# a comment naming the application to confine
+profile custom.usr.bin.foo {
+   #include <abstractions/base>
+
+   capability setgid,
+   network inet tcp,
+
+   link /etc/sysconfig/foo -> /etc/foo.conf,
+   /bin/mount            ux,
+   /dev/{,u}random     r,
+   /etc/ld.so.cache      r,
+   /etc/foo/*            r,
+   /lib/ld-*.so*         mr,
+   /lib/lib*.so*         mr,
+   /proc/[0-9]**         r,
+   /usr/lib/**           mr,
+   /tmp/                 r,
+   /tmp/foo.pid          wr,
+   /tmp/foo.*            lrw,
+   /@{HOME}/.foo_file   rw,
+   /@{HOME}/.foo_lock    kw,
+   owner /shared/foo/** rw,
+   /usr/bin/foobar       Cx,
+   /bin/**               Px -> bin_generic,
+
+   # a comment about foo's local (children) profile for /usr/bin/foobar.
+
+   profile /usr/bin/foobar {
+      /bin/bash          rmix,
+      /bin/cat           rmix,
+      /bin/more          rmix,
+      /var/log/foobar*   rwl,
+      /etc/foobar        r,
+   }
+
+  # foo's hat, bar.
+   ^bar {
+    /lib/ld-*.so*         mr,
+    /usr/bin/bar          px,
+    /var/spool/*          rwl,
+   }
+}

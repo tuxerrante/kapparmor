@@ -43,7 +43,7 @@ This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubern
 You can install the helm chart like this
 ```sh
 helm repo add tuxerrante https://tuxerrante.github.io/kapparmor
-helm upgrade kapparmor --install --atomic --timeout 100s --debug --set image.tag=dev tuxerrante/kapparmor
+helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag=main tuxerrante/kapparmor
 
 ```
 
@@ -95,7 +95,7 @@ docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROF
 
 ```
 
-To test Helm chart installation in a MicroK8s cluster, follow docs/microk8s.md instructions if you don't have any local cluster.
+To test Helm chart installation in a MicroK8s cluster, follow `docs/microk8s.md` instructions if you don't have any local cluster.
 
 ### Test on the Kubernetes cluster
 You can start a binary check inside the pod shell like this:
@@ -117,6 +117,7 @@ amicontained -h
 
 
 # External useful links
+- [https://kubernetes.io/docs/tutorials/security/apparmor/](https://kubernetes.io/docs/tutorials/security/apparmor/)
 - [https://emn178.github.io/online-tools/sha256.html](https://emn178.github.io/online-tools/sha256.html)
 - [https://github.com/udhos/equalfile/blob/v0.3.0/equalfile.go](https://github.com/udhos/equalfile/blob/v0.3.0/equalfile.go)
 - [https://github.com/kubernetes-sigs/security-profiles-operator/](https://github.com/kubernetes-sigs/security-profiles-operator/)
