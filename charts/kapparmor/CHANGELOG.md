@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.2]() - 2023-02-22
 ### Fixed
-- Support for profile names after comments and include lines
+- Support for profile names coming after comments and include lines
 ### Added
 - Tested on multiple nodes cluster
 - Base images switched to go 1.20
