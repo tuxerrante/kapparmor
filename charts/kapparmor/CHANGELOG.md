@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for profile names after comments and include lines
 ### Added
 - Tested on multiple nodes cluster
+- Base images switched to go 1.20
 
 
 

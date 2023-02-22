@@ -183,7 +183,7 @@ func IsProfileNameCorrect(directory, filename string) error {
 			// If the line starts with 'profile' check the following name
 			fileProfileName = strings.TrimSpace(fileProfileNameSlice[1])
 			isProfileWordPresent = true
-			// log.Printf("Found profile name: %s", fileProfileName)
+			log.Printf("Found profile name: %s", fileProfileName)
 			break
 		}
 	}

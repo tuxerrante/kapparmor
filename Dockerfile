@@ -1,8 +1,9 @@
 # --- build stage
-FROM golang:1.19 AS builder
+FROM golang:1.20 AS builder
 
 WORKDIR /builder/app
 COPY go/src/app/ .
+COPY go/src/tests/ /builder/tests/
 COPY go.mod .
 
 RUN go get -d -v . &&\
