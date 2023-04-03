@@ -3,6 +3,8 @@ name: "1. Create app"
 on:
   push:
     branches: [dev,feature/*]
+    tags:
+      - '**'
     paths:
       - "go/src/app/**.go"
       - Dockerfile
