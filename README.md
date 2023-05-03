@@ -36,8 +36,6 @@ You can view which profiles are loaded on a node by checking the /sys/kernel/sec
 
 This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
 
-## Features and constraints
-- Profile names have to start with 'custom.' and to be equal as the filename containing it
 
 ## Install
 You can install the helm chart like this
@@ -49,76 +47,22 @@ helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag
 
 ## Known limitations
 - Profiles names are checked on the first line, so if there is some include before that would fail
+- Profile names have to start with 'custom.' and to be equal as the filename containing it
 - There could be issues if you start the daemonsets on "dirty" nodes, where some old custom profiles were left after stopping or uninstalling Kapparmor. E.g: you stop the pods and then redeploy the app with an empty profiles configmap without removing the previous custom profiles: Kapparmor will try to remove the old profiles but it could fail since there is no definition of them anymore.
+- Not a limitation relative to this project, but if you deny write access in the /bin folder of a privileged container it could not be deleted by Kubernetes even after 'kubectl delete'. The command will succeed but the pod will stay in Terminating state.
+
+## ToDo:
+- Intercept Term signal and uninstall profiles before the Helm chart deletion completes.
+- Implement the [controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime#section-readme) design pattern through [Kubebuilder](https://book.kubebuilder.io/quick-start.html).
+
 
 ## Testing
-[Set up a Microk8s environment](./docs/microk8s.md).
+[There is a whole project meant to be a demo for this one](https://github.com/tuxerrante/kapparmor-demo), have fun.
 
-### How to initialize this project
-```sh
-helm create kapparmor
-sudo usermod -aG docker $USER
-
-# Create mod files in root dir
-go mod init github.com/tuxerrante/kapparmor
-go mod init ./go/src/app/
-```
-
-### Test the app locally
-
-Test Helm Chart creation
-```sh
-# --- Check the Helm chart
-# https://github.com/helm/chart-testing/issues/464
-echo Linting the Helm chart
-helm lint --debug --strict  charts/kapparmor/
-
-docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kube/config:ro \
-  --volume $(pwd):/data quay.io/helmpack/chart-testing:latest \
-  /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
-
-# Replace here a commit id being part of an image tag
-export GITHUB_SHA="sha-93d0dc4c597a8ae8a9febe1d68e674daf1fa919a"
-helm install --dry-run --atomic --generate-name --timeout 30s --debug --set image.tag=$GITHUB_SHA  charts/kapparmor/
-
-```
-
-Test the app inside a container:
-```sh
-# --- Build and run the container image
-docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . &&\
-  echo &&\
-  docker run --rm -it --privileged \
-  --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security'  \
-  --mount type=bind,source='/etc',target='/etc'\
-  --name kapparmor  test-kapparmor
-
-```
-
-To test Helm chart installation in a MicroK8s cluster, follow `docs/microk8s.md` instructions if you don't have any local cluster.
-
-### Test on the Kubernetes cluster
-You can start a binary check inside the pod shell like this:
-```sh
-kapparmor_pod=$(kubectl get pods -l app.kubernetes.io/name=kapparmor --no-headers |grep Running |head -n1 |cut -d' ' -f1)
-kubectl exec -it $kapparmor_pod -- cat /proc/1/attr/current
-kubectl exec -it $kapparmor_pod -- cat /sys/module/apparmor/parameters/enabled
-kubectl exec -it $kapparmor_pod -- cat /sys/kernel/security/apparmor/profiles |sort
-
-# --- https://github.com/genuinetools/amicontained/releases
-export AMICONTAINED_SHA256="d8c49e2cf44ee9668219acd092ed961fc1aa420a6e036e0822d7a31033776c9f"
-curl -fSL "https://github.com/genuinetools/amicontained/releases/download/v0.4.9/amicontained-linux-amd64" -o "/usr/local/bin/amicontained" \
-	&& echo "${AMICONTAINED_SHA256}  /usr/local/bin/amicontained" | sha256sum -c - \
-	&& chmod a+x "/usr/local/bin/amicontained"
-amicontained -h
-
-
-```
-
+Or you can find more info in [docs/testing.md](docs/testing.md)
 
 # External useful links
-- [https://kubernetes.io/docs/tutorials/security/apparmor/](https://kubernetes.io/docs/tutorials/security/apparmor/)
-- [https://emn178.github.io/online-tools/sha256.html](https://emn178.github.io/online-tools/sha256.html)
-- [https://github.com/udhos/equalfile/blob/v0.3.0/equalfile.go](https://github.com/udhos/equalfile/blob/v0.3.0/equalfile.go)
-- [https://github.com/kubernetes-sigs/security-profiles-operator/](https://github.com/kubernetes-sigs/security-profiles-operator/)
-- [https://github.com/kubernetes/kubernetes/blob/master/test/images/apparmor-loader/loader.go](https://github.com/kubernetes/kubernetes/blob/master/test/images/apparmor-loader/loader.go)
+- [KAppArmor Demo](https://github.com/tuxerrante/kapparmor-demo)
+- [Kubernetes.io tutorials on apparmor](https://kubernetes.io/docs/tutorials/security/apparmor/)
+- [Security Profiles Operator](https://github.com/kubernetes-sigs/security-profiles-operator/)
+- [Kubernetes apparmor-loader](https://github.com/kubernetes/kubernetes/blob/master/test/images/apparmor-loader/loader.go)
