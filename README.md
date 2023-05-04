@@ -52,9 +52,10 @@ helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag
 - Not a limitation relative to this project, but if you deny write access in the /bin folder of a privileged container it could not be deleted by Kubernetes even after 'kubectl delete'. The command will succeed but the pod will stay in Terminating state.
 
 ## ToDo:
-- Intercept Term signal and uninstall profiles before the Helm chart deletion completes.
-- Implement the [controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime#section-readme) design pattern through [Kubebuilder](https://book.kubebuilder.io/quick-start.html).
-
+- 🌱 Intercept Term signal and uninstall profiles before the Helm chart deletion completes.
+- ⚠️ Implement the [controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime#section-readme) design pattern through [Kubebuilder](https://book.kubebuilder.io/quick-start.html).
+- 😁 Find funnier quotes for app starting and ending message (David Zucker, Monty Python, Woody Allen...).
+- 🌱 Make the ticker loop thread safe: skip running a new loop if previous run is still ongoing.
 
 ## Testing
 [There is a whole project meant to be a demo for this one](https://github.com/tuxerrante/kapparmor-demo), have fun.
