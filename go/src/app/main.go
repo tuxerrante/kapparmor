@@ -3,13 +3,16 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -30,16 +33,39 @@ func main() {
 
 	POLL_TIME = preFlightChecks()
 
-	log.Printf("> Polling directory %s every %d seconds.\n", CONFIGMAP_PATH, POLL_TIME)
+	keepItRunning := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
 
-	pollProfiles(POLL_TIME)
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
+
+	log.Printf("> Polling directory %s every %d seconds.\n", CONFIGMAP_PATH, POLL_TIME)
+	go pollProfiles(POLL_TIME, ctx, keepItRunning)
+
+	// Manage OS signals for graceful shutdown
+	go func() {
+		<-signals
+		log.Print("> Received stop signal, terminating..")
+
+		// Stop polling new profiles
+		cancel()
+
+		// Delete all loaded profiles
+		err := unloadAllProfiles()
+		checkFatal(err)
+
+		log.Print("> The Eagle has landed.")
+	}()
+
+	<-keepItRunning
 }
 
-// Profiles will probably change content while keeping the same name, so a digest comparison
-// can be useful if we don't want to load everything every time.
-func pollProfiles(delay int) {
-
-	ticker := time.NewTicker(time.Duration(delay) * time.Second)
+// Every pollTime seconds it will read the mounted volume for profiles,
+// it will call loadNewProfiles() then to check if they are new ones or not.
+// Executed as go-routine it will run forever until a cancel() is called on the given context.
+func pollProfiles(pollTime int, ctx context.Context, keepItRunning chan struct{}) {
+	log.Print("> Polling started.")
+	ticker := time.NewTicker(time.Duration(pollTime) * time.Second)
 	pollNow := func() {
 		newProfiles, err := loadNewProfiles()
 		if err != nil {
@@ -47,10 +73,16 @@ func pollProfiles(delay int) {
 		}
 	}
 
-	pollNow()
-
-	for range ticker.C {
-		pollNow()
+	for {
+		select {
+		case <-ctx.Done():
+			keepItRunning <- struct{}{}
+			return
+		case <-ticker.C:
+			// TODO: check if the function is still running before starting a new one
+			// Ticker should not execute if already running
+			pollNow()
+		}
 	}
 }
 
@@ -122,7 +154,7 @@ func loadNewProfiles() ([]string, error) {
 	}
 
 	// Execute apparmor_parser --replace --verbose filteredNewProfiles
-	log.Println("============================================================")
+	printLogSeparator()
 	log.Println("> Apparmor REPLACE and apply new profiles..")
 	for _, profilePath := range newProfilesToApply {
 		err := loadProfile(profilePath)
@@ -133,7 +165,7 @@ func loadNewProfiles() ([]string, error) {
 
 	// Execute apparmor_parser --remove obsoleteProfilePath
 	if len(loadedProfilesToUnload) > 0 {
-		log.Println("============================================================")
+		printLogSeparator()
 		log.Println("> AppArmor REMOVE orphans profiles..")
 		for _, profileFileName := range loadedProfilesToUnload {
 			err := unloadProfile(profileFileName)
@@ -144,6 +176,7 @@ func loadNewProfiles() ([]string, error) {
 	}
 
 	log.Println("> Done!\n> Waiting next poll..")
+	printLogSeparator()
 	return newProfilesToApply, nil
 }
 
@@ -205,15 +238,28 @@ func parseProfileName(profileLine string) string {
 
 func loadProfile(profilePath string) error {
 	err := execApparmor("--verbose", "--replace", profilePath)
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkFatal(err)
 
 	// Copy the profile definition in the apparmor configuration standard directory
 	log.Printf("Copying profile in %s", ETC_APPARMORD)
 	return CopyFile(profilePath, ETC_APPARMORD)
 }
 
+// Remove all custom profiles from the kernel, reading from ETC_APPARMORD folder
+func unloadAllProfiles() error {
+	dirEntries, err := os.ReadDir(ETC_APPARMORD)
+	checkFatal(err)
+
+	for _, entry := range dirEntries {
+		if !entry.IsDir() && entry.Type().IsRegular() {
+			err := unloadProfile(entry.Name())
+			checkFatal(err)
+		}
+	}
+	return nil
+}
+
+// Remove an apparmor profile from the kernel
 func unloadProfile(fileName string) error {
 	filePath := path.Join(ETC_APPARMORD, fileName)
 
@@ -239,4 +285,15 @@ func execApparmor(args ...string) error {
 	}
 
 	return nil
+}
+
+func checkFatal(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// Useless line separator to simplify logs reading.
+func printLogSeparator() {
+	log.Println("============================================================")
 }
