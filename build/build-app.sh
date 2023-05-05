@@ -23,7 +23,8 @@ docker build --target test-coverage --tag "ghcr.io/tuxerrante/kapparmor:${APP_VE
 echo "> Building container image..."
 docker build --tag "ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev" \
     --no-cache	  \
-    --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles   \
+    --build-arg POLL_TIME=30 \
+    --build-arg PROFILES_DIR=/app/profiles   \
     -f Dockerfile \
     .
 

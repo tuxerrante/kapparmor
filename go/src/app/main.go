@@ -131,7 +131,7 @@ func loadNewProfiles() ([]string, error) {
 
 			// If the profile is exactly the same skip the apply
 			log.Printf("Checking %s profile..", path.Join(CONFIGMAP_PATH, newProfileName))
-			contentIsTheSame, err := HasTheSameContent(nil, filePath1, path.Join(CONFIGMAP_PATH, newProfileName))
+			contentIsTheSame, err := HasTheSameContent(nil, filePath1, path.Join(ETC_APPARMORD, newProfileName))
 			if err != nil {
 				// Error in checking the content of "/app/profiles/custom.deny-write-outside-app" VS "custom.deny-write-outside-app"
 				log.Printf(">> Error in checking the content of %q VS %q\n", filePath1, newProfileName)
