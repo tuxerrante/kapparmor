@@ -35,25 +35,24 @@ func main() {
 
 	keepItRunning := make(chan struct{})
 	ctx, cancel := context.WithCancel(context.Background())
-
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
+	defer cancel()
 
 	log.Printf("> Polling directory %s every %d seconds.\n", CONFIGMAP_PATH, POLL_TIME)
 	go pollProfiles(POLL_TIME, ctx, keepItRunning)
 
 	// Manage OS signals for graceful shutdown
 	go func() {
+		signals := make(chan os.Signal, 1)
+		signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)
 		<-signals
 		log.Print("> Received stop signal, terminating..")
-
-		// Stop polling new profiles
-		cancel()
 
 		// Delete all loaded profiles
 		err := unloadAllProfiles()
 		checkFatal(err)
 
+		// Stop polling new profiles
+		cancel()
 		log.Print("> The Eagle has landed.")
 	}()
 
@@ -79,8 +78,6 @@ func pollProfiles(pollTime int, ctx context.Context, keepItRunning chan struct{}
 			keepItRunning <- struct{}{}
 			return
 		case <-ticker.C:
-			// TODO: check if the function is still running before starting a new one
-			// Ticker should not execute if already running
 			pollNow()
 		}
 	}
