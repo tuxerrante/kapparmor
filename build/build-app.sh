@@ -1,6 +1,18 @@
 #!/bin/bash
 source ./config/config
 
+# --- Validate App and Chart version
+YML_CHART_VERSION="$(grep "version: [\"0-9\.]\+" charts/kapparmor/Chart.yaml  |cut -d'"' -f2)"
+YML_APP_VERSION="$(grep "appVersion: [\"0-9\.]\+" charts/kapparmor/Chart.yaml |cut -d'"' -f2)"
+
+if [[ $APP_VERSION != $YML_APP_VERSION ]]; then
+    echo "The APP version declared in the Chart is different from the one in the config!"
+    exit 1
+elif [[ $CHART_VERSION != $YML_CHART_VERSION ]]; then
+    echo "The APP version declared in the Chart is different from the one in the config!"
+    exit 1
+fi
+
 # Clean old images
 echo "> Removing old and dangling old images..."
 docker rmi "$(docker images --filter "reference=ghcr.io/tuxerrante/kapparmor" -q --no-trunc )"
