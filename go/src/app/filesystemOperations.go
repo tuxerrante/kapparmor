@@ -168,6 +168,16 @@ func IsProfileNameCorrect(directory, filename string) error {
 	}
 	scanner := bufio.NewScanner(fileReader)
 
+	// Validate the syntax
+	// the first index of a curly bracket should be greater than the first occurrence of "profile"
+	fileBytes, err := os.ReadFile(path.Join(directory, filename))
+	checkFatal(err)
+	profileIndex := bytes.Index(fileBytes, []byte("profile"))
+	curlyBracketIndex := bytes.Index(fileBytes, []byte("{"))
+	if curlyBracketIndex < 0 || curlyBracketIndex < profileIndex {
+		return errors.New("couldn't find a { after 'profile' keyword")
+	}
+
 	// Search for line starting with 'profile' word
 	for scanner.Scan() {
 		fileLine := scanner.Text()

@@ -46,13 +46,16 @@ helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag
 ```
 
 ## Known limitations
-- Profiles names are checked on the first line, so if there is some include before that would fail
-- Profile names have to start with 'custom.' and to be equal as the filename containing it
-- There could be issues if you start the daemonsets on "dirty" nodes, where some old custom profiles were left after stopping or uninstalling Kapparmor. E.g: you stop the pods and then redeploy the app with an empty profiles configmap without removing the previous custom profiles: Kapparmor will try to remove the old profiles but it could fail since there is no definition of them anymore.
+- Constraint: Profiles are validated on the "`profile`" keyword presence before of a opening curly bracket `{`.  
+  It must be a [unattached profiles](https://documentation.suse.com/sles/15-SP1/html/SLES-all/cha-apparmor-profiles.html#sec-apparmor-profiles-types-unattached).
+- Profile names have to start with 'custom.' and to be equal as the filename containing it.
+- There could be issues if you start the daemonsets on "dirty" nodes, where some old custom profiles were left after stopping or uninstalling Kapparmor.  
+  E.G: By default if you delete a pod all the profiles should be automatically deleted from that node, but the app crashes during the process. 
+
 - Not a limitation relative to this project, but if you deny write access in the /bin folder of a privileged container it could not be deleted by Kubernetes even after 'kubectl delete'. The command will succeed but the pod will stay in Terminating state.
 
 ## ToDo:
-- 🌱 Intercept Term signal and uninstall profiles before the Helm chart deletion completes.
+- [X] Intercept Term signal and uninstall profiles before the Helm chart deletion completes.
 - ⚠️ Implement the [controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime#section-readme) design pattern through [Kubebuilder](https://book.kubebuilder.io/quick-start.html).
 - 😁 Find funnier quotes for app starting and ending message (David Zucker, Monty Python, Woody Allen...).
 - 🌱 Make the ticker loop thread safe: skip running a new loop if previous run is still ongoing.
