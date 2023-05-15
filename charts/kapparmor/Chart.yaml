@@ -5,8 +5,9 @@ type: application
 home: https://artifacthub.io
 kubeVersion: ">= 1.23.0-0"
 
-version: "0.1.2"
-appVersion: "0.1.2"
+# Respect spaces and double quotes since this will be validated by the build-app script.
+version: "0.1.5"
+appVersion: "0.1.5"
 
 keywords:
   - kubernetes

@@ -24,8 +24,13 @@ docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kub
   /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
 
 # Replace here a commit id being part of an image tag
-export GITHUB_SHA="sha-93d0dc4c597a8ae8a9febe1d68e674daf1fa919a"
-helm install --dry-run --atomic --generate-name --timeout 30s --debug --set image.tag=$GITHUB_SHA  charts/kapparmor/
+export IMAGE_TAG="0.1.4_dev"
+helm upgrade kapparmor --install --dry-run \
+    --atomic \
+    --timeout 30s \
+    --debug \
+    --namespace test \
+    --set image.tag=$IMAGE_TAG  charts/kapparmor/
 
 ```
 

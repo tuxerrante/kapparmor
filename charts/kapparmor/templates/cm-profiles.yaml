@@ -3,5 +3,10 @@ kind: ConfigMap
 metadata:
   name: kapparmor-profiles
   namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "kapparmor.labels" . | nindent 4 }}
+    {{- with .Values.app.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 data:
 {{ (.Files.Glob "profiles/*").AsConfig | indent 2 }}

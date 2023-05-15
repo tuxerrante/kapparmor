@@ -6,10 +6,10 @@ COPY go/src/app/ .
 COPY go/src/tests/ /builder/tests/
 COPY go.mod .
 
-RUN go get -d -v . &&\
+RUN go get    -d -v .           &&\
     go build  -v -o /go/bin/app .
 
-RUN go test -v -coverprofile=coverage.out -covermode=atomic
+RUN go test -v -coverprofile=coverage.out -covermode=atomic ./...
 #    go tool cover -func=coverage.out
 
 
@@ -41,4 +41,4 @@ ENV PROFILES_DIR=$PROFILES_DIR
 ENV POLL_TIME=$POLL_TIME
 
 USER root
-CMD ./app
+ENTRYPOINT ["./app"]
