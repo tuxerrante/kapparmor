@@ -56,14 +56,22 @@ helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag
 
 ## ToDo:
 - [X] Intercept Term signal and uninstall profiles before the Helm chart deletion completes.
-- ⚠️ Implement the [controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime#section-readme) design pattern through [Kubebuilder](https://book.kubebuilder.io/quick-start.html).
+- 🔽 [low pr.] Implement the [controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime#section-readme) design pattern through [Kubebuilder](https://book.kubebuilder.io/quick-start.html).
 - 😁 Find funnier quotes for app starting and ending message (David Zucker, Monty Python, Woody Allen...).
-- 🌱 Make the ticker loop thread safe: skip running a new loop if previous run is still ongoing.
+
 
 ## Testing
 [There is a whole project meant to be a demo for this one](https://github.com/tuxerrante/kapparmor-demo), have fun.
 
 Or you can find more info in [docs/testing.md](docs/testing.md)
+## Release process
+Update `config/config` file with the right app and chart version.  
+Do the same in the chart manifest `charts/kapparmor/Chart.yaml`.  
+Test it on a local cluster with `./build` scripts and following [docs/testing.md](docs/testing.md) instructions (go test, go lint, helm lint, helm template, helm install dry run...).
+Update the chart Changelog with the most relevant commits of this release, this will automatically fill the release page.  
+Open the PR.  
+Merge.  
+Tag.  
 
 # External useful links
 - [KAppArmor Demo](https://github.com/tuxerrante/kapparmor-demo)
