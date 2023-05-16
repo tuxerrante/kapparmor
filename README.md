@@ -5,13 +5,11 @@
 
 # Kapparmor
 - [Kapparmor](#kapparmor)
-  - [Features and constraints](#features-and-constraints)
   - [Install](#install)
   - [Known limitations](#known-limitations)
+  - [ToDo:](#todo)
   - [Testing](#testing)
-    - [How to initialize this project](#how-to-initialize-this-project)
-    - [Test the app locally](#test-the-app-locally)
-    - [Test on the Kubernetes cluster](#test-on-the-kubernetes-cluster)
+  - [Release process](#release-process)
 - [External useful links](#external-useful-links)
 - -----
 Apparmor-loader project to deploy profiles through a kubernetes daemonset.  
