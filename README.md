@@ -25,9 +25,9 @@ If you modify only the content of a profile leaving the same name, Kapparmor sho
 1. The CD pipeline will
 	- deploy a configmap in the security namespace containing all the profiles versioned in the current project
 	- it will apply a daemonset on the linux nodes
-2. The configmap will contain multiple apparmor profiles  
-  - The custom profiles HAVE to start with the same PROFILE_NAME_PREFIX, currently this defaults to "custom.". 
-  - The name of the file should be the same as the name of the profile.
+2. The configmap will contain multiple apparmor profiles
+    - The custom profiles names HAVE to start with the same PROFILE_NAME_PREFIX, currently this defaults to "custom.". 
+    - The name of the file should be the same as the name of the profile.
 3. The configmap will be polled every POLL_TIME seconds to move them into PROFILES_DIR host path and then enable them.
 
 You can view which profiles are loaded on a node by checking the /sys/kernel/security/apparmor/profiles, so its parent will need to be mounted in the pod.
@@ -52,7 +52,7 @@ helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag
 
 - Not a limitation relative to this project, but if you deny write access in the /bin folder of a privileged container it could not be deleted by Kubernetes even after 'kubectl delete'. The command will succeed but the pod will stay in Terminating state.
 
-## ToDo:
+## ToDo
 - [X] Intercept Term signal and uninstall profiles before the Helm chart deletion completes.
 - 🔽 [low pr.] Implement the [controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime#section-readme) design pattern through [Kubebuilder](https://book.kubebuilder.io/quick-start.html).
 - 😁 Find funnier quotes for app starting and ending message (David Zucker, Monty Python, Woody Allen...).
