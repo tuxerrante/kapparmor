@@ -200,3 +200,7 @@ docker run --name tracee --rm --privileged -v /lib/modules/:/lib/modules/:ro -v 
 
 microk8s kubectl exec busy-dontwrite -- touch /home/dont_fail_please
 ```
+
+## Clean the storage
+
+`kubectl drain --delete-local-data --ignore-daemonsets $NODE_IP && kubectl uncordon $NODE_IP`

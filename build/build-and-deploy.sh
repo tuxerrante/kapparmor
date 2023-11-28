@@ -22,13 +22,15 @@ echo "> Current K8S context:" "$(kubectl config current-context)"
 read -r -p "> Are you sure? [Y/n] " response
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     helm upgrade kapparmor --install \
-        --atomic \
         --timeout 120s \
         --debug \
         --set image.tag=${APP_VERSION}_dev \
-        --set image.pullPolicy=Always \
+        --set image.pullPolicy=IfNotPresent \
         charts/kapparmor
 else
     echo " Bye."
     echo
 fi
+
+echo
+kubectl get pods -l=app.kubernetes.io/name=kapparmor -o wide -w
