@@ -15,6 +15,11 @@ app:
   labels: 
 #    costgroup: "test"
 
+service:
+  enabled: false
+  type: ClusterIP
+  port: 80
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: false
@@ -35,10 +40,6 @@ podSecurityContext: {}
 securityContext:
   readOnlyRootFilesystem: false
   privileged: true
-
-service:
-  type: ClusterIP
-  port: 80
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
