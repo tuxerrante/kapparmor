@@ -7,7 +7,6 @@
 - [Kapparmor](#kapparmor)
   - [Install](#install)
   - [Known limitations](#known-limitations)
-  - [ToDo:](#todo)
   - [Testing](#testing)
   - [Release process](#release-process)
 - [External useful links](#external-useful-links)
@@ -44,24 +43,19 @@ helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag
 ```
 
 ## Known limitations
-- Constraint: Profiles are validated on the "`profile`" keyword presence before of a opening curly bracket `{`.  
+- Constraint: Profiles are validated on the `profile` keyword presence before of a opening curly bracket `{`.  
   It must be a [unattached profiles](https://documentation.suse.com/sles/15-SP1/html/SLES-all/cha-apparmor-profiles.html#sec-apparmor-profiles-types-unattached).
-- Profile names have to start with 'custom.' and to be equal as the filename containing it.
+- Profile names have to start with `custom.` and to be equal to their filename.
 - There could be issues if you start the daemonsets on "dirty" nodes, where some old custom profiles were left after stopping or uninstalling Kapparmor.  
   E.G: By default if you delete a pod all the profiles should be automatically deleted from that node, but the app crashes during the process. 
-
-- Not a limitation relative to this project, but if you deny write access in the /bin folder of a privileged container it could not be deleted by Kubernetes even after 'kubectl delete'. The command will succeed but the pod will stay in Terminating state.
-
-## ToDo
-- [X] Intercept Term signal and uninstall profiles before the Helm chart deletion completes.
-- 🔽 [low pr.] Implement the [controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime#section-readme) design pattern through [Kubebuilder](https://book.kubebuilder.io/quick-start.html).
-- 😁 Find funnier quotes for app starting and ending message (David Zucker, Monty Python, Woody Allen...).
 
 
 ## Testing
 [There is a whole project meant to be a demo for this one](https://github.com/tuxerrante/kapparmor-demo), have fun.
 
 Or you can find more info in [docs/testing.md](docs/testing.md)
+
+
 ## Release process
 Update `config/config` file with the right app and chart version.  
 Do the same in the chart manifest `charts/kapparmor/Chart.yaml`.  
@@ -70,6 +64,7 @@ Update the chart Changelog with the most relevant commits of this release, this 
 Open the PR.  
 Merge.  
 Tag.  
+
 
 # External useful links
 - [KAppArmor Demo](https://github.com/tuxerrante/kapparmor-demo)

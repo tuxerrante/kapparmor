@@ -6,15 +6,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-1. Fix Codecov plugin issues
-1. E2E tests  
+- E2E tests  
     - [ ] Create a new profile
     - [ ] Update an existing profile
     - [ ] Remove an existing profile
     - [ ] Remove a non existing profile
     - [ ] check current confinement state of the app
-2. Remove kubernetes Service and DaemonSet exposed ports if useless
-7. Add different logging levels
+- Remove kubernetes Service and DaemonSet exposed ports if useless
+- Add different logging levels
+- Generate signed OCI containers for all architectures
+- Accept only signed commits
+- Increase test coverage at least to 50%
+- Implement [open telemetry](https://opentelemetry.io/docs/instrumentation/go/)
+- Refactor directories similarly to [kubernetes-sigs](https://github.com/kubernetes-sigs) structure (eg: go/kapaprmor/app/*.go) or to this [golang standard project layout](https://github.com/golang-standards/project-layout)
+- Refactor code following [Google Go style guide](https://google.github.io/styleguide/go/guide)
+
+---
+
+## [0.1.6 - ](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.6)
+
+- [X] Fixed Codecov plugin issues
+- [X] Git auto CRLF set to false `git config --global core.autocrlf false`
+- [X] [Signed commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits): `git config commit.gpgsign true`
+- [X] golang:1.21 as builder containerfile image
+- [X] Refresh container image every Sunday night
+- [X] The service resource is now toggable from the values.yaml
+
 ---
 
 ## [0.1.5 - 2023-05-16](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.5)
