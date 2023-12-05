@@ -53,7 +53,7 @@ func main() {
 
 		// Stop polling new profiles
 		cancel()
-		log.Print("> The Eagle has landed.")
+		log.Print("> The eagle has landed. Over and out.")
 	}()
 
 	<-keepItRunning

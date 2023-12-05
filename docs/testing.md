@@ -24,7 +24,7 @@ docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kub
   /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
 
 # Replace here a commit id being part of an image tag
-export IMAGE_TAG="0.1.4_dev"
+export IMAGE_TAG="0.1.6_dev"
 helm upgrade kapparmor --install --dry-run \
     --atomic \
     --timeout 30s \
