@@ -12,10 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [ ] Remove an existing profile
     - [ ] Remove a non existing profile
     - [ ] check current confinement state of the app
-- Remove kubernetes Service and DaemonSet exposed ports if useless
 - Add different logging levels
 - Generate signed OCI containers for all architectures
-- Accept only signed commits
 - Increase test coverage at least to 50%
 - Implement [open telemetry](https://opentelemetry.io/docs/instrumentation/go/)
 - Refactor directories similarly to [kubernetes-sigs](https://github.com/kubernetes-sigs) structure (eg: go/kapaprmor/app/*.go) or to this [golang standard project layout](https://github.com/golang-standards/project-layout)
@@ -30,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [X] [Signed commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits): `git config commit.gpgsign true`
 - [X] golang:1.21 as builder containerfile image
 - [X] Refresh container image every Sunday night
-- [X] The service resource is now toggable from the values.yaml
+- [X] The k8s service resource is now settable from the values.yaml
 
 ---
 
