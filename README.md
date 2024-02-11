@@ -44,7 +44,9 @@ helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag
 
 ## Known limitations
 - Constraint: Profiles are validated on the `profile` keyword presence before of a opening curly bracket `{`.  
+- Constraint: Profiles are validated on the `profile` keyword presence before of a opening curly bracket `{`.  
   It must be a [unattached profiles](https://documentation.suse.com/sles/15-SP1/html/SLES-all/cha-apparmor-profiles.html#sec-apparmor-profiles-types-unattached).
+- Profile names have to start with `custom.` and to be equal to their filename.
 - Profile names have to start with `custom.` and to be equal to their filename.
 - There could be issues if you start the daemonsets on "dirty" nodes, where some old custom profiles were left after stopping or uninstalling Kapparmor.  
   E.G: By default if you delete a pod all the profiles should be automatically deleted from that node, but the app crashes during the process. 
@@ -56,15 +58,20 @@ helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag
 Or you can find more info in [docs/testing.md](docs/testing.md)
 
 
+
+
 ## Release process
+Commits and tags [should be signed](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work).  
 Commits and tags [should be signed](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work).  
 Update `config/config` file with the right app and chart version.  
 Do the same in the chart manifest `charts/kapparmor/Chart.yaml`.  
+Test it on a local cluster with `./build` scripts and following [docs/testing.md](docs/testing.md) instructions (go test, go lint, helm lint, helm template, helm install dry run...).  
 Test it on a local cluster with `./build` scripts and following [docs/testing.md](docs/testing.md) instructions (go test, go lint, helm lint, helm template, helm install dry run...).  
 Update the chart Changelog with the most relevant commits of this release, this will automatically fill the release page.  
 Open the PR.  
 Merge.  
 Tag.  
+
 
 
 # External useful links
