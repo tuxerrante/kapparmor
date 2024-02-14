@@ -3,7 +3,6 @@ FROM golang:1.21 AS builder
 
 WORKDIR /builder/app
 COPY go/src/app/ .
-COPY go/src/tests/ /builder/tests/
 COPY go.mod .
 
 RUN go get    -d -v .           &&\
