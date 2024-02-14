@@ -15,6 +15,13 @@ elif [[ $CHART_VERSION != $YML_CHART_VERSION ]]; then
     exit 1
 fi
 
+# Set same Go version in all relevant files
+echo "Set go version variables in .github/workflows to $GO_VERSION"
+find .github/workflows -type f -exec sed -i 's/go-version: .*/go-version: '"$GO_VERSION"'/g' {} +
+find .github/workflows -type f -exec sed -i 's/GO_VERSION: .*/GO_VERSION: '"$GO_VERSION"'/g' {} +
+sed -i 's/^go [0-9]\(\.[0-9]\+\)/go '"$GO_VERSION"'/g' go.mod
+sed -i 's/golang:[0-9]\(\.[0-9]\+\)/golang:'"$GO_VERSION"'/g' Dockerfile
+
 # Clean old images
 echo "> Removing old and dangling old images..."
 docker rmi "$(docker images --filter "reference=ghcr.io/tuxerrante/kapparmor" -q --no-trunc )"

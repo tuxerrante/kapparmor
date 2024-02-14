@@ -14,7 +14,7 @@ on:
     - cron: '42 0 * * 6' # Refresh image every Sunday at 00:42
 
 env:
-  GO_VERSION: '1.22'
+  GO_VERSION: 1.22
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
