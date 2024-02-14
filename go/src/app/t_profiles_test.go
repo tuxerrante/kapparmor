@@ -14,7 +14,7 @@ import (
 */
 func TestIsProfileNameCorrect(t *testing.T) {
 
-	const testsDirectory string = "../tests"
+	const testsDirectory string = "profile_test_samples"
 	t.Parallel()
 
 	// table-driven tests

@@ -21,6 +21,8 @@ docker rmi "$(docker images --filter "reference=ghcr.io/tuxerrante/kapparmor" -q
 
 # go build -o ./.go/bin ./...
 # go test -v -coverprofile=coverage.out -covermode=atomic ./go/src/app/...
+go test -v -fuzz=Fuzz -fuzztime=60s
+
 if [[ ! -f ".go/bin/golangci-lint" ]]; then
     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./.go/bin
 fi

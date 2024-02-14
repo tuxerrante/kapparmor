@@ -1,3 +1,0 @@
-profile myNotValidProfile flags=(attach_disconnected) {
-    file,    
-}

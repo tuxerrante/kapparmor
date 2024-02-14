@@ -9,7 +9,7 @@ COPY go.mod .
 RUN go get    -d -v .           &&\
     go build  -v -o /go/bin/app .
 
-RUN go test -v -coverprofile=coverage.out -covermode=atomic ./...
+RUN go test -v -fuzz=Fuzz -fuzztime=30s -coverprofile=coverage.out -covermode=atomic ./...
 #    go tool cover -func=coverage.out
 
 
