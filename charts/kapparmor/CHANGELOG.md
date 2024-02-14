@@ -26,15 +26,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [X] Fixed Codecov plugin issues
 - [X] Git auto CRLF set to false `git config --global core.autocrlf false`
 - [X] [Signed commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits): `git config commit.gpgsign true`
-- [X] golang:1.21 as builder containerfile image
+- [X] golang:1.22 as builder containerfile image
 - [X] Refresh container image every Sunday night
 - [X] The k8s service resource is now settable from the values.yaml
-- [X] Added Security policy
+- [X] Added repository Security policy
 - [X] Added OpenSSF scorecard workflow
 - Bump actions/checkout to 4.1.1
 - Bump [actions/upload-artifact](https://github.com/actions/upload-artifact/releases/tag/v4.3.1) to 4.3.1
 - Bump [github/codeql-action/upload-sarif](https://github.com/github/codeql-action/blob/v3/upload-sarif/action.yml) to v3
-
+- Introduced Fuzz testing for profile filenames
+  
 ---
 
 ## [0.1.5 - 2023-05-16](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.5)
