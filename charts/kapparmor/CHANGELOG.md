@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.1.6 - ](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.6)
+## [0.2.0 - ](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.6)
 
 - [X] Fixed Codecov plugin issues
 - [X] Git auto CRLF set to false `git config --global core.autocrlf false`
@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump [actions/upload-artifact](https://github.com/actions/upload-artifact/releases/tag/v4.3.1) to 4.3.1
 - Bump [github/codeql-action/upload-sarif](https://github.com/github/codeql-action/blob/v3/upload-sarif/action.yml) to v3
 - Introduced Fuzz testing for profile filenames
+- Bash CI to automate go version bump from one source of truth (`config/config`)
   
 ---
 
