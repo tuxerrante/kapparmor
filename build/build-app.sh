@@ -20,8 +20,9 @@ echo "> Removing old and dangling old images..."
 docker rmi "$(docker images --filter "reference=ghcr.io/tuxerrante/kapparmor" -q --no-trunc )"
 
 # go build -o ./.go/bin ./...
-# go test -v -coverprofile=coverage.out -covermode=atomic ./go/src/app/...
 go test -v -fuzz=Fuzz -fuzztime=60s
+go test -v -coverprofile=coverage.out -covermode=atomic ./go/src/app/...
+
 
 if [[ ! -f ".go/bin/golangci-lint" ]]; then
     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./.go/bin
@@ -43,5 +44,7 @@ docker build --tag "ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev" \
     --build-arg PROFILES_DIR=/app/profiles   \
     -f Dockerfile \
     .
+
+docker scout quickview "ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev"
 
 # docker run --rm -it --privileged --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security' --mount type=bind,source='/etc',target='/etc' --name kapparmor  ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev
