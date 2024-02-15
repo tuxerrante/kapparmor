@@ -16,12 +16,12 @@ import (
 	"unicode"
 )
 
-func preFlightChecks() int {
+func preFlightChecks() (int, error) {
 
 	// Environment variable type check
 	POLL_TIME, err := strconv.Atoi(POLL_TIME_ARG)
 	if err != nil {
-		log.Fatalf(">> It was not possible to convert env var POLL_TIME %v to an integer.\n%v", POLL_TIME, err)
+		return 0, fmt.Errorf(">> It was not possible to convert env var POLL_TIME %v to an integer.\n%v", POLL_TIME, err)
 	}
 	if POLL_TIME < 1 {
 		log.Printf("warning, POLL_TIME %v too low! Defaulting to 1 second.", POLL_TIME)
@@ -30,19 +30,19 @@ func preFlightChecks() int {
 
 	// Check profiler binary
 	if _, err := os.Stat(PROFILER_FULL_PATH); os.IsNotExist(err) {
-		log.Fatal(err)
+		return 0, err
 	}
 
 	// Check if custom directory exists, creates it otherwise
 	if _, err := os.Stat(ETC_APPARMORD); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(ETC_APPARMORD, os.ModePerm)
 		if err != nil {
-			log.Fatal(err)
+			return 0, err
 		}
 		log.Printf("> Directory %s created.", ETC_APPARMORD)
 	}
 
-	return POLL_TIME
+	return POLL_TIME, nil
 }
 
 // Compare the byte content of two given files

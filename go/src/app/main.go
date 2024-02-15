@@ -33,7 +33,10 @@ var (
 
 func main() {
 
-	POLL_TIME = preFlightChecks()
+	POLL_TIME, err := preFlightChecks()
+	if err != nil {
+		log.Fatalf("the app can't start, check POLL_TIME (%v), ETC_APPARMORD (%v) and Apparmor profiler binary folder (%v)", ETC_APPARMORD, POLL_TIME_ARG, PROFILER_FULL_PATH)
+	}
 
 	keepItRunning := make(chan struct{})
 	ctx, cancel := context.WithCancel(context.Background())
