@@ -23,9 +23,13 @@ func preFlightChecks() int {
 	if err != nil {
 		log.Fatalf(">> It was not possible to convert env var POLL_TIME %v to an integer.\n%v", POLL_TIME, err)
 	}
+	if POLL_TIME < 1 {
+		log.Printf("warning, POLL_TIME %v too low! Defaulting to 1 second.", POLL_TIME)
+		POLL_TIME = 1
+	}
 
 	// Check profiler binary
-	if _, err := os.Stat(PROFILER_BIN); os.IsNotExist(err) {
+	if _, err := os.Stat(PROFILER_FULL_PATH); os.IsNotExist(err) {
 		log.Fatal(err)
 	}
 

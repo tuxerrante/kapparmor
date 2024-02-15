@@ -16,17 +16,19 @@ import (
 	"time"
 )
 
-var (
-	CONFIGMAP_PATH string = os.Getenv("PROFILES_DIR")
-	POLL_TIME_ARG  string = os.Getenv("POLL_TIME")
-	POLL_TIME      int
-)
-
 const (
 	KERNEL_PATH         = "/sys/kernel/security/apparmor/profiles"
-	PROFILER_BIN        = "/sbin/apparmor_parser"
+	PROFILER_BIN        = "apparmor_parser"
 	PROFILE_NAME_PREFIX = "custom."
-	ETC_APPARMORD       = "/etc/apparmor.d/custom"
+)
+
+var (
+	CONFIGMAP_PATH      string = os.Getenv("PROFILES_DIR")
+	ETC_APPARMORD       string = "/etc/apparmor.d/custom"
+	POLL_TIME           int
+	POLL_TIME_ARG       string = os.Getenv("POLL_TIME")
+	PROFILER_BIN_FOLDER string = "sbin"
+	PROFILER_FULL_PATH  string = path.Join(PROFILER_BIN_FOLDER, PROFILER_BIN)
 )
 
 func main() {

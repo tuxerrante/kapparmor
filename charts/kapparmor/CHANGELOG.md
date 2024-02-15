@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump [github/codeql-action/upload-sarif](https://github.com/github/codeql-action/blob/v3/upload-sarif/action.yml) to v3
 - Introduced Fuzz testing for profile filenames
 - Bash CI to automate go version bump from one source of truth (`config/config`)
-  
+- If POLL_TIME is set less than 1 it will default to 1 second
 ---
 
 ## [0.1.5 - 2023-05-16](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.5)
