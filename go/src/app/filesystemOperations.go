@@ -246,18 +246,14 @@ func isValidPath(path string) (bool, error) {
 }
 
 /*
-*
-
-	Accepts filenames that are
-	- not empty
-	- not more than 255 chars long
-	- not made of symbols excluding those one in 'validSymbols'
-		e.g.: '@', '#', '§', '!', ' '
-	- not made up of consecutive symbols
-		e.g.: '..', '-_-'
-		'..' paths are managed by filepath.Clean()
-
-*
+Accepts filenames that are:
+  - not empty
+  - not more than 255 chars long
+  - not made of symbols excluding those one in 'validSymbols'
+    e.g.: '@', '#', '§', '!', ' '
+  - not made up of consecutive symbols
+    e.g.: '..', '-_-'
+    '..' paths are managed by filepath.Clean()
 */
 func isValidFilename(filename string) (bool, error) {
 
