@@ -42,12 +42,11 @@ helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag
 
 ```
 
-## Known limitations
-- Constraint: Profiles are validated on the `profile` keyword presence before of a opening curly bracket `{`.  
+## Constraint and limitations
 - Constraint: Profiles are validated on the `profile` keyword presence before of a opening curly bracket `{`.  
   It must be a [unattached profiles](https://documentation.suse.com/sles/15-SP1/html/SLES-all/cha-apparmor-profiles.html#sec-apparmor-profiles-types-unattached).
 - Profile names have to start with `custom.` and to be equal to their filename.
-- Profile names have to start with `custom.` and to be equal to their filename.
+- Polling time should be a value between 1 and 86400 seconds (24 hours).
 - There could be issues if you start the daemonsets on "dirty" nodes, where some old custom profiles were left after stopping or uninstalling Kapparmor.  
   E.G: By default if you delete a pod all the profiles should be automatically deleted from that node, but the app crashes during the process. 
 
