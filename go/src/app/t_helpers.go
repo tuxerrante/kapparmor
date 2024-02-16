@@ -28,14 +28,14 @@ func assertError(t *testing.T, got, want error) {
 	}
 }
 
-func assertPanic(t *testing.T, f func()) {
-	defer func() {
-		if recover() == nil {
-			t.Errorf("The code did not panic")
-		}
-	}()
-	f()
-}
+// func assertPanic(t *testing.T, f func()) {
+// 	defer func() {
+// 		if recover() == nil {
+// 			t.Errorf("The code did not panic")
+// 		}
+// 	}()
+// 	f()
+// }
 
 func assertDontPanic(t *testing.T, f func()) {
 	defer func() {
