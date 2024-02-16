@@ -27,6 +27,9 @@ func preFlightChecks() (int, error) {
 		log.Printf("warning, POLL_TIME %v too low! Defaulting to 1 second.", POLL_TIME)
 		POLL_TIME = 1
 	}
+	if POLL_TIME > MAX_ALLOWED_POLLING_TIME {
+		return 0, fmt.Errorf(">> Too high value for POLL_TIME (%v). Please set a number between 0 and %d", POLL_TIME, MAX_ALLOWED_POLLING_TIME)
+	}
 
 	// Check profiler binary
 	if _, err := os.Stat(PROFILER_FULL_PATH); os.IsNotExist(err) {
@@ -190,7 +193,7 @@ func IsProfileNameCorrect(directory, filename string) error {
 	// Validate the syntax
 	// the first index of a curly bracket should be greater than the first occurrence of "profile"
 	fileBytes, err := os.ReadFile(path.Join(directory, filename))
-	checkFatal(err)
+	checkPanic(err)
 
 	profileIndex := bytes.Index(fileBytes, []byte("profile"))
 	curlyBracketIndex := bytes.Index(fileBytes, []byte("{"))
