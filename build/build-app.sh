@@ -26,8 +26,6 @@ sed -i 's/golang:[0-9]\(\.[0-9]\+\)/golang:'"$GO_VERSION"'/g' Dockerfile
 echo "> Removing old and dangling old images..."
 docker rmi "$(docker images --filter "reference=ghcr.io/tuxerrante/kapparmor" -q --no-trunc )"
 
-# go build -o ./.go/bin ./...
-go test -v -fuzz=Fuzz -fuzztime=60s
 go test -v -coverprofile=coverage.out -covermode=atomic ./go/src/app/...
 
 

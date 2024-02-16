@@ -62,7 +62,7 @@ func preFlightChecksInit(t *testing.T) *os.File {
 	}
 	CONFIGMAP_PATH = ETC_APPARMORD
 	KERNEL_PATH = ETC_APPARMORD
-	POLL_TIME_ARG = "1"
+	POLL_TIME_ARG = "3"
 
 	return f
 }
