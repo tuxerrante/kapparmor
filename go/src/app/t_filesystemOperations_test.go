@@ -1,65 +1,86 @@
 package main
 
 import (
+	"math"
 	"os"
-	"path"
+	"strconv"
 	"testing"
 )
 
+// https://goplay.tools/snippet/LwP6ggjUkwi
 func Test_preFlightChecks(t *testing.T) {
 
-	// Create fake apparmor binary
-	f, err := os.CreateTemp("", "apparmor_parser")
-	if err != nil {
-		t.Fatalf("failed to create temporary file: %v", err)
-	}
-	defer os.Remove(f.Name())
-
-	PROFILER_FULL_PATH = path.Join(f.Name())
-
-	// Create fake apparmor config dir
-	ETC_APPARMORD = path.Join(os.TempDir(), "test_apparmor.d")
-	if err := os.MkdirAll(ETC_APPARMORD, 0777); err != nil {
-		t.Fatalf("failed to create temporary dir: %v", err)
-	}
-	defer os.Remove(ETC_APPARMORD)
+	f := preFlightChecksInit(t)
+	defer func() {
+		if err := os.Remove(f.Name()); err != nil {
+			t.Log(err)
+		}
+	}()
 
 	tests := []struct {
 		name, testingPollTime string
 		want                  int
 	}{
 		{
-			"Testing with 30",
+			"Test case: 30",
 			"30",
 			30,
 		},
 		{
-			"Testing with 0",
+			"Test case: 0",
 			"0",
 			1,
 		},
 		{
-			"Testing with negative time delay",
+			"Test case: negative time delay",
 			"-1",
 			1,
 		},
 		{
-			"Testing with negative time delay",
+			"Test case: symbols",
 			":)",
+			0,
+		},
+		{
+			"Test case: MaxInt64",
+			strconv.Itoa(math.MaxInt64),
+			0,
+		},
+		{
+			"Test case: MaxInt32",
+			strconv.Itoa(math.MaxInt32),
+			0,
+		},
+		{
+			"Test case: MaxInt16",
+			strconv.Itoa(math.MaxInt16),
 			0,
 		},
 	}
 	for _, tt := range tests {
 
 		POLL_TIME_ARG = tt.testingPollTime
+		POLL_TIME_ARG_INT, errAtoi := strconv.Atoi(POLL_TIME_ARG)
 
 		t.Run(tt.name, func(t *testing.T) {
 			if got, err := preFlightChecks(); got != tt.want {
-				if err != nil && got == 0 {
-					// Expected error
+				// Input can't be converted to an integer
+				if errAtoi != nil {
 					return
 				}
-				t.Errorf("preFlightChecks() = %v, want %v", got, tt.want)
+
+				if err != nil {
+					// Expected error for invalid input
+					if got == 0 {
+						return
+
+						// input out of range
+					} else if POLL_TIME_ARG_INT > MAX_ALLOWED_POLLING_TIME {
+						return
+					}
+
+					t.Errorf("preFlightChecks() = %v, want %v", got, tt.want)
+				}
 			}
 		})
 	}

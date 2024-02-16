@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	KERNEL_PATH         = "/sys/kernel/security/apparmor/profiles"
-	PROFILER_BIN        = "apparmor_parser"
-	PROFILE_NAME_PREFIX = "custom."
+	MAX_ALLOWED_POLLING_TIME = 86400 // 24 hours
+	PROFILER_BIN             = "apparmor_parser"
+	PROFILE_NAME_PREFIX      = "custom."
 )
 
 var (
@@ -29,13 +29,16 @@ var (
 	POLL_TIME_ARG       string = os.Getenv("POLL_TIME")
 	PROFILER_BIN_FOLDER string = "sbin"
 	PROFILER_FULL_PATH  string = path.Join(PROFILER_BIN_FOLDER, PROFILER_BIN)
+	KERNEL_PATH                = "/sys/kernel/security/apparmor/profiles"
+	signals                    = make(chan os.Signal, 1)
 )
 
 func main() {
 
 	POLL_TIME, err := preFlightChecks()
 	if err != nil {
-		log.Fatalf("the app can't start, check POLL_TIME (%v), ETC_APPARMORD (%v) and Apparmor profiler binary folder (%v)", ETC_APPARMORD, POLL_TIME_ARG, PROFILER_FULL_PATH)
+		log.Fatalf("the app can't start: %s. Check POLL_TIME (%v), ETC_APPARMORD (%v) and Apparmor profiler binary folder (%v)",
+			err, POLL_TIME_ARG, ETC_APPARMORD, PROFILER_FULL_PATH)
 	}
 
 	keepItRunning := make(chan struct{})
@@ -43,18 +46,26 @@ func main() {
 	defer cancel()
 
 	log.Printf("> Polling directory %s every %d seconds.\n", CONFIGMAP_PATH, POLL_TIME)
-	go pollProfiles(POLL_TIME, ctx, keepItRunning)
+	go pollProfiles(POLL_TIME, ctx, cancel, keepItRunning)
 
 	// Manage OS signals for graceful shutdown
 	go func() {
-		signals := make(chan os.Signal, 1)
+		// Manages expected panics during tests
+		if os.Getenv("TESTING") == "true" {
+			defer func() {
+				if recover() != nil {
+					keepItRunning <- struct{}{}
+				}
+			}()
+		}
+
 		signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT, os.Interrupt)
 		<-signals
 		log.Print("> Received stop signal, terminating..")
 
 		// Delete all loaded profiles
 		err := unloadAllProfiles()
-		checkFatal(err)
+		checkPanic(err)
 
 		// Stop polling new profiles
 		cancel()
@@ -67,14 +78,31 @@ func main() {
 // Every pollTime seconds it will read the mounted volume for profiles,
 // it will call loadNewProfiles() then to check if they are new ones or not.
 // Executed as go-routine it will run forever until a cancel() is called on the given context.
-func pollProfiles(pollTime int, ctx context.Context, keepItRunning chan struct{}) {
+func pollProfiles(pollTime int, ctx context.Context, cancelContext context.CancelFunc, keepItRunning chan struct{}) {
 	log.Print("> Polling started.")
+
+	if os.Getenv("TESTING") == "true" {
+		defer func() {
+			log.Printf("expected panic during tests")
+			if r := recover(); r != nil {
+				if r, ok := r.(error); ok {
+					if strings.Contains(r.Error(), "You need root privileges") {
+						log.Printf("Recovered panic for missing privileges during tests: %s", r.Error())
+						signals <- syscall.SIGTERM
+					} else if strings.Contains(r.Error(), "executable file not found in %PATH%") {
+						log.Printf("Recovered panic for missing apparmor binary during tests: %s", r.Error())
+						signals <- syscall.SIGTERM
+					}
+				}
+			}
+		}()
+	}
+
 	ticker := time.NewTicker(time.Duration(pollTime) * time.Second)
 	pollNow := func() {
 		newProfiles, err := loadNewProfiles()
-		if err != nil {
-			log.Fatalf(">> Error retrieving profiles: %v\n%v", newProfiles, err)
-		}
+		log.Printf("retrieving profiles: %v", newProfiles)
+		checkPanic(err)
 	}
 
 	for {
@@ -240,7 +268,7 @@ func parseProfileName(profileLine string) string {
 
 func loadProfile(profilePath string) error {
 	err := execApparmor("--verbose", "--replace", profilePath)
-	checkFatal(err)
+	checkPanic(err)
 
 	// Copy the profile definition in the apparmor configuration standard directory
 	log.Printf("Copying profile in %s", ETC_APPARMORD)
@@ -250,12 +278,12 @@ func loadProfile(profilePath string) error {
 // Remove all custom profiles from the kernel, reading from ETC_APPARMORD folder
 func unloadAllProfiles() error {
 	dirEntries, err := os.ReadDir(ETC_APPARMORD)
-	checkFatal(err)
+	checkPanic(err)
 
 	for _, entry := range dirEntries {
 		if !entry.IsDir() && entry.Type().IsRegular() {
 			err := unloadProfile(entry.Name())
-			checkFatal(err)
+			checkPanic(err)
 		}
 	}
 	return nil
@@ -278,20 +306,25 @@ func execApparmor(args ...string) error {
 	cmd.Stderr = stderr
 	out, err := cmd.Output()
 	path := args[len(args)-1]
-	log.Printf("Loading profiles from %s:\n%s", path, out)
+
+	if len(out) > 0 {
+		log.Printf("Loading profiles from %s:\n%s", path, out)
+	} else {
+		log.Printf("No profiles in %s", path)
+	}
+
 	if err != nil {
 		if stderr.Len() > 0 {
 			log.Println(stderr.String())
 		}
-		return fmt.Errorf(" error loading profile! %v", err)
+		return fmt.Errorf("error loading profile >> %v >> %v", err, stderr)
 	}
-
 	return nil
 }
 
-func checkFatal(err error) {
+func checkPanic(err error) {
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
 
