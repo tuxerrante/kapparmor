@@ -6,7 +6,7 @@
 
 
 # Kapparmor
-<img src="img/kapparmor_logo.jpeg" alt="kapparmor logo" width="250" loading="lazy" align="right"/>
+<img src="img/kapparmor_logo.jpeg" alt="kapparmor logo" width="300" loading="lazy" align="right"/>
 
 - [Kapparmor](#kapparmor)
   - [Install](#install)
