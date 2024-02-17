@@ -14,6 +14,7 @@
   - [Testing](#testing)
   - [Release process](#release-process)
 - [External useful links](#external-useful-links)
+- [Credits](#credits)
 
 <hr width="100%">
 Apparmor-loader project to deploy profiles through a kubernetes daemonset.  
@@ -80,3 +81,6 @@ Or you can find more info in [docs/testing.md](docs/testing.md)
 - [Kubernetes.io tutorials on apparmor](https://kubernetes.io/docs/tutorials/security/apparmor/)
 - [Security Profiles Operator](https://github.com/kubernetes-sigs/security-profiles-operator/)
 - [Kubernetes apparmor-loader](https://github.com/kubernetes/kubernetes/blob/master/test/images/apparmor-loader/loader.go)
+
+# Credits
+- Thanks @Noblesix960 for helping improving the logo!
