@@ -89,7 +89,7 @@ func pollProfiles(pollTime int, ctx context.Context, cancelContext context.Cance
 					if strings.Contains(r.Error(), "You need root privileges") {
 						log.Printf("Recovered panic for missing privileges during tests: %s", r.Error())
 						signals <- syscall.SIGTERM
-					} else if strings.Contains(r.Error(), "executable file not found in %PATH%") {
+					} else if strings.Contains(r.Error(), "executable file not found") {
 						log.Printf("Recovered panic for missing apparmor binary during tests: %s", r.Error())
 						signals <- syscall.SIGTERM
 					}
