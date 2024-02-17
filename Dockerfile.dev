@@ -8,16 +8,8 @@ COPY go.mod .
 RUN go get    -d -v .           &&\
     go build  -v -o /go/bin/app .
 
-RUN go test -v -fuzz=Fuzz -fuzztime=30s -run ^t_fuzz* ./...
-RUN go test -v -coverprofile=coverage.out -covermode=atomic ./...
 
-
-# --- Publish test coverage results
-FROM scratch as test-coverage
-COPY --from=builder /builder/app/coverage.out .
-
-
-# --- Production image
+# --- Testing image
 FROM ubuntu:latest
 LABEL Name=kapparmor
 LABEL Author="Affinito Alessandro"

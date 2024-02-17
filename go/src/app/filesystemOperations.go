@@ -154,7 +154,7 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 		}
 
 		if err := IsProfileNameCorrect(FOLDER_NAME, filename); err != nil {
-			log.Fatalf("Profile name and filename '%s'are not the same!", filename)
+			log.Fatalf("Profile name and filename '%s'are not the same: %s", filename, err)
 		}
 
 		log.Printf("- %s\n", filename)
@@ -166,7 +166,6 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 
 // isProfileNameCorrect returns true if the filename is the same as the profile name
 func IsProfileNameCorrect(directory, filename string) error {
-
 	var isProfileWordPresent bool = false
 	var fileProfileName string
 
@@ -245,9 +244,6 @@ func isValidPath(path string) (bool, error) {
 		if len(substring) == 1 && substring[0] == '.' {
 			return true, nil
 		}
-		if ok, err := isValidFilename(substring); !ok {
-			return false, err
-		}
 	}
 	return true, nil
 }
@@ -263,7 +259,6 @@ Accepts filenames that are:
     '..' paths are managed by filepath.Clean()
 */
 func isValidFilename(filename string) (bool, error) {
-
 	if len(filename) == 0 {
 		return false, fmt.Errorf("empty filename")
 	}

@@ -27,7 +27,7 @@ var (
 	ETC_APPARMORD       string = "/etc/apparmor.d/custom"
 	POLL_TIME           int
 	POLL_TIME_ARG       string = os.Getenv("POLL_TIME")
-	PROFILER_BIN_FOLDER string = "sbin"
+	PROFILER_BIN_FOLDER string = "/sbin"
 	PROFILER_FULL_PATH  string = path.Join(PROFILER_BIN_FOLDER, PROFILER_BIN)
 	KERNEL_PATH                = "/sys/kernel/security/apparmor/profiles"
 	signals                    = make(chan os.Signal, 1)
