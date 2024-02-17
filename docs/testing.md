@@ -37,12 +37,16 @@ helm upgrade kapparmor --install --dry-run \
 Test the app inside a container:
 ```sh
 # --- Build and run the container image
-docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . &&\
+docker build --quiet -t test \
+  --build-arg POLL_TIME=5 \
+  --build-arg PROFILES_DIR=/app/profiles \
+  -f Dockerfile.dev . &&\
   echo &&\
   docker run --rm -it --privileged \
   --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security'  \
-  --mount type=bind,source='/etc',target='/etc'\
-  --name kapparmor  test-kapparmor
+  --mount type=bind,source='/etc',target='/etc' \
+  --mount type=bind,source='/sbin',target='/sbin' \
+  --name kapparmor test
 
 ```
 
