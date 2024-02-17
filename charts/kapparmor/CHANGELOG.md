@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implement [open telemetry](https://opentelemetry.io/docs/instrumentation/go/)
 - Refactor directories similarly to [kubernetes-sigs](https://github.com/kubernetes-sigs) structure (eg: go/kapaprmor/app/*.go) or to this [golang standard project layout](https://github.com/golang-standards/project-layout)
 - Refactor code following [Google Go style guide](https://google.github.io/styleguide/go/guide)
-
+- Move global vars to structs passed by reference
 ---
 
 ## [0.2.0 - ](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.6)
