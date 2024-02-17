@@ -83,9 +83,9 @@ func pollProfiles(pollTime int, ctx context.Context, cancelContext context.Cance
 
 	if os.Getenv("TESTING") == "true" {
 		defer func() {
-			log.Printf("expected panic during tests")
 			if r := recover(); r != nil {
 				if r, ok := r.(error); ok {
+					log.Printf("panic during test: %s", r.Error())
 					if strings.Contains(r.Error(), "You need root privileges") {
 						log.Printf("Recovered panic for missing privileges during tests: %s", r.Error())
 						signals <- syscall.SIGTERM
