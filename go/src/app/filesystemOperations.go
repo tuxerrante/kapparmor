@@ -13,31 +13,39 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
-func preFlightChecks() int {
+func preFlightChecks() (int, error) {
 
 	// Environment variable type check
 	POLL_TIME, err := strconv.Atoi(POLL_TIME_ARG)
 	if err != nil {
-		log.Fatalf(">> It was not possible to convert env var POLL_TIME %v to an integer.\n%v", POLL_TIME, err)
+		return 0, fmt.Errorf(">> It was not possible to convert env var POLL_TIME %v to an integer.\n%v", POLL_TIME, err)
+	}
+	if POLL_TIME < 1 {
+		log.Printf("warning, POLL_TIME %v too low! Defaulting to 1 second.", POLL_TIME)
+		POLL_TIME = 1
+	}
+	if POLL_TIME > MAX_ALLOWED_POLLING_TIME {
+		return 0, fmt.Errorf(">> Too high value for POLL_TIME (%v). Please set a number between 0 and %d", POLL_TIME, MAX_ALLOWED_POLLING_TIME)
 	}
 
 	// Check profiler binary
-	if _, err := os.Stat(PROFILER_BIN); os.IsNotExist(err) {
-		log.Fatal(err)
+	if _, err := os.Stat(PROFILER_FULL_PATH); os.IsNotExist(err) {
+		return 0, err
 	}
 
 	// Check if custom directory exists, creates it otherwise
 	if _, err := os.Stat(ETC_APPARMORD); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(ETC_APPARMORD, os.ModePerm)
 		if err != nil {
-			log.Fatal(err)
+			return 0, err
 		}
 		log.Printf("> Directory %s created.", ETC_APPARMORD)
 	}
 
-	return POLL_TIME
+	return POLL_TIME, nil
 }
 
 // Compare the byte content of two given files
@@ -162,6 +170,20 @@ func IsProfileNameCorrect(directory, filename string) error {
 	var isProfileWordPresent bool = false
 	var fileProfileName string
 
+	// input validation
+	if ok, err := isValidPath(directory); !ok {
+		return err
+	}
+	if ok, err := isValidFilename(filename); !ok {
+		return err
+	}
+
+	// Check if the file doesn't exist
+	if _, err := os.Stat(path.Join(directory, filename)); errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+
+	// Open the file to get a scanner to search for text later
 	fileReader, err := os.Open(path.Join(directory, filename))
 	if err != nil {
 		return err
@@ -171,7 +193,8 @@ func IsProfileNameCorrect(directory, filename string) error {
 	// Validate the syntax
 	// the first index of a curly bracket should be greater than the first occurrence of "profile"
 	fileBytes, err := os.ReadFile(path.Join(directory, filename))
-	checkFatal(err)
+	checkPanic(err)
+
 	profileIndex := bytes.Index(fileBytes, []byte("profile"))
 	curlyBracketIndex := bytes.Index(fileBytes, []byte("{"))
 	if curlyBracketIndex < 0 || curlyBracketIndex < profileIndex {
@@ -207,6 +230,86 @@ func IsProfileNameCorrect(directory, filename string) error {
 	}
 
 	return nil
+}
+
+func isValidPath(path string) (bool, error) {
+	if len(path) == 0 {
+		return false, fmt.Errorf("empty directory name")
+	}
+
+	cleanPath := filepath.Clean(path)
+	substrings := strings.Split(cleanPath, string(os.PathSeparator))
+
+	for _, substring := range substrings {
+		// '.' is a valid path name but not a valid filename
+		if len(substring) == 1 && substring[0] == '.' {
+			return true, nil
+		}
+		if ok, err := isValidFilename(substring); !ok {
+			return false, err
+		}
+	}
+	return true, nil
+}
+
+/*
+Accepts filenames that are:
+  - not empty
+  - not more than 255 chars long
+  - not made of symbols excluding those one in 'validSymbols'
+    e.g.: '@', '#', '§', '!', ' '
+  - not made up of consecutive symbols
+    e.g.: '..', '-_-'
+    '..' paths are managed by filepath.Clean()
+*/
+func isValidFilename(filename string) (bool, error) {
+
+	if len(filename) == 0 {
+		return false, fmt.Errorf("empty filename")
+	}
+
+	if len(filename) == 1 && filename[0] == '.' {
+		return false, fmt.Errorf("%q is not a valid filename", filename)
+	}
+
+	if len(filename) > 255 {
+		return false, fmt.Errorf("file name too long")
+	}
+
+	if strings.Contains(filename, "/") || strings.Contains(filename, "\\") {
+		return false, fmt.Errorf("invalid filename format")
+	}
+
+	isAlphaNumeric := func(char rune) bool {
+		return unicode.IsDigit(char) || unicode.IsLetter(char)
+	}
+
+	// Restrict the filename to contain only commonly used chars
+	validSymbols := []rune{'_', '-', '.'}
+	var previousCharIsASymbol bool
+
+	for i, char := range filename {
+		if i > 0 && isCharInSlice(char, validSymbols) && previousCharIsASymbol {
+			return false, fmt.Errorf("rejected suspect filename")
+		}
+		if !isAlphaNumeric(char) && !isCharInSlice(char, validSymbols) {
+			return false, fmt.Errorf("invalid characters in filename")
+		} else if isCharInSlice(char, validSymbols) {
+			previousCharIsASymbol = true
+		} else {
+			previousCharIsASymbol = false
+		}
+	}
+	return true, nil
+}
+
+func isCharInSlice(char rune, slice []rune) bool {
+	for _, c := range slice {
+		if char == c {
+			return true
+		}
+	}
+	return false
 }
 
 // CopyFile copies a file from src to dst. If src and dst files exist, and are

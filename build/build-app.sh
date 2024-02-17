@@ -15,12 +15,20 @@ elif [[ $CHART_VERSION != $YML_CHART_VERSION ]]; then
     exit 1
 fi
 
+# Set same Go version in all relevant files
+echo "Set go version variables in .github/workflows to $GO_VERSION"
+find .github/workflows -type f -exec sed -i 's/go-version: .*/go-version: '"$GO_VERSION"'/g' {} +
+find .github/workflows -type f -exec sed -i 's/GO_VERSION: .*/GO_VERSION: '"$GO_VERSION"'/g' {} +
+sed -i 's/^go [0-9]\(\.[0-9]\+\)/go '"$GO_VERSION"'/g' go.mod
+sed -i 's/golang:[0-9]\(\.[0-9]\+\)/golang:'"$GO_VERSION"'/g' Dockerfile
+
 # Clean old images
 echo "> Removing old and dangling old images..."
 docker rmi "$(docker images --filter "reference=ghcr.io/tuxerrante/kapparmor" -q --no-trunc )"
 
-# go build -o ./.go/bin ./...
-# go test -v -coverprofile=coverage.out -covermode=atomic ./go/src/app/...
+go test -v -coverprofile=coverage.out -covermode=atomic ./go/src/app/...
+
+
 if [[ ! -f ".go/bin/golangci-lint" ]]; then
     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./.go/bin
 fi
@@ -41,5 +49,7 @@ docker build --tag "ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev" \
     --build-arg PROFILES_DIR=/app/profiles   \
     -f Dockerfile \
     .
+
+docker scout quickview "ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev"
 
 # docker run --rm -it --privileged --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security' --mount type=bind,source='/etc',target='/etc' --name kapparmor  ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev

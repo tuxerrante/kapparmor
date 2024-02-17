@@ -1,14 +1,14 @@
 # --- build stage
-FROM golang:1.21 AS builder
+FROM golang:1.22 AS builder
 
 WORKDIR /builder/app
 COPY go/src/app/ .
-COPY go/src/tests/ /builder/tests/
 COPY go.mod .
 
 RUN go get    -d -v .           &&\
     go build  -v -o /go/bin/app .
 
+RUN go test -v -fuzz=Fuzz -fuzztime=30s -run ^t_fuzz* ./...
 RUN go test -v -coverprofile=coverage.out -covermode=atomic ./...
 #    go tool cover -func=coverage.out
 

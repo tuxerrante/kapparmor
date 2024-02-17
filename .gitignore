@@ -26,6 +26,8 @@
 
 # Go tests
 coverage.out
+testdata/
+/go/pkg/
 
 # Secret env vars
 config/secrets
