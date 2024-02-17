@@ -6,7 +6,7 @@
 
 
 # Kapparmor
-<img src="img/kapparmor_logo.jpeg" alt="kapparmor logo" width="300" loading="lazy" align="right"/>
+<img src="img/kapparmor_logo_no_bg.png" alt="kapparmor logo" width="300" loading="lazy" align="right"/>
 
 - [Kapparmor](#kapparmor)
   - [Install](#install)
@@ -83,4 +83,4 @@ Or you can find more info in [docs/testing.md](docs/testing.md)
 - [Kubernetes apparmor-loader](https://github.com/kubernetes/kubernetes/blob/master/test/images/apparmor-loader/loader.go)
 
 # Credits
-- Thanks @Noblesix960 for helping improving the logo!
+- Thanks [@Noblesix960](https://github.com/Noblesix960) for helping improving the logo!
