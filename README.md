@@ -60,16 +60,14 @@ Or you can find more info in [docs/testing.md](docs/testing.md)
 
 
 ## Release process
-Commits and tags [should be signed](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work).  
-Commits and tags [should be signed](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work).  
-Update `config/config` file with the right app and chart version.  
-Do the same in the chart manifest `charts/kapparmor/Chart.yaml`.  
-Test it on a local cluster with `./build` scripts and following [docs/testing.md](docs/testing.md) instructions (go test, go lint, helm lint, helm template, helm install dry run...).  
-Test it on a local cluster with `./build` scripts and following [docs/testing.md](docs/testing.md) instructions (go test, go lint, helm lint, helm template, helm install dry run...).  
-Update the chart Changelog with the most relevant commits of this release, this will automatically fill the release page.  
-Open the PR.  
-Merge.  
-Tag.  
+1. Commits and tags [should be signed](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work).  
+1. Update `config/config` file with the right app and chart version.  
+1. Do the same in the chart manifest `charts/kapparmor/Chart.yaml`.  
+1. Test it on a local cluster with `./build` scripts and following [docs/testing.md](docs/testing.md) instructions (go test, go lint, helm lint, helm template, helm install dry run...).  
+1. Update the chart Changelog with the most relevant commits of this release, this will automatically fill the release page.  
+1. Open the PR.  
+1. Merge.  
+1. Tag.  
 
 
 
