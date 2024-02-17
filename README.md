@@ -3,19 +3,24 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/tuxerrante/kapparmor)](https://goreportcard.com/report/github.com/tuxerrante/kapparmor)
 [![codecov](https://codecov.io/gh/tuxerrante/kapparmor/branch/main/graph/badge.svg?token=KVCU7EUBJE)](https://codecov.io/gh/tuxerrante/kapparmor) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8391/badge)](https://www.bestpractices.dev/projects/8391)
 
+
+
 # Kapparmor
+<img src="img/kapparmor_logo_no_bg.png" alt="kapparmor logo" width="300" loading="lazy" align="right"/>
+
 - [Kapparmor](#kapparmor)
   - [Install](#install)
-  - [Known limitations](#known-limitations)
+  - [Constraints](#constraints)
   - [Testing](#testing)
   - [Release process](#release-process)
 - [External useful links](#external-useful-links)
-- -----
+- [Credits](#credits)
+
+<hr width="100%">
 Apparmor-loader project to deploy profiles through a kubernetes daemonset.  
-
-
-![architecture](./docs/kapparmor-architecture.png)
-
+  
+<img src="./docs/kapparmor-architecture.png" width="100%">
+ 
 This app provide dynamic loading and unloading of [AppArmor profiles](https://ubuntu.com/server/docs/security-apparmor) to a Kubernetes cluster through a configmap.  
 The app doesn't need an operator and it will be managed by a DaemonSet filtering the linux nodes to schedule the app pod.  
 The custom profiles deployed in the configmap will be copied in a directory (`/etc/apparmor.d/custom` by default) since apparmor_parser needs the profiles definitions also to remove them. Once you will deploy a configmap with different profiles, Kapparmor will notice the missing ones and it will remove them from the apparmor cache and from the node directory.  
@@ -42,8 +47,8 @@ helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag
 
 ```
 
-## Constraint and limitations
-- Constraint: Profiles are validated on the `profile` keyword presence before of a opening curly bracket `{`.  
+## Constraints
+- Profiles are validated on the `profile` keyword presence before of a opening curly bracket `{`.  
   It must be a [unattached profiles](https://documentation.suse.com/sles/15-SP1/html/SLES-all/cha-apparmor-profiles.html#sec-apparmor-profiles-types-unattached).
 - Profile names have to start with `custom.` and to be equal to their filename.
 - Polling time should be a value between 1 and 86400 seconds (24 hours).
@@ -61,13 +66,13 @@ Or you can find more info in [docs/testing.md](docs/testing.md)
 
 ## Release process
 1. Commits and tags [should be signed](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work).  
-1. Update `config/config` file with the right app and chart version.  
-1. Do the same in the chart manifest `charts/kapparmor/Chart.yaml`.  
-1. Test it on a local cluster with `./build` scripts and following [docs/testing.md](docs/testing.md) instructions (go test, go lint, helm lint, helm template, helm install dry run...).  
-1. Update the chart Changelog with the most relevant commits of this release, this will automatically fill the release page.  
-1. Open the PR.  
-1. Merge.  
-1. Tag.  
+2. Update `config/config` file with the right app, chart and go version.  
+3. Do the same in the chart manifest `charts/kapparmor/Chart.yaml`.  
+4. Test it on a local cluster with `./build` scripts and following [docs/testing.md](docs/testing.md) instructions (go test, go lint, helm lint, helm template, helm install dry run...).  
+5. Update the chart Changelog with the most relevant commits of this release, this will automatically fill the release page.  
+6. Open the PR.  
+7. Merge.  
+8. Tag.  
 
 
 
@@ -76,3 +81,6 @@ Or you can find more info in [docs/testing.md](docs/testing.md)
 - [Kubernetes.io tutorials on apparmor](https://kubernetes.io/docs/tutorials/security/apparmor/)
 - [Security Profiles Operator](https://github.com/kubernetes-sigs/security-profiles-operator/)
 - [Kubernetes apparmor-loader](https://github.com/kubernetes/kubernetes/blob/master/test/images/apparmor-loader/loader.go)
+
+# Credits
+- Thanks [@Noblesix960](https://github.com/Noblesix960) for helping improving the logo!
