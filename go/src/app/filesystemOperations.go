@@ -244,8 +244,8 @@ func isValidPath(path string) (bool, error) {
 		if len(substring) == 1 && substring[0] == '.' {
 			return true, nil
 		}
-		if len(substring) >= 255 {
-			return false, fmt.Errorf("directory name too long")
+		if ok, err := isValidFilename(substring); !ok {
+			return false, err
 		}
 	}
 	return true, nil
