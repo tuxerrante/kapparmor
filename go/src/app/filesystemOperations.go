@@ -244,6 +244,9 @@ func isValidPath(path string) (bool, error) {
 		if len(substring) == 1 && substring[0] == '.' {
 			return true, nil
 		}
+		if ok, err := isValidFilename(substring); !ok {
+			return false, err
+		}
 	}
 	return true, nil
 }
@@ -267,7 +270,7 @@ func isValidFilename(filename string) (bool, error) {
 		return false, fmt.Errorf("%q is not a valid filename", filename)
 	}
 
-	if len(filename) > 255 {
+	if len(filename) >= 255 {
 		return false, fmt.Errorf("file name too long")
 	}
 

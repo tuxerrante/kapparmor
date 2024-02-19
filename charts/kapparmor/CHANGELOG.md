@@ -21,22 +21,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Move global vars to structs passed by reference
 ---
 
-## [0.2.0 - ](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.6)
-
+## [0.2.0 - ](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.2.0)
+CI:
 - [X] Fixed Codecov plugin issues
-- [X] Git auto CRLF set to false `git config --global core.autocrlf false`
-- [X] [Signed commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits): `git config commit.gpgsign true`
-- [X] golang:1.22 as builder containerfile image
 - [X] Refresh container image every Sunday night
+- [X] Git auto CRLF set to false `git config --global core.autocrlf false`
+- [X] Bumped multiple actions
+- [X] Bash CI to automate go version bump from one source of truth (`config/config`)
+
+Code:
+- [X] golang:1.22 as builder containerfile image
 - [X] The k8s service resource is now settable from the values.yaml
-- [X] Added repository Security policy
+- [X] Introduced Fuzz testing for profile filenames
+- [X] If POLL_TIME is set less than 1 it will default to 1 second
+
+Project Security Fixes
+- [X] [Signed commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits): `git config commit.gpgsign true`
+- [X] Added repository [Security policy](https://github.com/tuxerrante/kapparmor/blob/main/SECURITY.md)
 - [X] Added OpenSSF scorecard workflow
-- Bump actions/checkout to 4.1.1
-- Bump [actions/upload-artifact](https://github.com/actions/upload-artifact/releases/tag/v4.3.1) to 4.3.1
-- Bump [github/codeql-action/upload-sarif](https://github.com/github/codeql-action/blob/v3/upload-sarif/action.yml) to v3
-- Introduced Fuzz testing for profile filenames
-- Bash CI to automate go version bump from one source of truth (`config/config`)
-- If POLL_TIME is set less than 1 it will default to 1 second
+- [X] Least Privileged GitHub Actions Token Permissions: setting minimum token permissions for the GITHUB_TOKEN
+- [X] Pinning actions to full length commit
+- [X] Intergated [Harden-Runner](https://github.com/step-security/harden-runner) in the CI: it prevents exfiltration of credentials, detects tampering of source code during build, and enables running jobs without sudo access.
+- [X] Pinned image tags to digests in Dockerfiles.
+- [X] Closed 44 (!) security issues coming from [Scorecard security scanner](https://github.com/marketplace/actions/ossf-scorecard-action). Also with the help of [stepsecurity.io](https://app.stepsecurity.io/)
+
 ---
 
 ## [0.1.5 - 2023-05-16](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.5)
