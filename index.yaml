@@ -2,6 +2,27 @@ apiVersion: v1
 entries:
   kapparmor:
   - apiVersion: v2
+    appVersion: 0.2.0
+    created: "2024-02-19T19:07:46.446576835Z"
+    description: A project to deploy profiles through a kubernetes daemonset and a
+      configmap
+    digest: 9ae03ab365d4ba64e8d40ff5ad5661ede5037e378d3bed5e84f591bf15bf7dc2
+    home: https://artifacthub.io
+    keywords:
+    - kubernetes
+    - helm
+    - security
+    - apparmor
+    kubeVersion: '>= 1.23.0-0'
+    maintainers:
+    - name: tuxerrante
+      url: https://github.com/sponsors/tuxerrante
+    name: kapparmor
+    type: application
+    urls:
+    - https://github.com/tuxerrante/kapparmor/releases/download/kapparmor-0.2.0/kapparmor-0.2.0.tgz
+    version: 0.2.0
+  - apiVersion: v2
     appVersion: 0.1.5
     created: "2023-05-15T15:21:11.722529347Z"
     description: A project to deploy profiles through a kubernetes daemonset and a
@@ -156,10 +177,10 @@ entries:
       artifacthub.io/containsSecurityUpdates: "false"
     apiVersion: v2
     appVersion: 0.0.1-alpha
-    created: "2023-01-18T19:12:07.606281092Z"
+    created: "2023-01-18T18:43:23.921717385Z"
     description: A project to deploy profiles through a kubernetes daemonset and a
       configmap
-    digest: e539c393c4047f2bb16ba2e9d578fd11802bdf34e65f6e4a99df8681b1700289
+    digest: 71e0d401da23949f136fee677bacc952e4afd603259664080b06dc87eae7abf9
     home: https://artifacthub.io
     keywords:
     - kubernetes
@@ -216,10 +237,10 @@ entries:
       artifacthub.io/containsSecurityUpdates: "false"
     apiVersion: v2
     appVersion: 0.0.1-alpha
-    created: "2023-01-18T18:43:23.921717385Z"
+    created: "2023-01-18T18:15:55.93006829Z"
     description: A project to deploy profiles through a kubernetes daemonset and a
       configmap
-    digest: 71e0d401da23949f136fee677bacc952e4afd603259664080b06dc87eae7abf9
+    digest: 7e77ec2ba046add7bac212f09b3a23fc007c6f7c9a0d1358f17eaf80e32ca0aa
     home: https://artifacthub.io
     keywords:
     - kubernetes
@@ -246,10 +267,10 @@ entries:
       artifacthub.io/containsSecurityUpdates: "false"
     apiVersion: v2
     appVersion: 0.0.1-alpha
-    created: "2023-01-18T18:15:55.93006829Z"
+    created: "2023-01-18T19:12:07.606281092Z"
     description: A project to deploy profiles through a kubernetes daemonset and a
       configmap
-    digest: 7e77ec2ba046add7bac212f09b3a23fc007c6f7c9a0d1358f17eaf80e32ca0aa
+    digest: e539c393c4047f2bb16ba2e9d578fd11802bdf34e65f6e4a99df8681b1700289
     home: https://artifacthub.io
     keywords:
     - kubernetes
@@ -445,4 +466,4 @@ entries:
     urls:
     - https://github.com/tuxerrante/kapparmor/releases/download/kapparmor-0.0.1-alpha/kapparmor-0.0.1-alpha.tgz
     version: 0.0.1-alpha
-generated: "2023-05-15T15:21:11.722933147Z"
+generated: "2024-02-19T19:07:46.446935114Z"
