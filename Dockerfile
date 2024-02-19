@@ -1,5 +1,5 @@
 # --- build stage
-FROM golang:1.22 AS builder
+FROM golang:1.22.0@sha256:03082deb6ae090a0caa4e4a8f666bc59715bc6fa67f5fd109f823a0c4e1efc2a AS builder
 
 WORKDIR /builder/app
 COPY go/src/app/ .
