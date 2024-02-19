@@ -18,7 +18,7 @@ COPY --from=builder /builder/app/coverage.out .
 
 
 # --- Production image
-FROM ubuntu:latest
+FROM ubuntu:latest@sha256:f9d633ff6640178c2d0525017174a688e2c1aef28f0a0130b26bd5554491f0da
 LABEL Name=kapparmor
 LABEL Author="Affinito Alessandro"
 
