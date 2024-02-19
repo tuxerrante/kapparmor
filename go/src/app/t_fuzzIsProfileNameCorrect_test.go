@@ -23,9 +23,6 @@ func FuzzIsProfileNameCorrect(f *testing.F) {
 					//t.Logf("expected error for invalid filename %q", filename)
 					return
 				}
-				if len(filename) > 255 {
-					return
-				}
 				if ok, _ := isValidPath(directory); !ok {
 					return
 				} else {
