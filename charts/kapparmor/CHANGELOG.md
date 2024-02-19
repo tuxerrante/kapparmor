@@ -43,7 +43,8 @@ Project Security Fixes
 - [X] Pinning actions to full length commit
 - [X] Intergated [Harden-Runner](https://github.com/step-security/harden-runner) in the CI: it prevents exfiltration of credentials, detects tampering of source code during build, and enables running jobs without sudo access.
 - [X] Pinned image tags to digests in Dockerfiles.
-- [X] Closed 44 (!) security issues coming from [Scorecard security scanner](https://github.com/marketplace/actions/ossf-scorecard-action). 
+- [X] Closed 44 (!) security issues coming from [Scorecard security scanner](https://github.com/marketplace/actions/ossf-scorecard-action). Also with the help of [stepsecurity.io](https://app.stepsecurity.io/)
+
 ---
 
 ## [0.1.5 - 2023-05-16](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.5)
