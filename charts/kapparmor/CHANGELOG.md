@@ -14,14 +14,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - [ ] check current confinement state of the app
 - Add different logging levels
 - Generate signed OCI containers for all architectures
-- Increase test coverage at least to 50%
+- Increase test coverage at least to 60%
 - Implement [open telemetry](https://opentelemetry.io/docs/instrumentation/go/)
-- Refactor directories similarly to [kubernetes-sigs](https://github.com/kubernetes-sigs) structure (eg: go/kapaprmor/app/*.go) or to this [golang standard project layout](https://github.com/golang-standards/project-layout)
+- Refactor directories similarly to [kubernetes-sigs](https://github.com/kubernetes-sigs) structure (eg: go/kapparmor/app/*.go) or to this [golang standard project layout](https://github.com/golang-standards/project-layout)
 - Refactor code following [Google Go style guide](https://google.github.io/styleguide/go/guide)
 - Move global vars to structs passed by reference
+- Drop [Linux capabilities](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-capabilities-for-a-container)
+- Restrict syscalls through [seccomp](https://kubernetes.io/docs/tutorials/security/seccomp/#create-a-pod-that-uses-the-container-runtime-default-seccomp-profile) ([default profile](https://docs.docker.com/engine/security/seccomp/#significant-syscalls-blocked-by-the-default-profile))
+
 ---
 
-## [0.2.0 - ](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.2.0)
+## [0.2.0 - 2024-02-19](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.2.0)
 CI:
 - [X] Fixed Codecov plugin issues
 - [X] Refresh container image every Sunday night
@@ -30,7 +33,7 @@ CI:
 - [X] Bash CI to automate go version bump from one source of truth (`config/config`)
 
 Code:
-- [X] golang:1.22 as builder containerfile image
+- [X] golang:1.22 [release notes](https://go.dev/doc/go1.22)
 - [X] The k8s service resource is now settable from the values.yaml
 - [X] Introduced Fuzz testing for profile filenames
 - [X] If POLL_TIME is set less than 1 it will default to 1 second

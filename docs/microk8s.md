@@ -12,7 +12,8 @@ restart
 
 # Install microk8s and check the status
 sudo snap install microk8s --classic --channel=latest/stable
-microk8s enable dns hostpath-storage
+microk8s enable dns 
+microk8s enable hostpath-storage
 
 microk8s inspect
 

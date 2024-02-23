@@ -8,6 +8,8 @@ sudo usermod -aG docker $USER
 # Create mod files in root dir
 go mod init github.com/tuxerrante/kapparmor
 go mod init ./go/src/app/
+
+go test -v -run TestIsProfileNameCorrect -failfast -timeout 30s ./go/src/app/...
 ```
 
 ### Test the app locally
