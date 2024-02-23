@@ -1,15 +1,16 @@
 # --- build stage
-FROM golang:1.22.0@sha256:03082deb6ae090a0caa4e4a8f666bc59715bc6fa67f5fd109f823a0c4e1efc2a AS builder
+FROM golang:1.22.0@sha256:7b297d9abee021bab9046e492506b3c2da8a3722cbf301653186545ecc1e00bb AS builder
 
 WORKDIR /builder/app
 COPY go/src/app/ .
 COPY go.mod .
 
-RUN go get    -d -v .           &&\
+RUN go get -u -v .  &&\
+    go mod tidy     &&\
     go build  -v -o /go/bin/app .
 
 RUN go test -v -vet off -fuzz=Fuzz -fuzztime=60s -run ^t_fuzz* ./...
-RUN go test -v -coverprofile=coverage.out -covermode=count ./...
+RUN go test -v -failfast -coverprofile=coverage.out -covermode=count ./...
 
 
 # --- Publish test coverage results
@@ -26,7 +27,9 @@ WORKDIR /app
 
 RUN apt-get update &&\
     apt-get upgrade -y &&\
-    apt-get install --no-install-recommends --yes apparmor apparmor-utils &&\
+    apt-get install --no-install-recommends --yes \
+    apparmor apparmor-utils \
+    tini &&\
     rm -rf /var/lib/apt/lists/* &&\
     mkdir --parent --verbose /etc/apparmor.d/custom 
 
@@ -40,4 +43,4 @@ ENV PROFILES_DIR=$PROFILES_DIR
 ENV POLL_TIME=$POLL_TIME
 
 USER root
-ENTRYPOINT ["./app"]
+ENTRYPOINT ["/usr/bin/tini", "./app"]
