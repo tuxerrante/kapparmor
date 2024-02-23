@@ -40,6 +40,11 @@ podSecurityContext: {}
 securityContext:
   readOnlyRootFilesystem: false
   privileged: true
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+      type: RuntimeDefault
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
