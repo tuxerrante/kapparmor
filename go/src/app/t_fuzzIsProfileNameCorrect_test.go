@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -16,17 +17,15 @@ func FuzzIsProfileNameCorrect(f *testing.F) {
 					return
 				}
 				if strings.Contains(err.Error(), "no such file or directory") {
-					//t.Logf("expected error for missing file %q", filename)
+					return
+				}
+				if ok, _ := isValidPath(filepath.Clean(directory)); !ok {
 					return
 				}
 				if ok, _ := isValidFilename(filename); !ok {
-					//t.Logf("expected error for invalid filename %q", filename)
-					return
-				}
-				if ok, _ := isValidPath(directory); !ok {
 					return
 				} else {
-					t.Fatal("Error:", err)
+					t.Fatal("failed test:", err)
 				}
 			}
 		})

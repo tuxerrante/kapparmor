@@ -23,19 +23,24 @@ func TestIsProfileNameCorrect(t *testing.T) {
 		want           error
 	}{
 		{
-			name:     "OK: filename and profile name are the same",
+			name:     "OK: custom.myValidProfile",
 			filename: "custom.myValidProfile",
+			want:     nil,
+		},
+		{
+			name:     "OK: custom.deny-write-outside-app",
+			filename: "custom.deny-write-outside-app",
+			want:     nil,
+		},
+		{
+			name:     "OK: custom.bin.foo",
+			filename: "custom.bin.foo",
 			want:     nil,
 		},
 		{
 			name:     "Deny a filename different from profile name",
 			filename: "custom.myNotValidProfile",
 			want:     errors.New("filename 'custom.myNotValidProfile' and profile name 'myNotValidProfile' seems to be different"),
-		},
-		{
-			name:     "OK: filename and profile name are the same",
-			filename: "custom.bin.foo",
-			want:     nil,
 		},
 	}
 
@@ -45,4 +50,12 @@ func TestIsProfileNameCorrect(t *testing.T) {
 			assertError(t, got, tt.want)
 		})
 	}
+	t.Run("..data", func(t *testing.T) {
+		got := IsProfileNameCorrect("..data", "custom.deny-write-outside-app")
+		assertError(t, got, nil)
+	})
+	t.Run("..", func(t *testing.T) {
+		got := IsProfileNameCorrect("..", "custom.deny-write-outside-app")
+		assertError(t, got, nil)
+	})
 }

@@ -154,7 +154,7 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 		}
 
 		if err := IsProfileNameCorrect(FOLDER_NAME, filename); err != nil {
-			log.Fatalf("Profile name and filename '%s'are not the same: %s", filename, err)
+			log.Fatalf("Profile name and filename '%s' in '%s' are not the same: %s", filename, FOLDER_NAME, err)
 		}
 
 		log.Printf("- %s\n", filename)
@@ -170,6 +170,8 @@ func IsProfileNameCorrect(directory, filename string) error {
 	var fileProfileName string
 
 	// input validation
+	directory = filepath.Clean(directory)
+
 	if ok, err := isValidPath(directory); !ok {
 		return err
 	}
@@ -236,13 +238,15 @@ func isValidPath(path string) (bool, error) {
 		return false, fmt.Errorf("empty directory name")
 	}
 
-	cleanPath := filepath.Clean(path)
-	substrings := strings.Split(cleanPath, string(os.PathSeparator))
+	substrings := strings.Split(path, string(os.PathSeparator))
 
 	for _, substring := range substrings {
 		// '.' is a valid path name but not a valid filename
 		if len(substring) == 1 && substring[0] == '.' {
 			return true, nil
+		}
+		if substring == ".." && strings.Index(path, substring) != 0 {
+			return false, fmt.Errorf("wrong directory name")
 		}
 		if ok, err := isValidFilename(substring); !ok {
 			return false, err
@@ -271,12 +275,12 @@ func isValidFilename(filename string) (bool, error) {
 	}
 
 	if len(filename) >= 255 {
-		return false, fmt.Errorf("file name too long")
+		return false, fmt.Errorf("filename too long")
 	}
 
-	if strings.Contains(filename, "/") || strings.Contains(filename, "\\") {
-		return false, fmt.Errorf("invalid filename format")
-	}
+	// if strings.ContainsAny(filename, "/\\ ") {
+	// 	return false, fmt.Errorf("filename contains invalid symbols")
+	// }
 
 	isAlphaNumeric := func(char rune) bool {
 		return unicode.IsDigit(char) || unicode.IsLetter(char)
@@ -288,10 +292,10 @@ func isValidFilename(filename string) (bool, error) {
 
 	for i, char := range filename {
 		if i > 0 && isCharInSlice(char, validSymbols) && previousCharIsASymbol {
-			return false, fmt.Errorf("rejected suspect filename")
+			return false, fmt.Errorf("rejected suspicious filename")
 		}
 		if !isAlphaNumeric(char) && !isCharInSlice(char, validSymbols) {
-			return false, fmt.Errorf("invalid characters in filename")
+			return false, fmt.Errorf("invalid characters in filename %q", char)
 		} else if isCharInSlice(char, validSymbols) {
 			previousCharIsASymbol = true
 		} else {
