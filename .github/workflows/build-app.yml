@@ -2,7 +2,7 @@ name: "1. Create app"
 
 on:
   push:
-    branches: [dev,feature/*]
+    branches: [dev,feature/*,main]
     tags:
       - '**'
     paths:
@@ -14,7 +14,7 @@ on:
     - cron: '42 0 * * 6' # Refresh image every Sunday at 00:42
 
 env:
-  GO_VERSION: 1.22
+  GO_VERSION: 1.22.0
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -6,6 +6,7 @@
 *.dylib
 
 .go/
+/bin
 
 # Docker image files
 *.tar.gz
