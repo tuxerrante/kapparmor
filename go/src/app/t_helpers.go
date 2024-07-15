@@ -37,7 +37,7 @@ func assertError(t *testing.T, got, want error) {
 // 	f()
 // }
 
-func assertDontPanic(t *testing.T, f func()) {
+func assertNoPanic(t *testing.T, f func()) {
 	defer func() {
 		if recover() != nil {
 			t.Errorf("The code did panic")

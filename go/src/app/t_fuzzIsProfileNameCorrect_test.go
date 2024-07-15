@@ -13,7 +13,6 @@ func FuzzIsProfileNameCorrect(f *testing.F) {
 			err := IsProfileNameCorrect(directory, filename)
 			if err != nil {
 				if len(directory) == 0 || len(filename) == 0 {
-					//t.Log("Expected fail for empty string")
 					return
 				}
 				if strings.Contains(err.Error(), "no such file or directory") {

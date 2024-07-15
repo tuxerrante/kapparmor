@@ -7,6 +7,7 @@
 
 .go/
 /bin
+/output
 
 # Docker image files
 *.tar.gz

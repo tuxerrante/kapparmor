@@ -6,8 +6,7 @@ import (
 )
 
 /*
-		TestIsProfileNameCorrect checks if profile names and filenames match
-		The name must not begin with a : or . character.
+		TestIsProfileNameCorrect checks if profile names and filenames match.
 	 	If it contains a whitespace, it must be quoted.
 		If the name begins with a /, the profile is considered to be a standard profile,
 		https://documentation.suse.com/sles/15-SP1/html/SLES-all/cha-apparmor-profiles.html#sec-apparmor-profiles-types-unattached
@@ -23,22 +22,32 @@ func TestIsProfileNameCorrect(t *testing.T) {
 		want           error
 	}{
 		{
-			name:     "OK: custom.myValidProfile",
+			name:     "OK_custom.myValidProfile",
 			filename: "custom.myValidProfile",
 			want:     nil,
 		},
 		{
-			name:     "OK: custom.deny-write-outside-app",
+			name:     "OK_custom.deny-write-outside-app",
 			filename: "custom.deny-write-outside-app",
 			want:     nil,
 		},
 		{
-			name:     "OK: custom.bin.foo",
+			name:     "OK_..data/custom.deny-write-outside-app",
+			filename: "..data/custom.deny-write-outside-app",
+			want:     nil,
+		},
+		{
+			name:     "OK_custom.bin.foo",
 			filename: "custom.bin.foo",
 			want:     nil,
 		},
 		{
-			name:     "Deny a filename different from profile name",
+			name:     "OK_custom.linked.profile",
+			filename: "custom.linked.profile",
+			want:     nil,
+		},
+		{
+			name:     "KO_filename different from profile name",
 			filename: "custom.myNotValidProfile",
 			want:     errors.New("filename 'custom.myNotValidProfile' and profile name 'myNotValidProfile' seems to be different"),
 		},
@@ -50,12 +59,4 @@ func TestIsProfileNameCorrect(t *testing.T) {
 			assertError(t, got, tt.want)
 		})
 	}
-	t.Run("..data", func(t *testing.T) {
-		got := IsProfileNameCorrect("..data", "custom.deny-write-outside-app")
-		assertError(t, got, nil)
-	})
-	t.Run("..", func(t *testing.T) {
-		got := IsProfileNameCorrect("..", "custom.deny-write-outside-app")
-		assertError(t, got, nil)
-	})
 }

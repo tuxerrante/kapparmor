@@ -6,17 +6,17 @@ COPY go/src/app/ .
 COPY go.mod .
 
 RUN go get -u -v .  &&\
-    go mod tidy     &&\
-    go build  -v -o /go/bin/app .
+    go mod tidy
+RUN go build  -v -o /go/bin/app .
 
 RUN go test -v -vet off -fuzz=Fuzz -fuzztime=60s -run ^t_fuzz* ./...
-RUN go test -v -failfast -coverprofile=coverage.out -covermode=count ./...
+RUN go test -v -failfast -timeout 120s -coverprofile=coverage.out -covermode=count ./...
 
 
 # --- Publish test coverage results
 FROM scratch as test-coverage
 COPY --from=builder /builder/app/coverage.out .
-
+COPY --from=builder /builder/app/testdata/fuzz/FuzzIsProfileNameCorrect/ .
 
 # --- Production image
 FROM ubuntu:latest@sha256:f9d633ff6640178c2d0525017174a688e2c1aef28f0a0130b26bd5554491f0da
