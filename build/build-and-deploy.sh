@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-. ./build/build-app.sh
+. ./build/build.sh
 . ./config/secrets
 
 echo $GHCR_TOKEN | docker login -u "$(git config user.email)" --password-stdin ghcr.io
@@ -15,27 +15,28 @@ helm upgrade kapparmor --install \
     --set image.tag=${APP_VERSION}_dev \
     --set image.pullPolicy=Always \
     --dry-run \
-    charts/kapparmor
+    charts/kapparmor > output/kapparmor.yml
 
 echo
-echo "> Is the previous result the expected one?"
+echo "> Is the result in the output folder the expected one?"
 echo "> Current K8S context:" "$(kubectl config current-context)"
 read -r -p "> Are you sure? [Y/n] " response
+echo "> Applying helm chart"
 if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
     helm upgrade kapparmor --install \
         --timeout 120s \
         --debug \
         --set app.poll_time=30 \
         --set image.tag=${APP_VERSION}_dev \
-        --set image.pullPolicy=IfNotPresent \
+        --set image.pullPolicy=Always \
         charts/kapparmor
 else
-    echo " Bye."
-    echo
+    echo " Bye!"
+    exit
 fi
 
 export POD_NAME=$(kubectl get pods --namespace default -l "app.kubernetes.io/name=kapparmor,app.kubernetes.io/instance=kapparmor" -o jsonpath="{.items[0].metadata.name}")
-export CONTAINER_PORT=$(kubectl get pod --namespace default $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
+# export CONTAINER_PORT=$(kubectl get pod --namespace default $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
 
 kubectl wait --for=jsonpath='{.status.numberReady}'=1 daemonset/kapparmor
 echo

@@ -30,8 +30,8 @@ if [[ $dockerfile_go_version != "golang:${GO_VERSION}" ]]; then
 fi
 
 # Clean old images
-echo "> Removing old and dangling old images..."
-docker rmi "$(docker images --filter "reference=ghcr.io/tuxerrante/kapparmor" -q --no-trunc)" || true
+# echo "> Removing old and dangling old images..."
+# docker rmi "$(docker images --filter "reference=ghcr.io/tuxerrante/kapparmor" -q --no-trunc)" || true
 
 # Clean go cache
 # go clean ./...
@@ -46,13 +46,6 @@ echo "> Linting..."
 echo Linting the Helm chart
 helm lint --debug --strict  charts/kapparmor/
 
-# --- Unit tests are in Dockerfile
-# go test -v -vet=off -failfast -coverprofile=coverage.out -covermode=atomic ./go/src/app/...
-# echo "> Scanning for suspicious constructs..."
-# go vet go/...
-# echo "> Creating test output..."
-# docker build --target test-coverage --tag "ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev" .
-
 #### To run it look into docs/testing.md
 echo "> Building container image..."
 docker build --tag "ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev" \
@@ -65,7 +58,7 @@ docker build --tag "ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev" \
 if [[ ! -f "./bin/trivy" ]]; then
     curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ./bin v0.18.3
 fi
-./bin/trivy image "ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev"
+./bin/trivy image "ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev" > output/trivy.log
 
 if [[ ! -f "./bin/syft" ]]; then
     curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b ./bin
@@ -76,6 +69,6 @@ if [[ ! -f "./bin/grype" ]]; then
     curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b ./bin
 fi
 echo grype scan
-./bin/grype --add-cpes-if-none --fail-on critical sbom.spdx.json |awk '{if (NR>1) {print $NF,$0}}' |sort |cut -f2- -d' '
+./bin/grype --add-cpes-if-none --fail-on critical sbom.spdx.json |awk '{if (NR>1) {print $NF,$0}}' |sort |cut -f2- -d' ' > output/grype.log
 
 # docker run --rm -it --privileged --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security' --mount type=bind,source='/etc',target='/etc' --name kapparmor  ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev
