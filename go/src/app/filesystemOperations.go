@@ -58,11 +58,13 @@ func HasTheSameContent(fsys fs.FS, filePath1, filePath2 string) (bool, error) {
 	if fsys == nil {
 		fileBytes1, err := os.ReadFile(filePath1)
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("error comparing profiles contents between %s and %s. Error reading the first file: %s", filePath1, filePath2, err)
+			return false, err
 		}
 		fileBytes2, err := os.ReadFile(filePath2)
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("error comparing profiles contents between %s and %s. Error reading the second file: %s", filePath1, filePath2, err)
+			return false, err
 		}
 		if !bytes.Equal(fileBytes1, fileBytes2) {
 			return false, nil
@@ -88,9 +90,10 @@ func HasTheSameContent(fsys fs.FS, filePath1, filePath2 string) (bool, error) {
 	}
 
 	if file1 == nil || file2 == nil {
-		return false, fmt.Errorf("ERROR: files not found")
+		return false, fmt.Errorf("ERROR: files not found, null input")
 	}
 
+	// No need to return an error if files are different
 	if file1.Size() != file2.Size() {
 		return false, nil
 	}
@@ -129,6 +132,39 @@ func compareBytes(f1, f2 fs.File) (bool, error) {
 	return true, nil
 }
 
+// TODO: loop on recursive symlinks until the final target is found
+func resolveSymlink(directory string, fileInfo fs.FileInfo) (bool, string, string) {
+
+	if fileInfo.Mode()&fs.ModeSymlink != 0 {
+		target, err := os.Readlink(filepath.Join(directory, fileInfo.Name()))
+		if err != nil {
+			log.Printf("error reading link file: %s", err)
+			return false, "", ""
+		}
+
+		// Resolve the target recursively
+		targetEntry, err := os.Lstat(filepath.Join(directory, target))
+		if err != nil {
+			log.Printf("error resolving link: %s", err)
+			return false, "", ""
+		}
+
+		// Recurse if the target is still a symbolic link
+		if fileInfo.Mode()&fs.ModeSymlink != 0 {
+			targetDir, _ := filepath.Split(target)
+			return resolveSymlink(targetDir, targetEntry)
+		}
+
+		// Target is a regular file
+		targetDir, targetFile := filepath.Split(target)
+		log.Printf("Resolved link to: %s/%s", targetDir, targetFile) //DEBUG
+		return true, targetDir, targetFile
+	}
+
+	// Not a symbolic link, return original entry
+	return false, "", ""
+}
+
 func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 
 	filenames := map[string]bool{}
@@ -144,12 +180,24 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 
 	log.Printf("Found files in %s:\n", FOLDER_NAME)
 	for _, file := range files {
+
 		filename := file.Name()
-		if file.IsDir() {
-			log.Printf("Directory '%s' will be skipped.\n", filename)
+
+		// Don't skip it if filename is a symbolic link
+		// by default configmaps are mounted from symlinks
+		fileInfo, err := os.Lstat(filepath.Join(FOLDER_NAME, filename))
+		if err != nil {
+			log.Printf("error reading file '%s': %v\n", file, err)
 			continue
-		} else if strings.HasPrefix(filename, ".") {
-			log.Printf("'%s' will be skipped.\n", filename)
+		}
+		if isSymlink, targetFolder, targetFilename := resolveSymlink(FOLDER_NAME, fileInfo); isSymlink {
+			log.Printf("found a symlink to '%s/%s'", targetFolder, targetFilename)
+			FOLDER_NAME = targetFolder
+			filename = targetFilename
+
+			// Current file is a a directory
+		} else if fileInfo.IsDir() {
+			log.Printf("Directory '%s' will be skipped.\n", filename)
 			continue
 		}
 
@@ -169,9 +217,11 @@ func IsProfileNameCorrect(directory, filename string) error {
 	var isProfileWordPresent bool = false
 	var fileProfileName string
 
-	// input validation
+	// input sanitization
 	directory = filepath.Clean(directory)
+	log.Printf("DEBUG> IsProfileNameCorrect? Cleaned path: %q. Filename: %q", directory, filename)
 
+	// input validation
 	if ok, err := isValidPath(directory); !ok {
 		return err
 	}
@@ -189,6 +239,7 @@ func IsProfileNameCorrect(directory, filename string) error {
 	if err != nil {
 		return err
 	}
+	defer fileReader.Close()
 	scanner := bufio.NewScanner(fileReader)
 
 	// Validate the syntax
@@ -217,7 +268,7 @@ func IsProfileNameCorrect(directory, filename string) error {
 			// If the line starts with 'profile' check the following name
 			fileProfileName = strings.TrimSpace(fileProfileNameSlice[1])
 			isProfileWordPresent = true
-			log.Printf("Found profile name: %s", fileProfileName)
+			// log.Printf("Found profile name: %s", fileProfileName) //DEBUG
 			break
 		}
 	}
@@ -234,25 +285,26 @@ func IsProfileNameCorrect(directory, filename string) error {
 }
 
 func isValidPath(path string) (bool, error) {
+
 	if len(path) == 0 {
 		return false, fmt.Errorf("empty directory name")
 	}
 
-	substrings := strings.Split(path, string(os.PathSeparator))
-
-	for _, substring := range substrings {
-		// '.' is a valid path name but not a valid filename
-		if len(substring) == 1 && substring[0] == '.' {
-			return true, nil
+	// Check if the path exists
+	info, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil // Path does not exist
 		}
-		if substring == ".." && strings.Index(path, substring) != 0 {
-			return false, fmt.Errorf("wrong directory name")
-		}
-		if ok, err := isValidFilename(substring); !ok {
-			return false, err
-		}
+		return false, err // Other error (e.g., permission denied)
 	}
-	return true, nil
+
+	// Check if it's a directory
+	if !info.IsDir() {
+		return false, nil // Not a directory
+	}
+
+	return true, nil // Path exists and is a directory
 }
 
 /*
@@ -261,26 +313,38 @@ Accepts filenames that are:
   - not more than 255 chars long
   - not made of symbols excluding those one in 'validSymbols'
     e.g.: '@', '#', '§', '!', ' '
-  - not made up of consecutive symbols
-    e.g.: '..', '-_-'
+  - '/' are allowed to follow symbolic links like the ones coming
+    from the mount of the configmap (eg: file1 -> ..data/file1)
     '..' paths are managed by filepath.Clean()
 */
 func isValidFilename(filename string) (bool, error) {
+	log.Printf("@isValidFilename %s", filename) //DEBUG
+	// Check only the latest string if also the filename is a path
+	if strings.Contains(filename, string(os.PathSeparator)) {
+		splitted_filename_slice := strings.Split(filename, string(os.PathSeparator))
+		if len(splitted_filename_slice) > 1 {
+			if ok, err := isValidPath(filename); !ok {
+				return false, fmt.Errorf("invalid path inside filename %v: %s", filename, err)
+			}
+			filename = splitted_filename_slice[len(splitted_filename_slice)-1]
+		}
+	}
+
 	if len(filename) == 0 {
 		return false, fmt.Errorf("empty filename")
 	}
 
-	if len(filename) == 1 && filename[0] == '.' {
+	if len(filename) == 1 && !unicode.IsLetter(rune(filename[0])) {
 		return false, fmt.Errorf("%q is not a valid filename", filename)
+	}
+
+	if len(filename) == 2 && filename == ".." {
+		return false, fmt.Errorf("%q seems to be a directory", filename)
 	}
 
 	if len(filename) >= 255 {
 		return false, fmt.Errorf("filename too long")
 	}
-
-	// if strings.ContainsAny(filename, "/\\ ") {
-	// 	return false, fmt.Errorf("filename contains invalid symbols")
-	// }
 
 	isAlphaNumeric := func(char rune) bool {
 		return unicode.IsDigit(char) || unicode.IsLetter(char)
@@ -288,9 +352,11 @@ func isValidFilename(filename string) (bool, error) {
 
 	// Restrict the filename to contain only commonly used chars
 	validSymbols := []rune{'_', '-', '.'}
+
 	var previousCharIsASymbol bool
 
 	for i, char := range filename {
+		// '..filename' must be accepted
 		if i > 0 && isCharInSlice(char, validSymbols) && previousCharIsASymbol {
 			return false, fmt.Errorf("rejected suspicious filename")
 		}
@@ -374,9 +440,10 @@ func copyFileContents(src, dst string) (err error) {
 		return
 	}
 	defer func() {
-		cerr := out.Close()
-		if err == nil {
-			err = cerr
+		err := out.Close()
+		if err != nil {
+			log.Print(err)
+			return
 		}
 	}()
 

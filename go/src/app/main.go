@@ -46,7 +46,7 @@ func main() {
 	defer cancel()
 
 	log.Printf("> Polling directory %s every %d seconds.\n", CONFIGMAP_PATH, POLL_TIME)
-	go pollProfiles(POLL_TIME, ctx, cancel, keepItRunning)
+	go pollProfiles(POLL_TIME, ctx, keepItRunning)
 
 	// Manage OS signals for graceful shutdown
 	go func() {
@@ -78,7 +78,7 @@ func main() {
 // Every pollTime seconds it will read the mounted volume for profiles,
 // it will call loadNewProfiles() then to check if they are new ones or not.
 // Executed as go-routine it will run forever until a cancel() is called on the given context.
-func pollProfiles(pollTime int, ctx context.Context, cancelContext context.CancelFunc, keepItRunning chan struct{}) {
+func pollProfiles(pollTime int, ctx context.Context, keepItRunning chan struct{}) {
 	log.Print("> Polling started.")
 
 	if os.Getenv("TESTING") == "true" {
@@ -217,7 +217,7 @@ func getNewProfiles() (bool, map[string]bool) {
 
 // It reads a list of profile names from a singe file under KERNEL_PATH
 func getLoadedProfiles() (map[string]bool, map[string]bool, error) {
-	return getProfilesNamesFromFile(KERNEL_PATH, PROFILE_NAME_PREFIX)
+	return getProfilesNamesFromFile(KERNEL_PATH)
 }
 
 // Search for profiles already present on the current node in '$apparmorfs/profiles' folder
@@ -225,7 +225,7 @@ func getLoadedProfiles() (map[string]bool, map[string]bool, error) {
 // Output
 //   - profiles{} map containing all the loaded profiles
 //   - customProfiles{} map containing only the profiles starting with the given PREFIX
-func getProfilesNamesFromFile(profilesPath, profileNamePrefix string) (map[string]bool, map[string]bool, error) {
+func getProfilesNamesFromFile(profilesPath string) (map[string]bool, map[string]bool, error) {
 
 	profilesFile, err := os.Open(profilesPath)
 	if err != nil {
