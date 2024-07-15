@@ -16,6 +16,7 @@ spec:
     metadata:
       annotations:
         container.apparmor.security.beta.kubernetes.io/kapparmor: unconfined
+        deploymentTime: {{ now }}
         {{- with .Values.podAnnotations }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
