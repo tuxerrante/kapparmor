@@ -6,6 +6,8 @@
 *.dylib
 
 .go/
+/bin
+/output
 
 # Docker image files
 *.tar.gz
@@ -26,6 +28,8 @@
 
 # Go tests
 coverage.out
+testdata/
+/go/pkg/
 
 # Secret env vars
 config/secrets

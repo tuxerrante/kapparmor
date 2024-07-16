@@ -1,5 +1,5 @@
 # --- build stage
-FROM golang:1.20 AS builder
+FROM golang:1.22.5@sha256:829eff99a4b2abffe68f6a3847337bf6455d69d17e49ec1a97dac78834754bd6 AS builder
 
 WORKDIR /builder/app
 COPY go/src/app/ .
@@ -7,6 +7,7 @@ COPY go/src/tests/ /builder/tests/
 COPY go.mod .
 
 RUN go get    -d -v .           &&\
+    go mod tidy &&\
     go build  -v -o /go/bin/app .
 
 RUN go test -v -coverprofile=coverage.out -covermode=atomic ./...
@@ -19,7 +20,7 @@ COPY --from=builder /builder/app/coverage.out .
 
 
 # --- Production image
-FROM ubuntu:latest
+FROM ubuntu:24.04@sha256:2e863c44b718727c860746568e1d54afd13b2fa71b160f5cd9058fc436217b30
 LABEL Name=kapparmor
 LABEL Author="Affinito Alessandro"
 
