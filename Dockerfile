@@ -15,7 +15,7 @@ RUN go test -v -coverprofile=coverage.out -covermode=atomic ./...
 
 
 # --- Publish test coverage results
-FROM scratch as test-coverage
+FROM scratch AS test-coverage
 COPY --from=builder /builder/app/coverage.out .
 
 

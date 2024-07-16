@@ -1,6 +1,7 @@
 You can find here also some indication on how to [set up a Microk8s environment in a Linux virtual machine](./microk8s.md).
 
 ### How to initialize this project
+
 ```sh
 helm create kapparmor
 sudo usermod -aG docker $USER
@@ -13,6 +14,7 @@ go mod init ./go/src/app/
 ### Test the app locally
 
 Test Helm Chart creation
+
 ```sh
 # --- Check the Helm chart
 # https://github.com/helm/chart-testing/issues/464
@@ -24,8 +26,10 @@ docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kub
   /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
 
 # Replace here a commit id being part of an image tag
-export IMAGE_TAG="0.1.4_dev"
-helm upgrade kapparmor --install --dry-run \
+export IMAGE_TAG="0.1.6_dev"
+helm upgrade kapparmor \
+    --dry-run \
+    --install \
     --atomic \
     --timeout 30s \
     --debug \
@@ -35,6 +39,7 @@ helm upgrade kapparmor --install --dry-run \
 ```
 
 Test the app inside a container:
+
 ```sh
 # --- Build and run the container image
 docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . &&\
@@ -49,7 +54,9 @@ docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROF
 To test Helm chart installation in a MicroK8s cluster, follow `docs/microk8s.md` instructions if you don't have any local cluster.
 
 ### Test on the Kubernetes cluster
+
 You can start a binary check inside the pod shell like this:
+
 ```sh
 kapparmor_pod=$(kubectl get pods -l app.kubernetes.io/name=kapparmor --no-headers |grep Running |head -n1 |cut -d' ' -f1)
 kubectl exec -it $kapparmor_pod -- cat /proc/1/attr/current

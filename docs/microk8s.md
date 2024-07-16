@@ -1,5 +1,3 @@
-
-
 ```bash
 # Set VM hostname as valid hostname name (no capital cases like in the default "yourname@yourname-VirtualBox")
 hostnamectl hostname virtualbox
@@ -26,7 +24,7 @@ microk8s kubectl get nodes -o=jsonpath='{range .items[*]}{@.metadata.name}: {.st
 
 Verify pods have some syscall blocked
 
-`kubectl run -n dev-testing amicontained --rm -it --image=jess/amicontained -- amicontained`  
+`kubectl run -n testing amicontained --image=jess/amicontained -ti --rm --privileged=false -- amicontained`
 
     Container Runtime: kube
     Has Namespaces:
@@ -40,7 +38,9 @@ Verify pods have some syscall blocked
             MSGRCV SYSLOG SETPGID SETSID VHANGUP PIVOT_ROOT ACCT SETTIMEOFDAY UMOUNT2 SWAPON SWAPOFF REBOOT SETHOSTNAME SETDOMAINNAME INIT_MODULE DELETE_MODULE LOOKUP_DCOOKIE KEXEC_LOAD PERF_EVENT_OPEN FANOTIFY_INIT OPEN_BY_HANDLE_AT FINIT_MODULE KEXEC_FILE_LOAD BPF
 
 ### HA setup
+
 Microk8s doesn't support dynamic ips for nodes, so remember to fix it manually after machines reboot.
+
 ```sh
 microk8s stop
 
@@ -77,20 +77,36 @@ Add this to the bottom of /var/snap/microk8s/current/args/kube-apiserver:
 
 microk8s start
 
-## Test the container locally 
+## Test the container locally
+
 While working on the app code it could be convenient avoid the pipelines building and pushing overload by using a local container registry where we will push directly our testing container.
 See [microk8s.io registry-built-in](https://microk8s.io/docs/registry-built-in)
 
 Run this in you VM linux host:
+
 ```sh
-docker build -t localhost:32000/kapparmor-local --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . 
+docker build -t localhost:32000/kapparmor-local --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile .
 docker push localhost:32000/kapparmor-local
 
-kubectl set image daemonset/kapparmor kapparmor=localhost:32000/kapparmor-local
+# Install it thorugh Helm
+helm upgrade kapparmor \
+    --install \
+    --atomic \
+    --timeout 30s \
+    --debug \
+    --namespace default \
+    --set image.pullPolicy=Always \
+    --set image.repository=localhost:32000/kapparmor-local \
+    --set image.tag=latest \
+      charts/kapparmor/
+
+# OR patch it
+# kubectl set image daemonset/kapparmor kapparmor=localhost:32000/kapparmor-local
 
 ```
 
-Otherwise you can run it directly as root on your bash. Remember to take a snapshot of the VM before ;)
+Otherwise you can run it directly as root on your bash. Remember to take a snapshot of the VM before 😉
+
 ```bash
 sudo -i
 export POLL_TIME=60
@@ -103,7 +119,9 @@ go run .
 ```
 
 ## Install the helm chart
+
 Run this on your linux node:
+
 ```sh
 # Assume the last commit triggered a building pipeline, we'll have this as last docker image tag
 # Move on the right branch before
@@ -129,23 +147,25 @@ helm upgrade kapparmor --install --atomic --timeout 30s --debug --set image.tag=
 ```
 
 If the pod is running you can go inside to run some extra command, like:
+
 ```sh
-POD_NAME=kubectl get pods -l app.kubernetes.io/name=kapparmor --no-headers |cut -d' ' -f1
+POD_NAME=$(kubectl get pods -l app.kubernetes.io/name=kapparmor --no-headers |cut -d' ' -f1)
 kubectl exec -ti $POD_NAME -- sh
   cat /proc/1/attr/current
   ps -ef
+  ls -l /etc/apparmor.d/custom
   apparmor_parser --replace --verbose profiles/custom.deny-write-outside-app
 
 
 # Run a new pod for extra testing
 kubectl debug node/XXX -it --image=busybox
 # or
-kubectl run ubuntu --rm --privileged -v /lib/modules/:/lib/modules/:ro 
+kubectl run ubuntu --rm --privileged -v /lib/modules/:/lib/modules/:ro
 ```
 
 ## Test profiles
 
-deny_all_writes.profile  
+deny_all_writes.profile
 
     profile deny-write flags=(attach_disconnected) {
     file,       # access all filesystem
@@ -163,6 +183,7 @@ deny_all_writes_outside_home.profile
     }
 
 busybox_dontwrite_pod.yml
+
 ```yml
 apiVersion: v1
 kind: Pod
@@ -172,10 +193,10 @@ metadata:
     container.apparmor.security.beta.kubernetes.io/busy-dontwrite: localhost/deny-write
 spec:
   containers:
-  - name: busy-dontwrite
-    image: busybox
-    command: [ "sh", "-c", "echo 'Hello AppArmor!' && sleep 1h" ]
-    resources: {}
+    - name: busy-dontwrite
+      image: busybox
+      command: ["sh", "-c", "echo 'Hello AppArmor!' && sleep 1h"]
+      resources: {}
   restartPolicy: Always
 ```
 
@@ -186,7 +207,7 @@ microk8s kubectl get pods -o wide
 microk8s kubectl get events --sort-by=.lastTimestamp
 
 # Parse the profile on the node and check the pod status
-sudo apparmor_parser --preprocess -v deny_all_writes_profile 
+sudo apparmor_parser --preprocess -v deny_all_writes_profile
 sudo less /sys/kernel/security/apparmor/profiles
 
 # Try to write from the profiled pod

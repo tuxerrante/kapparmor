@@ -54,19 +54,24 @@ helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag
 
 - Not a limitation relative to this project, but if you deny write access in the /bin folder of a privileged container it could not be deleted by Kubernetes even after 'kubectl delete'. The command will succeed but the pod will stay in Terminating state.
 
-## ToDo:
-- [X] Intercept Term signal and uninstall profiles before the Helm chart deletion completes.
-- ⚠️ Implement the [controller-runtime](https://pkg.go.dev/sigs.k8s.io/controller-runtime#section-readme) design pattern through [Kubebuilder](https://book.kubebuilder.io/quick-start.html).
-- 😁 Find funnier quotes for app starting and ending message (David Zucker, Monty Python, Woody Allen...).
-- 🌱 Make the ticker loop thread safe: skip running a new loop if previous run is still ongoing.
-
 ## Testing
 [There is a whole project meant to be a demo for this one](https://github.com/tuxerrante/kapparmor-demo), have fun.
 
 Or you can find more info in [docs/testing.md](docs/testing.md)
 
+## Release process
+1. Commits and tags [should be signed](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work).  
+2. Update `config/config` file with the right app, chart and go version.  
+3. Do the same in the chart manifest `charts/kapparmor/Chart.yaml`.  
+4. Test it on a local cluster with `./build` scripts and following [docs/testing.md](docs/testing.md) instructions (go test, go lint, helm lint, helm template, helm install dry run...).  
+5. Update the chart Changelog with the most relevant commits of this release, this will automatically fill the release page.  
+6. Open the PR.  
+7. Merge.  
+8. Tag.  
+
+## Roadmap
+See [docs/roadmap.md](docs/roadmap.md)
+
 # External useful links
 - [KAppArmor Demo](https://github.com/tuxerrante/kapparmor-demo)
 - [Kubernetes.io tutorials on apparmor](https://kubernetes.io/docs/tutorials/security/apparmor/)
-- [Security Profiles Operator](https://github.com/kubernetes-sigs/security-profiles-operator/)
-- [Kubernetes apparmor-loader](https://github.com/kubernetes/kubernetes/blob/master/test/images/apparmor-loader/loader.go)

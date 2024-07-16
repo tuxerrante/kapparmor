@@ -5,19 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.6 - 2024-07-16](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.6)
+- Update to go 1.22.5
+  - Security: fix [CVE-2024-24790](https://nvd.nist.gov/vuln/detail/CVE-2024-24790)
+- Fixed produced image to ubuntu:24.04@sha256:2e863c44b718727c860746568e1d54afd13b2fa71b160f5cd9058fc436217b30
+- Publication of a roadmap
+- Docs update
 
-1. E2E tests  
-    - [ ] Create a new profile
-    - [ ] Update an existing profile
-    - [ ] Remove an existing profile
-    - [ ] Remove a non existing profile
-    - [ ] check current confinement state of the app
-2. Remove kubernetes Service and DaemonSet exposed ports if useless
-4. Add daemonset commands for checking readiness
-7. Add different logging levels
+## [0.1.5 - 2023-05-16](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.5)
+- [Feature: manage custom labels](https://github.com/tuxerrante/kapparmor/commit/6e10b49720823930538cb9b86aa4a5f791efcb03)
+- [Feature: validate profile file content](https://github.com/tuxerrante/kapparmor/commit/15da4e42893cdaa4412412a23c618ed98108714b)
+- [Feature: Validate app and chart version](https://github.com/tuxerrante/kapparmor/commit/689fa391970cfd37a9c2410ebd860a3324b9fbd2)
+- [Feature: catch SIGTERM signal](https://github.com/tuxerrante/kapparmor/commit/d8cc52cb7f62fa2f9995d56ef4c0a1008bb59203)
+- [Fix: profile content checking when they have same name](https://github.com/tuxerrante/kapparmor/commit/5a97ba6071bbae2c75b28eb5969f8022d629afdd)
+- [update to go 1.20](https://github.com/tuxerrante/kapparmor/commit/354ee4280d364057542b67df26dc75f96273b85c)
+- Docs update
 
-## [0.1.2]() - 2023-02-22
+## [0.1.2](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.2) - 2023-02-22
 ### Fixed
 - Support for profile names coming after comments and include lines
 ### Added
@@ -26,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-## [0.1.1]() - 2023-02-13
+## [0.1.1](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.1) - 2023-02-13
 ### Fixed
 - Moved shared testing functions to a dedicated module
 - Minor documentation and readme fixes
