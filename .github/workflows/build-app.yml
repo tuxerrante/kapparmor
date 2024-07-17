@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Log in to the Container registry
-        uses: docker/login-action@v2.1.0
+        uses: docker/login-action@v3.2.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -38,13 +38,13 @@ jobs:
 
       # Will create and boot a builder that can be used in the build-push action.
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3.1.0
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3.4.0
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v4.1.1
+        uses: docker/metadata-action@v5.5.1
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
@@ -55,7 +55,7 @@ jobs:
 
       # Run the build and outputs a test coverage file
       - name: Build and push Docker image
-        uses: docker/build-push-action@v4.0.0
+        uses: docker/build-push-action@v6.4.0
         with:
           file: Dockerfile
           push: false
@@ -65,7 +65,7 @@ jobs:
           outputs: |
             type=local,dest=.
 
-      - uses: codecov/codecov-action@v3
+      - uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.out
@@ -76,7 +76,7 @@ jobs:
       # since the context is based on the Git reference. Use the Path context to remove this restriction. 
       # https://github.com/marketplace/actions/build-and-push-docker-images#git-context
       - name: Build and push Docker image
-        uses: docker/build-push-action@v4.0.0
+        uses: docker/build-push-action@v6.4.0
         with:
           file: Dockerfile
           push: true
@@ -88,7 +88,7 @@ jobs:
     needs: ['build-app']
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.1.7
 
       # Security scanner
       # https://github.com/aquasecurity/trivy-action
@@ -115,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.1.7
         with:
           fetch-depth: 0
 
@@ -125,15 +125,15 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: Install Helm
-        uses: azure/setup-helm@v3
+        uses: azure/setup-helm@v4.2.0
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5.1.1
         with:
           python-version: '3.9'
           check-latest: true
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.3.1
+        uses: helm/chart-testing-action@v2.6.1
 
       - name: Run chart-testing (list-changed)
         id: list-changed
@@ -147,7 +147,7 @@ jobs:
         run: ct lint --config ct.yaml --target-branch ${{ github.event.repository.default_branch }}
 
       - name: Create kind cluster
-        uses: helm/kind-action@v1.4.0
+        uses: helm/kind-action@v1.10.0
         if: steps.list-changed.outputs.changed == 'true'
 
       - name: Run chart-testing (install)
@@ -159,7 +159,7 @@ jobs:
           cat charts/kapparmor/values.yaml
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.5.0
+        uses: helm/chart-releaser-action@v1.6.0
         env:
           CR_TOKEN: "${{ env.GITHUB_TOKEN }}"
         with:
