@@ -5,6 +5,10 @@
 *.so
 *.dylib
 
+.go/
+/bin
+/output
+
 # Docker image files
 *.tar.gz
 *.tar.xz
@@ -20,3 +24,12 @@
 # Editor configs 
 .idea/
 .vscode/
+.errors/
+
+# Go tests
+coverage.out
+testdata/
+/go/pkg/
+
+# Secret env vars
+config/secrets
