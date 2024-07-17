@@ -1,0 +1,10 @@
+apiVersion: v1
+entries:
+  kapparmor:
+    - created: "${CURRENT_DATE}"
+      description: A project to deploy AppArmor security profiles through a kubernetes daemonset
+      home: https://github.com/tuxerrante/kapparmor/
+      name: kapparmor
+      urls:
+        - https://github.com/tuxerrante/kapparmor/releases/download/kapparmor-${CHART_VERSION}/kapparmor-${CHART_VERSION}.tgz
+      version: ${CHART_VERSION}

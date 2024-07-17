@@ -2,6 +2,7 @@
 set -e 
 
 source ./config/config
+export CURRENT_DATE=$(date +"%Y-%m-%dT%H:%M:%S%:z")
 
 # --- Validate App and Chart version
 YML_CHART_VERSION="$(grep "version: [\"0-9\.]\+" charts/kapparmor/Chart.yaml | cut -d'"' -f2)"
@@ -31,6 +32,10 @@ if [[ $dockerfile_go_version != "golang:${GO_VERSION}" ]]; then
     exit 1
 fi
 
+# Update Helm index
+envsubst < charts/kapparmor/templates/index.yaml > output/index.yaml
+helm repo index charts/kapparmor --merge output/index.yaml
+
 # Clean old images
 # echo "> Removing old and dangling old images..."
 # docker rmi "$(docker images --filter "reference=ghcr.io/tuxerrante/kapparmor" -q --no-trunc)" || true
@@ -42,10 +47,10 @@ go clean ./...
 if [[ ! -f "./bin/golangci-lint" ]]; then
     curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./bin
 fi
-echo "> Linting..."
+echo "> Linting go code"
 ./bin/golangci-lint run --go "$GO_VERSION" --fix --fast --allow-parallel-runners ./go/src/app
 
-echo Linting the Helm chart
+echo "> Linting the Helm chart"
 helm lint --debug --strict  charts/kapparmor/
 
 #### To run it look into docs/testing.md
