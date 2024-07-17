@@ -1,27 +1,43 @@
 apiVersion: v1
 entries:
   kapparmor:
-  - annotations:
-      artifacthub.io/changes: |
-        - kind: added
-          description: Load new profiles in the configmap
-        - kind: added
-          description: Unload old profiles in the filesystem
-        - kind: added
-          description: Update profiles with same name and different content
-      artifacthub.io/containsSecurityUpdates: "false"
-    apiVersion: v2
-    appVersion: 0.1.0
-    created: "2023-01-12T15:05:11.364330737Z"
+  - apiVersion: v2
+    appVersion: 0.1.6
+    created: "2024-07-17T15:50:36.264340939+02:00"
     description: A project to deploy profiles through a kubernetes daemonset and a
       configmap
-    digest: a805363fcf54fddcd1f37d804b1b249597ccc04d914a39d904a57a2f6d76853c
+    digest: 7de47bf6cdd3c613106be530f6d4016a15be32d8c21bafafb9625a4d37bec113
     home: https://artifacthub.io
+    icon: https://github.com/tuxerrante/kapparmor/blob/main/img/kapparmor_logo.jpeg
     keywords:
     - kubernetes
     - helm
     - security
     - apparmor
+    kubeVersion: '>= 1.23.0-0'
+    maintainers:
+    - name: tuxerrante
+      url: https://github.com/sponsors/tuxerrante
+    name: kapparmor
+    type: application
+    urls:
+    - https://tuxerrante.github.io/kapparmor/kapparmor-0.1.6.tgz
+    version: 0.1.6
+  - apiVersion: v1
+    created: "2023-05-15T00:00:00+02:00"
+    description: A project to deploy security profiles through a kubernetes daemonset
+      and a configmap
+    home: https://github.com/tuxerrante/kapparmor/
+    name: kapparmor
+    urls:
+    - https://github.com/tuxerrante/kapparmor/releases/download/kapparmor-0.1.5/kapparmor-0.1.5.tgz
+    version: 0.1.5
+  - apiVersion: v1
+    appVersion: 0.1.0
+    created: "2023-01-12T15:05:11.364330737Z"
+    description: A project to deploy profiles through a kubernetes daemonset and a
+      configmap
+    digest: a805363fcf54fddcd1f37d804b1b249597ccc04d914a39d904a57a2f6d76853c
     kubeVersion: '>= 1.23.0-0'
     maintainers:
     - name: Alessandro Affinito
@@ -31,4 +47,4 @@ entries:
     urls:
     - https://github.com/tuxerrante/kapparmor/releases/download/kapparmor-0.1.0/kapparmor-0.1.0.tgz
     version: 0.1.0
-generated: "2023-01-12T15:05:11.364336138Z"
+generated: "2024-07-17T15:50:36.261267854+02:00"
