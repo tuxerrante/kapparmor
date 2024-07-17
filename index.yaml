@@ -21,7 +21,7 @@ entries:
     name: kapparmor
     type: application
     urls:
-    - https://tuxerrante.github.io/kapparmor/kapparmor-0.1.6.tgz
+    - https://github.com/tuxerrante/kapparmor/releases/download/kapparmor-0.1.6/kapparmor-0.1.6.tgz
     version: 0.1.6
   - apiVersion: v1
     created: "2023-05-15T00:00:00+02:00"
