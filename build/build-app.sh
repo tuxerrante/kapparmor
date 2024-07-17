@@ -33,8 +33,10 @@ if [[ $dockerfile_go_version != "golang:${GO_VERSION}" ]]; then
 fi
 
 # Update Helm index
-envsubst < charts/kapparmor/templates/index.yaml > output/index.yaml
-helm repo index charts/kapparmor --merge output/index.yaml
+# envsubst < charts/kapparmor/templates/index.yaml > output/index.yaml
+helm package --app-version ${APP_VERSION} --version ${CHART_VERSION} --destination output/ charts/kapparmor/
+helm repo index output/ --merge ./index.yaml --url https://tuxerrante.github.io/kapparmor/
+mv output/index.yaml ./index.yaml
 
 # Clean old images
 # echo "> Removing old and dangling old images..."
