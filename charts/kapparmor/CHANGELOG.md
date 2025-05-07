@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## **0.1.7**
+- Update to go 1.24.2
+
 ## [0.1.6 - 2024-07-16](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.6)
 - Update to go 1.22.5
   - Security: fix [CVE-2024-24790](https://nvd.nist.gov/vuln/detail/CVE-2024-24790)
@@ -42,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.0) - 2023-02-01
 ### Fixed
 1. "Unable to replace profiles. Permission denied, app seems still confined." - Switched to ubuntu image
-1. No need for SYS_ADMIN capabilities 
+1. No need for SYS_ADMIN capabilities
 1. Ignore hidden and system folders while scanning for profiles
 
 ### Added
@@ -51,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.0.6 - 2023-01-26
 
-### Added 
+### Added
 Helm:
 - Added SYS_ADMIN capabilities to the daemonset
 - Mounted needed folders in the Dockerfile and in the daemonset
@@ -69,7 +72,7 @@ CI/CD:
 
 ## [0.0.5](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.0.5-alpha) - 2023-01-23
 
-### Added 
+### Added
 
 Helm:
 - Helm Chart based mainly on a DaemonSet and a configmap. No operator needed.
@@ -82,7 +85,7 @@ CI/CD:
 - Helm chart linting and testing before releasing
 - Security vulnerability tests on Go dependencies and container file.
 - Auto generation of [GitHub pages](https://tuxerrante.github.io/kapparmor/)
-- Container image tag is set to current commit SHA for every release. 
+- Container image tag is set to current commit SHA for every release.
 
 ### Fixed
 

@@ -1,5 +1,5 @@
 # --- build stage
-FROM golang:1.22.5@sha256:829eff99a4b2abffe68f6a3847337bf6455d69d17e49ec1a97dac78834754bd6 AS builder
+FROM golang:1.24.2@sha256:30baaea08c5d1e858329c50f29fe381e9b7d7bced11a0f5f1f69a1504cdfbf5e AS builder
 
 WORKDIR /builder/app
 COPY go/src/app/ .
@@ -20,7 +20,7 @@ COPY --from=builder /builder/app/coverage.out .
 
 
 # --- Production image
-FROM ubuntu:24.04@sha256:2e863c44b718727c860746568e1d54afd13b2fa71b160f5cd9058fc436217b30
+FROM ubuntu:24.04@sha256:1e622c5f073b4f6bfad6632f2616c7f59ef256e96fe78bf6a595d1dc4376ac02
 LABEL Name=kapparmor
 LABEL Author="Affinito Alessandro"
 
@@ -30,7 +30,7 @@ RUN apt-get update &&\
     apt-get upgrade -y &&\
     apt-get install --no-install-recommends --yes apparmor apparmor-utils &&\
     rm -rf /var/lib/apt/lists/* &&\
-    mkdir --parent --verbose /etc/apparmor.d/custom 
+    mkdir --parent --verbose /etc/apparmor.d/custom
 
 COPY --from=builder /go/bin/app /app/
 COPY ./charts/kapparmor/profiles /app/profiles/

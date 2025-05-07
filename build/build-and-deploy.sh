@@ -4,8 +4,8 @@ set -e
 . ./build/build-app.sh
 . ./config/secrets
 
-echo $GHCR_TOKEN | docker login -u "$(git config user.email)" --password-stdin ghcr.io
-docker push ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev
+# echo $GHCR_TOKEN | docker login -u "$(git config user.email)" --password-stdin ghcr.io
+# docker push ghcr.io/tuxerrante/kapparmor:${APP_VERSION}_dev
 
 # Install the chart from the local directory
 helm upgrade kapparmor \
