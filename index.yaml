@@ -22,7 +22,7 @@ entries:
       name: kapparmor
       type: application
       urls:
-        - https://tuxerrante.github.io/kapparmor/kapparmor-0.1.7.tgz
+        - https://github.com/tuxerrante/kapparmor/releases/download/kapparmor-0.1.7/kapparmor-0.1.7.tgz
       version: 0.1.7
     - apiVersion: v2
       appVersion: 0.1.6
