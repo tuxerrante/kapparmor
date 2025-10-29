@@ -39,7 +39,6 @@ link /etc/sysconfig/foo -> /etc/foo.conf,
 )
 
 func TestHasTheSameContent(t *testing.T) {
-
 	fs := fstest.MapFS{
 		"foo.profile":         {Data: []byte(testProfileData)},
 		"foo.profile.copy":    {Data: []byte(testProfileData)},

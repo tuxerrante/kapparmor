@@ -17,7 +17,7 @@ coverage:
         informational: true
 
 fixes:
-  - "github.com/tuxerrante/kapparmor/::github.com/tuxerrante/kapparmor/go/src/app/" 
+  - "github.com/tuxerrante/kapparmor/::github.com/tuxerrante/kapparmor/go/src/app/"
 
 # Disable codecov annotations in Github files changed tab in PRs.
 # https://docs.codecov.com/docs/github-checks#disabling-github-checks-patch-annotations-via-yaml

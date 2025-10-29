@@ -53,16 +53,16 @@ func preFlightChecksInit(t *testing.T) *os.File {
 		t.Fatalf("failed to create temporary file: %v", err)
 	}
 
-	PROFILER_FULL_PATH = path.Join(f.Name())
+	ProfilerFullPath = path.Join(f.Name())
 
 	// Create fake apparmor config dir
-	ETC_APPARMORD = path.Join("profile_test_samples/positive_tests")
-	if err := os.MkdirAll(ETC_APPARMORD, 0777); err != nil {
+	EtcApparmord = path.Join("profile_test_samples/positive_tests")
+	if err := os.MkdirAll(EtcApparmord, 0o750); err != nil {
 		t.Fatalf("failed to create temporary dir: %v", err)
 	}
-	CONFIGMAP_PATH = ETC_APPARMORD
-	KERNEL_PATH = ETC_APPARMORD
-	POLL_TIME_ARG = "3"
+	ConfigmapPath = EtcApparmord
+	KernelPath = EtcApparmord
+	PollTimeArg = "3"
 
 	return f
 }

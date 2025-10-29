@@ -1,0 +1,83 @@
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ".*\\.md$"
+      - id: end-of-file-fixer
+      - id: check-yaml
+        exclude: ^charts/kapparmor/templates/.*
+      - id: check-added-large-files
+      - id: check-merge-conflict
+
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: v9.23.0
+    hooks:
+      - id: commitlint
+        stages: [commit-msg]
+        additional_dependencies: ['@commitlint/config-conventional']
+        args: ['--config', '.commitlint.config.js']
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks
+        args: ["--config", ".gitleaks.toml", "--redact"]
+        verbose: true
+
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v2.5.0
+    hooks:
+      - id: golangci-lint
+        args: ["-c", ".golangci.yml", "--timeout=5m"]
+        files: '\.go$'
+        types: [file]
+
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.14.0
+    hooks:
+      - id: hadolint
+        args: ["--failure-threshold", "error"]
+        name: hadolint (Docker)
+        language: docker_image
+        entry: ghcr.io/hadolint/hadolint:latest hadolint
+        files: (^|/)(Dockerfile([^/]*))$
+        stages: [pre-commit]
+
+  - repo: local
+    hooks:
+      - id: version-check
+        name: Check versions consistency
+        entry: bash build/check_versions.sh
+        language: system
+        files: ^(config/config|charts/kapparmor/Chart\.yaml)$
+        pass_filenames: false
+     
+      - id: lint-rendered-helm
+        name: Lint rendered Helm chart YAML
+        entry: bash -c "source ./config/config && helm template --set image.tag=${APP_VERSION}_dev charts/kapparmor | yq . > testdata/rendered.yaml && yamllint testdata/rendered.yaml && kubeconform --summary testdata/rendered.yaml"
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: gotidy
+        name: go tidy
+        entry: go mod tidy
+        language: system
+        files: '\.go$'
+        pass_filenames: false
+
+      - id: govet
+        name: go vet
+        entry: go vet ./go/...
+        language: system
+        files: '\.go$'
+        pass_filenames: false
+
+      - id: gotest
+        name: go test
+        entry: bash -c 'go test -v -race -coverprofile=coverage.out -covermode=atomic ./...'
+        language: system
+        files: '\.go$'

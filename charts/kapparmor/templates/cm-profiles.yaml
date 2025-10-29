@@ -9,4 +9,9 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 data:
-{{ (.Files.Glob "profiles/*").AsConfig | indent 2 }}
+{{- $files := (.Files.Glob "profiles/*") }}
+{{- if $files }}
+{{ $files.AsConfig | indent 2 }}
+{{- else }}
+  placeholder: "no profiles found"
+{{- end }}

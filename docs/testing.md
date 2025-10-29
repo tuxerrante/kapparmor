@@ -1,5 +1,15 @@
 You can find here also some indication on how to [set up a Microk8s environment in a Linux virtual machine](./microk8s.md).
 
+### Requirements
+```sh
+sudo apt install yamllint
+
+go install github.com/yannh/kubeconform/cmd/kubeconform@latest
+
+# Check all pre-commit hooks are installed
+pre-commit run --config .pre-commit-config.yaml -v --hook-stage pre-commit --all-files
+```
+
 ### How to initialize this project
 ```sh
 helm create kapparmor

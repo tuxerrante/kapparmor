@@ -6,7 +6,6 @@ import (
 )
 
 func FuzzIsProfileNameCorrect(f *testing.F) {
-
 	f.Fuzz(
 		func(t *testing.T, directory, filename string) {
 			err := IsProfileNameCorrect(directory, filename)
@@ -25,9 +24,9 @@ func FuzzIsProfileNameCorrect(f *testing.F) {
 				}
 				if ok, _ := isValidPath(directory); !ok {
 					return
-				} else {
-					t.Fatal("Error:", err)
 				}
+
+				t.Fatal("Error:", err)
 			}
 		})
 }

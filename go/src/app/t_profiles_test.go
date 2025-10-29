@@ -13,7 +13,6 @@ import (
 		https://documentation.suse.com/sles/15-SP1/html/SLES-all/cha-apparmor-profiles.html#sec-apparmor-profiles-types-unattached
 */
 func TestIsProfileNameCorrect(t *testing.T) {
-
 	const testsDirectory string = "profile_test_samples"
 	t.Parallel()
 

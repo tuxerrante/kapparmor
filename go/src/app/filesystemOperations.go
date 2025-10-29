@@ -1,3 +1,4 @@
+// Package main provides AppArmor profile and filesystem operations for kapparmor.
 package main
 
 import (
@@ -16,51 +17,70 @@ import (
 	"unicode"
 )
 
-func preFlightChecks() (int, error) {
+// isSafePath checks for path traversal and absolute path issues
+func isSafePath(p string) bool {
+	clean := filepath.Clean(p)
+	// Allow relative paths (not starting with /)
+	if !filepath.IsAbs(clean) {
+		return !strings.Contains(clean, "..")
+	}
+	// Allow only specific absolute path prefixes
+	allowedPrefixes := []string{"/app/", "/etc/", "/sys/kernel/security/apparmor/"}
+	for _, prefix := range allowedPrefixes {
+		if strings.HasPrefix(clean, prefix) {
+			return true
+		}
+	}
+	return false
+}
 
+func preFlightChecks() (int, error) {
 	// Environment variable type check
-	POLL_TIME, err := strconv.Atoi(POLL_TIME_ARG)
+	pollTime, err := strconv.Atoi(PollTimeArg)
 	if err != nil {
-		return 0, fmt.Errorf(">> It was not possible to convert env var POLL_TIME %v to an integer.\n%v", POLL_TIME, err)
+		return 0, fmt.Errorf(">> It was not possible to convert env var POLL_TIME %v to an integer.\n%v", pollTime, err)
 	}
-	if POLL_TIME < 1 {
-		log.Printf("warning, POLL_TIME %v too low! Defaulting to 1 second.", POLL_TIME)
-		POLL_TIME = 1
+	if pollTime < 1 {
+		log.Printf("warning, POLL_TIME %v too low! Defaulting to 1 second.", pollTime)
+		pollTime = 1
 	}
-	if POLL_TIME > MAX_ALLOWED_POLLING_TIME {
-		return 0, fmt.Errorf(">> Too high value for POLL_TIME (%v). Please set a number between 0 and %d", POLL_TIME, MAX_ALLOWED_POLLING_TIME)
+	if pollTime > MaxAllowedPollingTime {
+		return 0, fmt.Errorf(">> Too high value for POLL_TIME (%v). Please set a number between 0 and %d", pollTime, MaxAllowedPollingTime)
 	}
 
 	// Check profiler binary
-	if _, err := os.Stat(PROFILER_FULL_PATH); os.IsNotExist(err) {
+	if _, err := os.Stat(ProfilerFullPath); os.IsNotExist(err) {
 		return 0, err
 	}
 
 	// Check if custom directory exists, creates it otherwise
-	if _, err := os.Stat(ETC_APPARMORD); errors.Is(err, os.ErrNotExist) {
-		err := os.Mkdir(ETC_APPARMORD, os.ModePerm)
+	if _, err := os.Stat(EtcApparmord); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir(EtcApparmord, 0o750)
 		if err != nil {
 			return 0, err
 		}
-		log.Printf("> Directory %s created.", ETC_APPARMORD)
+		log.Printf("> Directory %s created.", EtcApparmord)
 	}
 
-	return POLL_TIME, nil
+	return pollTime, nil
 }
 
 // Compare the byte content of two given files
 // The function supports also an external filesystem for testing and future usages
 func HasTheSameContent(fsys fs.FS, filePath1, filePath2 string) (bool, error) {
-
 	var file1, file2 os.FileInfo
 
 	// Checking files on current filesystem
 	if fsys == nil {
-		fileBytes1, err := os.ReadFile(filePath1)
+		// Validate file paths before reading
+		if !isSafePath(filePath1) || !isSafePath(filePath2) {
+			return false, fmt.Errorf("unsafe file path detected")
+		}
+		fileBytes1, err := os.ReadFile(filePath1) // #nosec G304 -- path validated by isSafePath
 		if err != nil {
 			log.Fatal(err)
 		}
-		fileBytes2, err := os.ReadFile(filePath2)
+		fileBytes2, err := os.ReadFile(filePath2) // #nosec G304 -- path validated by isSafePath
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -99,19 +119,29 @@ func HasTheSameContent(fsys fs.FS, filePath1, filePath2 string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	defer f1.Close()
+	defer func() {
+		err := f1.Close()
+		if err != nil {
+			log.Printf("error closing file1: %v", err)
+		}
+	}()
 
 	f2, err := fsys.Open(file2.Name())
+
 	if err != nil {
 		return false, err
 	}
-	defer f2.Close()
+	defer func() {
+		err := f2.Close()
+		if err != nil {
+			log.Printf("error closing file2: %v", err)
+		}
+	}()
 
 	return compareBytes(f1, f2)
 }
 
 func compareBytes(f1, f2 fs.File) (bool, error) {
-
 	data1, err := io.ReadAll(f1)
 	if err != nil {
 		return false, err
@@ -128,11 +158,9 @@ func compareBytes(f1, f2 fs.File) (bool, error) {
 
 	return true, nil
 }
-
-func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
-
+func areProfilesReadable(folderName string) (bool, map[string]bool) {
 	filenames := map[string]bool{}
-	files, err := os.ReadDir(FOLDER_NAME)
+	files, err := os.ReadDir(folderName)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -142,7 +170,7 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 		return false, nil
 	}
 
-	log.Printf("Found files in %s:\n", FOLDER_NAME)
+	log.Printf("Found files in %s:\n", folderName)
 	for _, file := range files {
 		filename := file.Name()
 		if file.IsDir() {
@@ -153,7 +181,7 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 			continue
 		}
 
-		if err := IsProfileNameCorrect(FOLDER_NAME, filename); err != nil {
+		if err := IsProfileNameCorrect(folderName, filename); err != nil {
 			log.Fatalf("Profile name and filename '%s'are not the same: %s", filename, err)
 		}
 
@@ -166,7 +194,7 @@ func areProfilesReadable(FOLDER_NAME string) (bool, map[string]bool) {
 
 // isProfileNameCorrect returns true if the filename is the same as the profile name
 func IsProfileNameCorrect(directory, filename string) error {
-	var isProfileWordPresent bool = false
+	var isProfileWordPresent = false
 	var fileProfileName string
 
 	// input validation
@@ -178,12 +206,16 @@ func IsProfileNameCorrect(directory, filename string) error {
 	}
 
 	// Check if the file doesn't exist
-	if _, err := os.Stat(path.Join(directory, filename)); errors.Is(err, os.ErrNotExist) {
+	profilePath := path.Join(directory, filename)
+	if !isSafePath(profilePath) {
+		return fmt.Errorf("unsafe file path detected: %s", profilePath)
+	}
+	if _, err := os.Stat(profilePath); errors.Is(err, os.ErrNotExist) {
 		return err
 	}
 
 	// Open the file to get a scanner to search for text later
-	fileReader, err := os.Open(path.Join(directory, filename))
+	fileReader, err := os.Open(profilePath) // #nosec G304 -- path validated by isSafePath
 	if err != nil {
 		return err
 	}
@@ -191,7 +223,7 @@ func IsProfileNameCorrect(directory, filename string) error {
 
 	// Validate the syntax
 	// the first index of a curly bracket should be greater than the first occurrence of "profile"
-	fileBytes, err := os.ReadFile(path.Join(directory, filename))
+	fileBytes, err := os.ReadFile(profilePath) // #nosec G304 -- path validated by isSafePath
 	checkPanic(err)
 
 	profileIndex := bytes.Index(fileBytes, []byte("profile"))
@@ -211,13 +243,18 @@ func IsProfileNameCorrect(directory, filename string) error {
 		// searching for a line with a least three tokens
 		if len(fileProfileNameSlice) < 2 || fileProfileNameSlice[0] != "profile" {
 			continue
-		} else {
-			// If the line starts with 'profile' check the following name
-			fileProfileName = strings.TrimSpace(fileProfileNameSlice[1])
-			isProfileWordPresent = true
-			log.Printf("Found profile name: %s", fileProfileName)
-			break
 		}
+		// If the line starts with 'profile' check the following name
+		fileProfileName = strings.TrimSpace(fileProfileNameSlice[1])
+		isProfileWordPresent = true
+		defer func() {
+			err := fileReader.Close()
+			if err != nil {
+				log.Printf("error closing fileReader: %v", err)
+			}
+		}()
+		log.Printf("Found profile name: %s", fileProfileName)
+		break
 	}
 
 	if !isProfileWordPresent {
@@ -315,10 +352,9 @@ func isCharInSlice(char rune, slice []rune) bool {
 // between the two files. If that fail, copy the file contents from src to dst.
 // Credits: https://stackoverflow.com/a/21067803/3673430
 func CopyFile(src, dst string) error {
-
 	// dst is the destination directory
 	srcFileName := filepath.Base(src)
-	dstCompleteFileName := path.Join(ETC_APPARMORD, srcFileName)
+	dstCompleteFileName := path.Join(dst, srcFileName)
 
 	sfi, err := os.Stat(src)
 	if err != nil {
@@ -357,14 +393,22 @@ func CopyFile(src, dst string) error {
 // destination file exists, all it's contents will be replaced by the contents
 // of the source file.
 func copyFileContents(src, dst string) (err error) {
-	in, err := os.Open(src)
+	if !isSafePath(src) || !isSafePath(dst) {
+		log.Print("unsafe file path detected in copyFileContents")
+		return fmt.Errorf("unsafe file path detected")
+	}
+	in, err := os.Open(src) // #nosec G304 -- path validated by isSafePath
 	if err != nil {
 		log.Print(err)
 		return
 	}
-	defer in.Close()
+	defer func() {
+		if err := in.Close(); err != nil {
+			log.Printf("error closing input file: %v", err)
+		}
+	}()
 
-	out, err := os.Create(dst)
+	out, err := os.Create(dst) // #nosec G304 -- path validated by isSafePath
 	if err != nil {
 		log.Print(err)
 		return

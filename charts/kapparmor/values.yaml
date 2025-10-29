@@ -10,9 +10,9 @@ nameOverride: "kapparmor"
 fullnameOverride: ""
 
 app:
-  profiles_dir: "/app/profiles" 
+  profiles_dir: "/app/profiles"
   poll_time: 60
-  labels: 
+  labels:
 #    costgroup: "test"
 
 service:
