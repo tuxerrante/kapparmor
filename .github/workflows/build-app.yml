@@ -14,7 +14,7 @@ on:
     - cron: '42 0 * * 6' # Refresh image every Sunday at 00:42
 
 env:
-  GO_VERSION: 1.22
+  GO_VERSION: 1.25
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,8 +81,8 @@ jobs:
           fail_ci_if_error: true # optional (default = false)
           verbose: true          # optional (default = false)
 
-      # Any file mutation in the steps that precede the build step will be ignored, 
-      # since the context is based on the Git reference. Use the Path context to remove this restriction. 
+      # Any file mutation in the steps that precede the build step will be ignored,
+      # since the context is based on the Git reference. Use the Path context to remove this restriction.
       # https://github.com/marketplace/actions/build-and-push-docker-images#git-context
       - name: Build and push Docker image
         uses: docker/build-push-action@4a13e500e55cf31b7a5d59a38ab2040ab0f42f56 # v5.1.0
