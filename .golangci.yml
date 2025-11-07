@@ -1,32 +1,56 @@
 version: "2"
 
 linters:
-  enable:
-    - bodyclose
-    - errcheck
-    - gocyclo
-    - gosec
-    - govet
-    - ineffassign
-    - misspell
-    - revive
-    - staticcheck
-    - unused
-    - whitespace
-  disable-all: true
+  default: fast 
+  # enable:
+  #   - bodyclose
+  #   - deadcode
+  #   - depguard
+  #   - errcheck
+  #   - gocyclo
+  #   - gosec
+  #   - gosimple
+  #   - govet
+  #   - ineffassign
+  #   - misspell
+  #   - revive
+  #   - staticcheck
+  #   - stylecheck
+  #   - typecheck
+  #   - unconvert
+  #   - unused
+  #   - whitespace
+  disable:
+    - err113
+    - wsl
+    - varnamelen
+    - cyclop
+  settings:
+    gocyclo:
+      min-complexity: 11
+    gosec:
+      excludes:
+        - G104
+    revive:
+      rules:
+        - name: exported
+          disabled: false
+        - name: package-comments
+          disabled: false
 
-linters-settings:
-  gocyclo:
-    min-complexity: 15
-  gosec:
-    excludes:
-      - G104  # Audit errors not checked
-  revive:
+  exclusions:
     rules:
-      - name: exported
-        disabled: false
-      - name: package-comments
-        disabled: false
+      # Don’t run gosec/govet on *_test.go files
+      - path: (_test\.go$|t_.*\.go$)
+        linters:
+          - errcheck
+          - funlen
+          - gosec
+          - govet
+          - lll
+          - mnd
+          - nestif
+          - varnamelen
 
 formatters:
   enable:
@@ -35,19 +59,17 @@ formatters:
     gofmt:
       simplify: true
       rewrite-rules:
-        - pattern: 'interface{}'
-          replacement: 'any'
+        - pattern: "interface{}"
+          replacement: "any"
 
 run:
   tests: true
   timeout: 5m
 
 issues:
-  exclude-rules:
-    - path: _test\.go$
-      linters:
-        - gosec
-        - govet
-    - path: main.go
-      text: "G104:"  # Excluding error checking in main for brevity
-  max-same-issues: 0
+  max-issues-per-linter: 50
+  max-same-issues: 3
+  new: false
+  fix: false
+  uniq-by-line: true
+  whole-files: false

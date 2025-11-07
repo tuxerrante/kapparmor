@@ -15,6 +15,7 @@
 *.log
 *.sql
 *.bkp
+*.txt
 
 # OS generated files
 .DS_Store
@@ -31,3 +32,8 @@ testdata/
 
 # Secret env vars
 config/secrets
+
+
+#Ignore cursor AI rules
+.cursor\rules\codacy.mdc
+.codacy/cli.sh

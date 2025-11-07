@@ -16,8 +16,8 @@ repos:
     hooks:
       - id: commitlint
         stages: [commit-msg]
-        additional_dependencies: ['@commitlint/config-conventional']
-        args: ['--config', '.commitlint.config.js']
+        additional_dependencies: ["@commitlint/config-conventional"]
+        args: ["--config", ".commitlint.config.js"]
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.28.0
@@ -53,10 +53,10 @@ repos:
         language: system
         files: ^(config/config|charts/kapparmor/Chart\.yaml)$
         pass_filenames: false
-     
+
       - id: lint-rendered-helm
         name: Lint rendered Helm chart YAML
-        entry: bash -c "source ./config/config && helm template --set image.tag=${APP_VERSION}_dev charts/kapparmor | yq . > testdata/rendered.yaml && yamllint testdata/rendered.yaml && kubeconform --summary testdata/rendered.yaml"
+        entry: bash -c "source ./config/config && helm template --set image.tag=${APP_VERSION}-dev charts/kapparmor | yq . > testdata/rendered.yaml && yamllint testdata/rendered.yaml && kubeconform --summary testdata/rendered.yaml"
         language: system
         pass_filenames: false
         always_run: true
