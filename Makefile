@@ -15,6 +15,8 @@ all: fmt vet lint test-coverage docker-build docker-scan
 fmt:
 	@echo "> go fmt"
 	gofmt -s -w src/ 
+	@echo "> shfmt"
+	shfmt --write --simplify -ln bash build/
 
 vet:
 	@echo "> go vet"
