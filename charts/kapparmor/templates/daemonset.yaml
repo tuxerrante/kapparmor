@@ -9,14 +9,18 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
   selector:
     matchLabels:
       {{- include "kapparmor.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
-        container.apparmor.security.beta.kubernetes.io/kapparmor: unconfined
-        {{- with .Values.podAnnotations }}
+        gitCommit: {{ (default .Chart.AppVersion .Values.podAnnotations.gitCommit) | trunc 63 | quote }}
+        {{- with (omit (default dict .Values.podAnnotations) "gitCommit") }} 
           {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
@@ -26,13 +30,17 @@ spec:
         {{- end }}
 
     spec:
+      hostPID: false
+      hostNetwork: false
+      terminationGracePeriodSeconds: 30
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "kapparmor.serviceAccountName" . }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        appArmorProfile:
+          type: "Unconfined"
 
       containers:
         - name: {{ .Chart.Name }}
@@ -67,7 +75,14 @@ spec:
                 configMapKeyRef:
                   name: kapparmor-settings
                   key: POLL_TIME
-
+          livenessProbe:
+            httpGet:
+              port: 8080
+              path: /healthz
+          readinessProbe:
+            httpGet:
+              port: 8080
+              path: /readyz
       volumes:
         - name: kapparmor-profiles
           configMap:
@@ -93,3 +108,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+  

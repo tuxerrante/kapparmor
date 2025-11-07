@@ -11,7 +11,7 @@ fullnameOverride: ""
 
 app:
   profiles_dir: "/app/profiles"
-  poll_time: 60
+  poll_time: 30
   labels:
 #    costgroup: "test"
 
@@ -33,6 +33,7 @@ daemonset:
   labels: {}
 
 podAnnotations: {}
+  # gitCommit: ""
 
 podSecurityContext: {}
   # fsGroup: 2000
