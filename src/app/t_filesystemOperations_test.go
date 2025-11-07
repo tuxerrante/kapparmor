@@ -9,9 +9,11 @@ import (
 
 // https://goplay.tools/snippet/LwP6ggjUkwi
 func Test_preFlightChecks(t *testing.T) {
-	f := preFlightChecksInit(t)
+	cfg, f := preFlightChecksInit(t)
+
 	defer func() {
-		if err := os.Remove(f.Name()); err != nil {
+		err := os.Remove(f.Name())
+		if err != nil {
 			t.Log(err)
 		}
 	}()
@@ -57,11 +59,11 @@ func Test_preFlightChecks(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		PollTimeArg = tt.testingPollTime
-		PollTimeArgInt, errAtoi := strconv.Atoi(PollTimeArg)
+		cfg.PollTimeArg = tt.testingPollTime
+		PollTimeArgInt, errAtoi := strconv.Atoi(cfg.PollTimeArg)
 
 		t.Run(tt.name, func(t *testing.T) {
-			if got, err := preFlightChecks(); got != tt.want {
+			if got, err := preFlightChecks(cfg); got != tt.want {
 				// Input can't be converted to an integer
 				if errAtoi != nil {
 					return
@@ -71,8 +73,9 @@ func Test_preFlightChecks(t *testing.T) {
 					// Expected error for invalid input
 					if got == 0 {
 						return
-						// input out of range
-					} else if PollTimeArgInt > MaxAllowedPollingTime {
+					}
+					// input out of range
+					if PollTimeArgInt > MaxAllowedPollingTime {
 						return
 					}
 

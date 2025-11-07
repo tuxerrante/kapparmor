@@ -17,7 +17,7 @@ sudo usermod -aG docker $USER
 
 # Create mod files in root dir
 go mod init github.com/tuxerrante/kapparmor
-go mod init ./go/src/app/
+go mod init ./src/app/
 ```
 
 ### Test the app locally
@@ -34,7 +34,7 @@ docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kub
   /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
 
 # Replace here a commit id being part of an image tag
-export IMAGE_TAG="0.1.6_dev"
+export IMAGE_TAG="0.1.6-dev"
 helm upgrade kapparmor --install --dry-run \
     --atomic \
     --timeout 30s \
