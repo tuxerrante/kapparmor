@@ -6,15 +6,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- E2E tests  
-    - [ ] Create a new profile
-    - [ ] Update an existing profile
-    - [ ] Remove an existing profile
-    - [ ] Remove a non existing profile
-    - [ ] check current confinement state of the app
-- Add different logging levels
+- 🚀 go 1.25
+- Integration tests  
+    - ✅ Create a new profile
+    - ❌ Update an existing profile
+    - ✅ Remove an existing profile
+    - ✅ Check current confinement state of the app
+- test_on_microk8s.sh - Main test script with:
+    ✅ Use helm chart approach
+    ✅ Fixed MicroK8s status check
+    ✅ Added apparmor to required addons
+    ✅ Rebuilds image with --no-cache if missing
+    ✅ Adds build-time and gitCommit annotations
+    ❌ Skips RBAC
+    ✅ Implements two test cases
+    ✅ Shows logs and events in readable format
+- Switched to structured logging
+- Added different logging levels
+- Increased test coverage
+- Moved global vars to config struct
+- Removed shared signal channel. Moved to timeout based shutdown through context passing.
+- Removed panics to ensure cleanup and graceful shutdown
+- Liveness and Readiness server
+- Filesystem writing operations protected by a mutex
+- Extensive integration testing bash automation 
+
+TODO:
 - Generate signed OCI containers for all architectures
-- Increase test coverage at least to 50%
+- Increase test coverage at least to 60%
 - Implement [open telemetry](https://opentelemetry.io/docs/instrumentation/go/)
 - Refactor directories similarly to [kubernetes-sigs](https://github.com/kubernetes-sigs) structure (eg: go/kapaprmor/app/*.go) or to this [golang standard project layout](https://github.com/golang-standards/project-layout)
 - Refactor code following [Google Go style guide](https://google.github.io/styleguide/go/guide)

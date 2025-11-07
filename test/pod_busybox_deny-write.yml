@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busy-dontwrite
+spec:
+  securityContext:
+    appArmorProfile:
+        type: Localhost
+        localhostProfile: custom.deny-write-outside-home
+ 
+  containers:
+    - name: busy-dontwrite
+      image: busybox
+      command: ["sh", "-c", "echo 'Hello AppArmor!' && sleep 1h"]
+      resources:
+        limits:
+          cpu: 100m
+          memory: 64Mia
+        requests:
+          cpu: 50m
+          memory: 32Mi
+  restartPolicy: Always

@@ -11,4 +11,3 @@ spec:
     command: [ "sh", "-c", "echo 'Hello AppArmor!' && sleep 1h" ]
     resources: {}
   restartPolicy: Always
-

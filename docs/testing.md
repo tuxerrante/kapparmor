@@ -1,5 +1,15 @@
 You can find here also some indication on how to [set up a Microk8s environment in a Linux virtual machine](./microk8s.md).
 
+### Requirements
+```sh
+sudo apt install yamllint
+
+go install github.com/yannh/kubeconform/cmd/kubeconform@latest
+
+# Check all pre-commit hooks are installed
+pre-commit run --config .pre-commit-config.yaml -v --hook-stage pre-commit --all-files
+```
+
 ### How to initialize this project
 ```sh
 helm create kapparmor
@@ -7,7 +17,7 @@ sudo usermod -aG docker $USER
 
 # Create mod files in root dir
 go mod init github.com/tuxerrante/kapparmor
-go mod init ./go/src/app/
+go mod init ./src/app/
 ```
 
 ### Test the app locally
@@ -24,7 +34,7 @@ docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kub
   /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
 
 # Replace here a commit id being part of an image tag
-export IMAGE_TAG="0.1.6_dev"
+export IMAGE_TAG="0.1.6-dev"
 helm upgrade kapparmor --install --dry-run \
     --atomic \
     --timeout 30s \

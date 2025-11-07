@@ -1,0 +1,93 @@
+[allowlist]
+  description = "Global allow list"
+  paths = [
+    '''go.sum''',
+    '''go.mod''',
+    '''package-lock.json''',
+    '''yarn.lock''',
+    '''vendor''',
+    '''node_modules''',
+    '''.git''',
+    '''\.env\.example$''',
+    '''.*_test\.go$'''
+  ]
+
+  regexes = [
+    '''test|example|sample|mock''',
+  ]
+
+# ------------------------
+# Rules
+# ------------------------
+
+[[rules]]
+id = "github-pat"
+description = "GitHub Personal Access Token"
+regex = '''ghp_[0-9a-zA-Z]{36}'''
+tags = ["github", "auth"]
+
+[[rules]]
+id = "github-fine-grained-pat"
+description = "GitHub Fine-Grained PAT"
+regex = '''github_pat_[0-9a-zA-Z_]{82}'''
+tags = ["github", "auth"]
+
+[[rules]]
+id = "github-app-token"
+description = "GitHub App Token"
+regex = '''(ghu|ghs|ghr)_[0-9a-zA-Z]{36}'''
+tags = ["github", "auth"]
+
+[[rules]]
+id = "openai-api-key"
+description = "OpenAI API Key"
+regex = '''sk-[a-zA-Z0-9]{48}'''
+tags = ["openai", "ai", "auth"]
+
+[[rules]]
+id = "copilot-token"
+description = "GitHub Copilot Token"
+regex = '''github_copilot_[a-zA-Z0-9\-_]{80,120}'''
+tags = ["github", "copilot", "ai", "auth"]
+
+[[rules]]
+id = "google-credentials"
+description = "Google service account file"
+regex = '''\"type\": \"service_account\"'''
+tags = ["google", "auth"]
+
+[[rules]]
+id = "aws-access-token"
+description = "AWS Access Token"
+regex = '''(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'''
+tags = ["aws", "auth"]
+
+[[rules]]
+id = "aws-secret-key"
+description = "AWS Secret Key"
+regex = '''(?i)aws(.{0,20})?(?-i)['\"][0-9a-zA-Z\/+]{40}['\"]'''
+tags = ["aws", "auth"]
+
+[[rules]]
+id = "azure-auth"
+description = "Azure auth token"
+regex = '''(?i)azure(.{0,20})?(?-i)['\"][0-9a-zA-Z\/+]{40}['\"]'''
+tags = ["azure", "auth"]
+
+[[rules]]
+id = "private-key"
+description = "Private key"
+regex = '''(?i)-----BEGIN[ A-Z0-9_-]{0,100}PRIVATE KEY( BLOCK)?-----'''
+tags = ["key", "private"]
+
+[[rules]]
+id = "slack-webhook"
+description = "Slack Webhook"
+regex = '''https://hooks.slack.com/services/T[a-zA-Z0-9_]{8}/B[a-zA-Z0-9_]{8}/[a-zA-Z0-9_]{24}'''
+tags = ["slack", "webhook"]
+
+[[rules]]
+id = "docker-auth"
+description = "Docker registry auth"
+regex = '''(?i)(docker)(.{0,20})?['\"][0-9a-zA-Z-_+]{10,50}['\"]'''
+tags = ["docker", "auth"]

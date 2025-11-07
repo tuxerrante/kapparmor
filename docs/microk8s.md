@@ -95,7 +95,7 @@ Otherwise you can run it directly as root on your bash. Remember to take a snaps
 sudo -i
 export POLL_TIME=60
 export PROFILES_DIR=../../../charts/kapparmor/profiles/
-cd kapparmor/go/src/app
+cd kapparmor/src/app
 
 rm /etc/apparmor.d/custom/custom.*
 apparmor_parser --remove --verbose $PROFILES_DIR

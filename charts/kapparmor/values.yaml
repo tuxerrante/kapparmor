@@ -10,9 +10,9 @@ nameOverride: "kapparmor"
 fullnameOverride: ""
 
 app:
-  profiles_dir: "/app/profiles" 
-  poll_time: 60
-  labels: 
+  profiles_dir: "/app/profiles"
+  poll_time: 30
+  labels:
 #    costgroup: "test"
 
 service:
@@ -33,6 +33,7 @@ daemonset:
   labels: {}
 
 podAnnotations: {}
+  # gitCommit: ""
 
 podSecurityContext: {}
   # fsGroup: 2000

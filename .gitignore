@@ -11,15 +11,16 @@
 *.tar.gz
 *.tar.xz
 
-# Ignore all logfiles and databases 
-*.log 
-*.sql 
+# Ignore all logfiles and databases
+*.log
+*.sql
 *.bkp
+*.txt
 
-# OS generated files 
-.DS_Store 
+# OS generated files
+.DS_Store
 
-# Editor configs 
+# Editor configs
 .idea/
 .vscode/
 .errors/
@@ -31,3 +32,8 @@ testdata/
 
 # Secret env vars
 config/secrets
+
+
+#Ignore cursor AI rules
+.cursor\rules\codacy.mdc
+.codacy/cli.sh

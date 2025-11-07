@@ -1,0 +1,75 @@
+version: "2"
+
+linters:
+  default: fast 
+  # enable:
+  #   - bodyclose
+  #   - deadcode
+  #   - depguard
+  #   - errcheck
+  #   - gocyclo
+  #   - gosec
+  #   - gosimple
+  #   - govet
+  #   - ineffassign
+  #   - misspell
+  #   - revive
+  #   - staticcheck
+  #   - stylecheck
+  #   - typecheck
+  #   - unconvert
+  #   - unused
+  #   - whitespace
+  disable:
+    - err113
+    - wsl
+    - varnamelen
+    - cyclop
+  settings:
+    gocyclo:
+      min-complexity: 11
+    gosec:
+      excludes:
+        - G104
+    revive:
+      rules:
+        - name: exported
+          disabled: false
+        - name: package-comments
+          disabled: false
+
+  exclusions:
+    rules:
+      # Don’t run gosec/govet on *_test.go files
+      - path: (_test\.go$|t_.*\.go$)
+        linters:
+          - errcheck
+          - funlen
+          - gosec
+          - govet
+          - lll
+          - mnd
+          - nestif
+          - varnamelen
+
+formatters:
+  enable:
+    - gofmt
+  settings:
+    gofmt:
+      simplify: true
+      rewrite-rules:
+        - pattern: "interface{}"
+          replacement: "any"
+
+run:
+  tests: true
+  timeout: 5m
+
+issues:
+  max-issues-per-linter: 50
+  max-same-issues: 3
+  new: false
+  fix: false
+  uniq-by-line: true
+  whole-files: false
