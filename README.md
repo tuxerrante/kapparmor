@@ -53,6 +53,7 @@ helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag
 - Profile names have to start with `custom.` and to be equal to their filename.
 - Polling time should be a value between 1 and 86400 seconds (24 hours).
 - There could be issues if you start the daemonsets on "dirty" nodes, where some old custom profiles were left after stopping or uninstalling Kapparmor.  
+  - Always delete the pods mounting a given profile before deleting that profile from Kapparmor.
   E.G: By default if you delete a pod all the profiles should be automatically deleted from that node, but the app crashes during the process. 
 
 
