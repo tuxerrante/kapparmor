@@ -8,6 +8,10 @@ Currently only the latest versions of this project is being supported with secur
 | ------- | ------------------ |
 | Latest   | :white_check_mark: |
 
+## Threat modeling
+[Please refer to the **dedicated doc**](./docs/ThreatModel.md).  
+
+From the documented self-assessment, a strong security posture emerges from the overall project architecture.
 
 ## Reporting a Vulnerability
 
