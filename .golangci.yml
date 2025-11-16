@@ -2,6 +2,8 @@ version: "2"
 
 linters:
   default: fast 
+  enable:
+    - depguard
   # enable:
   #   - bodyclose
   #   - deadcode
@@ -31,6 +33,13 @@ linters:
     gosec:
       excludes:
         - G104
+    depguard:
+      rules:
+        Main:
+          allow:
+            - $gostd
+            - github.com/prometheus/client_golang
+            - github.com/tuxerrante/kapparmor/src/app/metrics
     revive:
       rules:
         - name: exported
@@ -40,7 +49,7 @@ linters:
 
   exclusions:
     rules:
-      # Don’t run gosec/govet on *_test.go files
+      # Don't run gosec/govet on *_test.go files
       - path: (_test\.go$|t_.*\.go$)
         linters:
           - errcheck
@@ -51,6 +60,7 @@ linters:
           - mnd
           - nestif
           - varnamelen
+          - testpackage
 
 formatters:
   enable:
