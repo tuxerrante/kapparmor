@@ -24,7 +24,7 @@ RUN cd /builder/src/app &&\
 
 # --- Publish test coverage results
 FROM scratch AS test-coverage
-COPY --from=builder /builder/app/coverage.out .
+COPY --from=builder /builder/src/app/coverage.out .
 
 
 # --- Production image
