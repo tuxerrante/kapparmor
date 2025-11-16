@@ -183,3 +183,37 @@ jobs:
           CR_TOKEN: "${{ env.GITHUB_TOKEN }}"
         with:
           config: cr.yaml
+
+      # Update Helm repository index on gh-pages branch
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v5.0.0
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Update Helm repository index
+        run: |
+          # The cr tool is already available from helm/chart-releaser-action
+          cr index \
+            --owner $(echo ${{ github.repository }} | cut -d'/' -f1) \
+            --git-repo $(echo ${{ github.repository }} | cut -d'/' -f2) \
+            --charts-repo https://tuxerrante.github.io/kapparmor/ \
+            --index-path gh-pages/index.yaml \
+            --pages-branch gh-pages \
+            --push false
+          
+          # Copy docs from main branch to gh-pages if needed
+          cp -f *.md gh-pages/ 2>/dev/null || true
+
+      - name: Commit and push to gh-pages
+        run: |
+          cd gh-pages
+          git add index.yaml *.md
+          
+          # Only commit if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update Helm repository index for release ${{ github.ref_name }}"
+            git push origin gh-pages
+          fi
