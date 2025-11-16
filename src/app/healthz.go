@@ -45,7 +45,9 @@ func startHealthzServer(cfg *AppConfig) {
 		slog.Default().Info("Starting healthz server",
 			slog.Int("port", HealthzPort),
 			slog.String("health_endpoint", "/healthz"),
-			slog.String("ready_endpoint", "/readyz"))
+			slog.String("ready_endpoint", "/readyz"),
+			slog.String("metrics_endpoint", "/metrics"),
+		)
 
 		if err := http.ListenAndServe(fmt.Sprintf(":%d", HealthzPort), nil); err != nil {
 			slog.Default().Error("Healthz server failed", slog.Any("error", err))

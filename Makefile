@@ -8,7 +8,7 @@ COVER := coverage.out
 GOLANGCI_LINT_VERSION ?= v2.6.0
 GOLANGCI_LINT         := $(BIN_DIR)/golangci-lint
 
-.PHONY: all fmt vet lint test test-coverage build docker-build docker-scan helm-lint precommit clean
+.PHONY: all fmt vet lint test test-coverage build docker-build docker-run docker-scan helm-lint precommit clean
 
 all: fmt vet lint test-coverage docker-build docker-scan
 
@@ -38,9 +38,46 @@ test-coverage:
 	@go test -coverprofile=$(COVER) $(PKG)
 	@go tool cover -func=$(COVER) | tail -n 1 || true
 
-docker-build:
+docker-test:
 	@echo "> docker build (test-coverage)"
 	@docker build --target test-coverage --tag "ghcr.io/tuxerrante/$(APP):$(APP_VERSION)-dev" .
+
+docker-build:
+	@echo "> docker build - building production image"
+	@docker build --tag "ghcr.io/tuxerrante/$(APP):$(APP_VERSION)-dev" \
+		--build-arg POLL_TIME=$(POLL_TIME) \
+		--build-arg PROFILES_DIR=/app/profiles \
+		-f Dockerfile \
+		.
+
+docker-run: docker-build
+	@echo "> docker run - testing container startup"
+	@echo "> Detecting environment compatibility..."
+	@if [ -d "/sys/kernel/security" ]; then \
+		echo "> Starting container $(APP) with AppArmor mounts (native Linux)..."; \
+		DOCKER_OPTS="--privileged --init --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security' --mount type=bind,source='/etc',target='/etc'"; \
+	else \
+		echo "> /sys/kernel/security not available (WSL2/Docker Desktop). Running in limited mode..."; \
+		DOCKER_OPTS="--init"; \
+	fi; \
+	docker run --rm $$DOCKER_OPTS \
+		--name "$(APP)-test" \
+		--health-cmd='test -f /proc/self/cmdline' \
+		--health-interval=5s \
+		--health-timeout=3s \
+		--health-retries=3 \
+		"ghcr.io/tuxerrante/$(APP):$(APP_VERSION)-dev" &
+	@sleep 10; \
+	if docker inspect "$(APP)-test" > /dev/null 2>&1; then \
+		echo "> Container is running. Checking logs..."; \
+		docker logs "$(APP)-test" | head -30; \
+		docker stop "$(APP)-test" || docker kill "$(APP)-test"; \
+		echo "> ✓ Container started and ran successfully"; \
+	else \
+		echo "> ✗ Container failed to start"; \
+		docker logs "$(APP)-test" 2>/dev/null || true; \
+		exit 1; \
+	fi
 
 docker-scan:
 	@echo "> docker scout quickview"
