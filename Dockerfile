@@ -5,7 +5,9 @@ WORKDIR /builder/app
 COPY src/app/ .
 COPY go.mod .
 
-RUN go get    -v .           &&\
+RUN apk update &&\
+    apk add --no-cache git   &&\
+    go get    -v .           &&\
     go build  -v -o /go/bin/app .
 
 RUN go test -v -vet off -fuzz=Fuzz -fuzztime=60s -run ^t_fuzz* ./...
