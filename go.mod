@@ -1,4 +1,4 @@
-module github.com/tuxerrante/kapparmor
+module github.com/tuxerrante/kapparmor/src/app
 
 go 1.25
 
