@@ -7,8 +7,10 @@ BIN_DIR := ./.go/bin
 COVER := coverage.out
 GOLANGCI_LINT_VERSION ?= v2.6.0
 GOLANGCI_LINT         := $(BIN_DIR)/golangci-lint
+DEFAULT_LOG_DIR := ./output
 
-.PHONY: all fmt vet lint test test-coverage build docker-build docker-scan helm-lint precommit clean
+.PHONY: all fmt vet lint test test-coverage build docker-build docker-run docker-scan helm-lint precommit clean
+.PHONY: e2e e2e-sideload e2e-case1 e2e-case2 e2e-case3 e2e-help
 
 all: fmt vet lint test-coverage docker-build docker-scan
 
@@ -19,15 +21,21 @@ fmt:
 	shfmt --write --simplify -ln bash build/
 
 vet:
-	@echo "> go vet"
+	@echo -e "\n> go vet"
 	@go vet ./src/...
 
-lint: helm-lint
-	@echo "> golangci-lint"
+py-lint:
+	@echo -e "\n> python linting with flake8"
+	@docker run -ti --rm -v $(CURDIR):/apps alpine/flake8:7.3.0 --ignore E501,W503,F541 --statistics --exit-zero ./
+
+go-lint:
+	@echo -e "\n> golangci-lint"
 	@if [ ! -x $(BIN_DIR)/golangci-lint ]; then \
 		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(BIN_DIR) $(GOLANGCI_LINT_VERSION); \
 	fi
 	@$(GOLANGCI_LINT) run --config .golangci.yml $(PKG)
+
+lint: helm-lint py-lint go-lint
 
 test:
 	@echo "> go test"
@@ -38,9 +46,46 @@ test-coverage:
 	@go test -coverprofile=$(COVER) $(PKG)
 	@go tool cover -func=$(COVER) | tail -n 1 || true
 
-docker-build:
+docker-test:
 	@echo "> docker build (test-coverage)"
 	@docker build --target test-coverage --tag "ghcr.io/tuxerrante/$(APP):$(APP_VERSION)-dev" .
+
+docker-build:
+	@echo "> docker build - building production image"
+	@docker build --tag "ghcr.io/tuxerrante/$(APP):$(APP_VERSION)-dev" \
+		--build-arg POLL_TIME=$(POLL_TIME) \
+		--build-arg PROFILES_DIR=/app/profiles \
+		-f Dockerfile \
+		.
+
+docker-run: docker-build
+	@echo "> docker run - testing container startup"
+	@echo "> Detecting environment compatibility..."
+	@if [ -d "/sys/kernel/security" ]; then \
+		echo "> Starting container $(APP) with AppArmor mounts (native Linux)..."; \
+		DOCKER_OPTS="--privileged --init --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security' --mount type=bind,source='/etc',target='/etc'"; \
+	else \
+		echo "> /sys/kernel/security not available (WSL2/Docker Desktop). Running in limited mode..."; \
+		DOCKER_OPTS="--init"; \
+	fi; \
+	docker run --rm $$DOCKER_OPTS \
+		--name "$(APP)-test" \
+		--health-cmd='test -f /proc/self/cmdline' \
+		--health-interval=5s \
+		--health-timeout=3s \
+		--health-retries=3 \
+		"ghcr.io/tuxerrante/$(APP):$(APP_VERSION)-dev" &
+	@sleep 10; \
+	if docker inspect "$(APP)-test" > /dev/null 2>&1; then \
+		echo "> Container is running. Checking logs..."; \
+		docker logs "$(APP)-test" | head -30; \
+		docker stop "$(APP)-test" || docker kill "$(APP)-test"; \
+		echo "> ✓ Container started and ran successfully"; \
+	else \
+		echo "> ✗ Container failed to start"; \
+		docker logs "$(APP)-test" 2>/dev/null || true; \
+		exit 1; \
+	fi
 
 docker-scan:
 	@echo "> docker scout quickview"
@@ -59,3 +104,71 @@ precommit:
 clean:
 	@rm -f $(COVER)
 	@rm -rf ./.go/bin
+
+# ---- Integration	Tests
+e2e: e2e-help
+	@echo ""
+	@echo "Running E2E tests with all cases..."
+	@mkdir -p ./$(DEFAULT_LOG_DIR)
+	@python3 test/e2e.py --sideload
+
+e2e-sideload:
+	@echo "> e2e tests with image side-loading (no GHCR token needed)"
+	@mkdir -p ./$(DEFAULT_LOG_DIR)
+	@python3 test/e2e.py --sideload
+
+e2e-case1:
+	@echo "> e2e test case 1: Profile Management"
+	@mkdir -p ./$(DEFAULT_LOG_DIR)
+	@python3 test/e2e.py --sideload --run case1
+
+e2e-case2:
+	@echo "> e2e test case 2: In-Use Profile Deletion"
+	@mkdir -p ./$(DEFAULT_LOG_DIR)
+	@python3 test/e2e.py --sideload --run case2
+
+e2e-case3:
+	@echo "> e2e test case 3: Prometheus Metrics"
+	@mkdir -p ./$(DEFAULT_LOG_DIR)
+	@python3 test/e2e.py --sideload --run case3
+
+e2e-help:
+	@echo ""
+	@echo "╔════════════════════════════════════════════════════════════════╗"
+	@echo "║          KappArmor E2E Test Suite - Available Targets          ║"
+	@echo "╚════════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "QUICK START:"
+	@echo "  make e2e              # Run all tests (this help + full suite)"
+	@echo "  make e2e-sideload     # Run all tests with image side-loading"
+	@echo ""
+	@echo "SPECIFIC TEST CASES:"
+	@echo "  make e2e-case1        # Profile Management test"
+	@echo "  make e2e-case2        # In-Use Profile Deletion test"
+	@echo "  make e2e-case3        # Prometheus Metrics validation test"
+	@echo ""
+	@echo "DIRECT PYTHON OPTIONS (requires: python3 test/e2e.py):"
+	@echo "  --sideload            # Side-load image (no GHCR token needed)"
+	@echo "  --skip-build          # Skip Docker image build"
+	@echo "  --run {all|case1|case2|case3} # Run specific test cases"
+	@echo "  --target-ns NS        # Namespace for KappArmor (default: security)"
+	@echo "  --test-ns NS          # Namespace for test pods (default: kapparmor-test)"
+	@echo "  --chart PATH          # Path to Helm chart (default: charts/kapparmor)"
+	@echo "  --log-file PATH       # Custom log file location"
+	@echo ""
+	@echo "EXAMPLES:"
+	@echo "  python3 test/e2e.py --sideload"
+	@echo "  python3 test/e2e.py --sideload --run case1"
+	@echo "  python3 test/e2e.py --sideload --run case3"
+	@echo "  python3 test/e2e.py --sideload --target-ns security --test-ns kapparmor-test"
+	@echo ""
+	@echo "PREREQUISITES:"
+	@echo "  ✓ MicroK8s 1.30+     (check: microk8s version)"
+	@echo "  ✓ Helm 3.0+          (check: helm version)"
+	@echo "  ✓ Docker             (check: docker version)"
+	@echo "  ✓ Python 3.9+        (check: python3 --version)"
+	@echo "  ✓ config/config file with APP_VERSION, POLL_TIME, etc."
+	@echo ""
+	@echo "DOCUMENTATION:"
+	@echo "  See docs/testing.md for detailed instructions and troubleshooting"
+	@echo ""

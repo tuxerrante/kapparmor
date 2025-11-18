@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func startHealthzServer(cfg *AppConfig) {
@@ -37,11 +39,16 @@ func startHealthzServer(cfg *AppConfig) {
 		}
 	})
 
+	http.Handle("/metrics", promhttp.Handler())
+
 	go func() {
 		slog.Default().Info("Starting healthz server",
 			slog.Int("port", HealthzPort),
 			slog.String("health_endpoint", "/healthz"),
-			slog.String("ready_endpoint", "/readyz"))
+			slog.String("ready_endpoint", "/readyz"),
+			slog.String("metrics_endpoint", "/metrics"),
+		)
+
 		if err := http.ListenAndServe(fmt.Sprintf(":%d", HealthzPort), nil); err != nil {
 			slog.Default().Error("Healthz server failed", slog.Any("error", err))
 		}

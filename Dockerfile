@@ -1,20 +1,30 @@
 # --- build stage
 FROM golang:1.25.3-alpine3.22@sha256:aee43c3ccbf24fdffb7295693b6e33b21e01baec1b2a55acc351fde345e9ec34 AS builder
 
-WORKDIR /builder/app
-COPY src/app/ .
-COPY go.mod .
+WORKDIR /builder
 
-RUN go get    -v .           &&\
+# Copy go.mod and go.sum first for better caching
+COPY go.mod go.sum ./
+COPY src/ ./src/
+
+RUN apk update &&\
+    apk add --no-cache git   &&\
+    cd src/app &&\
+    go get    -v .           &&\
     go build  -v -o /go/bin/app .
 
-RUN go test -v -vet off -fuzz=Fuzz -fuzztime=60s -run ^t_fuzz* ./...
-RUN go test -v -coverprofile=coverage.out -covermode=count ./...
+# Run fuzzing tests only on the main package (not on sub-packages like metrics)
+RUN cd /builder/src/app &&\
+    go test -v -vet off -fuzz=Fuzz -fuzztime=60s -run ^t_fuzz* .
+
+# Run coverage tests on all packages
+RUN cd /builder/src/app &&\
+    go test -v -coverprofile=coverage.out -covermode=count ./...
 
 
 # --- Publish test coverage results
 FROM scratch AS test-coverage
-COPY --from=builder /builder/app/coverage.out .
+COPY --from=builder /builder/src/app/coverage.out .
 
 
 # --- Production image

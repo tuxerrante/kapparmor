@@ -10,11 +10,11 @@ import (
 func Test_main_RunApp_StartsAndStops(t *testing.T) {
 	// Skip if AppArmor not present
 	if _, err := os.Stat("/sys/module/apparmor/parameters/enabled"); os.IsNotExist(err) {
-		t.Skip(`\n\n====================\n
-		WARNING: AppArmor is not available in this environment.\n
-		Some tests were skipped.\n
-		Run tests in a real Linux VM with AppArmor enabled for full coverage.\n
-		====================\n`)
+		t.Skip(`====================
+		WARNING: AppArmor is not available in this environment.
+		Some tests were skipped.
+		Run tests in a real Linux VM with AppArmor enabled for full coverage.
+		====================`)
 	}
 
 	t.Setenv("TESTING", "true")

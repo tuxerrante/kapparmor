@@ -6,8 +6,8 @@ home: https://artifacthub.io
 kubeVersion: ">= 1.23.0-0"
 icon: https://raw.githubusercontent.com/tuxerrante/kapparmor/main/img/kapparmor_logo_64.jpg
 # Respect spaces and double quotes since this will be validated by the test_on_docker script.
-version: "0.3.0"
-appVersion: "0.3.0"
+version: "0.3.1"
+appVersion: "0.3.1"
 
 keywords:
   - kubernetes

@@ -1,0 +1,55 @@
+name: "Update gh-pages with Helm repo index"
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "1. Create app"
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  update-ghpages:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+      
+      - name: Checkout gh-pages
+        uses: actions/checkout@v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: gh-pages
+          path: ghpages
+          fetch-depth: 1
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      # Copy docs from main branch to gh-pages if needed
+      - name: Update docs
+        run: |
+          cp -f ./*.md ghpages/ 2>/dev/null || true
+          cp -f ./docs/*.md ghpages/docs/ 2>/dev/null || true
+
+      - name: Commit and push to gh-pages
+        run: |
+          cd ghpages
+          git add *.md
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update docs for GH pages" 
+            git push origin gh-pages
+          fi
