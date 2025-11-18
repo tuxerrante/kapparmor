@@ -30,6 +30,10 @@ coverage.out
 testdata/
 /go/pkg/
 
+# Python cache
+__pycache__/
+*.pyc
+
 # Secret env vars
 config/secrets
 
