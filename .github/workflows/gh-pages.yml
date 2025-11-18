@@ -47,7 +47,7 @@ jobs:
       - name: Commit and push to gh-pages
         run: |
           cd ghpages
-          git add *.md
+          git add *.md *.png *.jpg
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
