@@ -15,6 +15,7 @@ app:
   labels:
 #    costgroup: "test"
 
+# Required by the servicemonitor when enabled.
 service:
   enabled: false
   type: ClusterIP
@@ -66,3 +67,15 @@ affinity: {}
 
 ingress:
   enabled: false
+
+serviceMonitor:
+  # Enable ServiceMonitor for Prometheus scraping.
+  # For kube-prometheus-stack deployments, you may need to either:
+  # 1. Patch the Prometheus CRD to accept this label, e.g.:
+  # 2. Or use the kube-prom-stack label by setting: --set 'serviceMonitor.labels.release'=kube-prom-stack
+  # 3. Or change the Prometheus serviceMonitorSelector to use an empty selector {} (matches all)
+  enabled: false
+  labels:
+    release: kapparmor
+  interval: 30s
+  scrapeTimeout: 10s
