@@ -8,6 +8,9 @@ on:
     types:
       - completed
 
+permissions:
+  contents: read
+
 jobs:
   update-ghpages:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
