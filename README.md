@@ -1,48 +1,87 @@
 [![1. Create app](https://github.com/tuxerrante/kapparmor/actions/workflows/build-app.yml/badge.svg)](https://github.com/tuxerrante/kapparmor/actions/workflows/build-app.yml)
 [![1. CodeQL](https://github.com/tuxerrante/kapparmor/actions/workflows/codeql.yml/badge.svg)](https://github.com/tuxerrante/kapparmor/actions/workflows/codeql.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tuxerrante/kapparmor)](https://goreportcard.com/report/github.com/tuxerrante/kapparmor)
+[![codecov](https://codecov.io/gh/tuxerrante/kapparmor/branch/main/graph/badge.svg?token=KVCU7EUBJE)](https://codecov.io/gh/tuxerrante/kapparmor) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8391/badge)](https://www.bestpractices.dev/projects/8391)
+
+
 
 # Kapparmor
+<img src="img/kapparmor_logo_no_bg.png" alt="kapparmor logo" width="300" loading="lazy" align="right"/>
+
+- [Kapparmor](#kapparmor)
+  - [Install](#install)
+  - [Constraints](#constraints)
+  - [Testing](#testing)
+  - [Release process](#release-process)
+- [External useful links](#external-useful-links)
+- [Credits](#credits)
+
+<hr width="100%">
 Apparmor-loader project to deploy profiles through a kubernetes daemonset.  
+  
+<img src="./docs/kapparmor-architecture.png" width="100%">
+ 
+This app provide dynamic loading and unloading of [AppArmor profiles](https://ubuntu.com/server/docs/security-apparmor) to a Kubernetes cluster through a configmap.  
+The app doesn't need an operator and it will be managed by a DaemonSet filtering the linux nodes to schedule the app pod.  
+The custom profiles deployed in the configmap will be copied in a directory (`/etc/apparmor.d/custom` by default) since apparmor_parser needs the profiles definitions also to remove them. Once you will deploy a configmap with different profiles, Kapparmor will notice the missing ones and it will remove them from the apparmor cache and from the node directory.  
+If you modify only the content of a profile leaving the same name, Kapparmor should notice it anyway since a byte comparison is done when configmap profiles names and local profiles names match.
 
-This work is inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
-
-![architecture](./docs/kapparmor-architecture.png)
-
-1. Azure pipelines will
+1. The CD pipeline will
 	- deploy a configmap in the security namespace containing all the profiles versioned in the current project
 	- it will apply a daemonset on the linux nodes
-2. The configmap will contain multiple apparmor profiles  
-   -  The custom profiles HAVE to start with the same PROFILE_NAME_PREFIX, currently this defaults to "custom.". 
-   - The name of the file should be the same as the name of the profile.
+2. The configmap will contain multiple apparmor profiles
+    - The custom profiles names HAVE to start with the same PROFILE_NAME_PREFIX, currently this defaults to "custom.". 
+    - The name of the file should be the same as the name of the profile.
 3. The configmap will be polled every POLL_TIME seconds to move them into PROFILES_DIR host path and then enable them.
 
-## Prerequisites
-[Set up a Microk8s environment](./docs/microk8s.md).
+You can view which profiles are loaded on a node by checking the /sys/kernel/security/apparmor/profiles, so its parent will need to be mounted in the pod.
 
-### How to initialize this project again
+This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubernetes/kubernetes/tree/master/test/images/apparmor-loader).
+
+
+## Install
+You can install the helm chart like this
 ```sh
-helm create kapparmor
-sudo usermod -aG docker $USER
+helm repo add tuxerrante https://tuxerrante.github.io/kapparmor
+helm upgrade kapparmor --install --atomic --timeout 120s --debug --set image.tag=pr-16 tuxerrante/kapparmor
 
-# Create mod files in root dir
-go mod init github.com/tuxerrante/kapparmor
-go mod init ./go/src/app/
 ```
 
-### Test the app
-```sh
-# Build and run the container image
-docker build --quiet -t test-kapparmor --build-arg POLL_TIME=60 --build-arg PROFILES_DIR=/app/profiles -f Dockerfile . &&\
-  echo &&\
-  docker run --rm -it --privileged \
-  --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security'  \
-  --mount type=bind,source='/etc',target='/etc'\
-  test-kapparmor
-```
+## Constraints
+- Profiles are validated on the `profile` keyword presence before of a opening curly bracket `{`.  
+  It must be a [unattached profiles](https://documentation.suse.com/sles/15-SP1/html/SLES-all/cha-apparmor-profiles.html#sec-apparmor-profiles-types-unattached).
+- Profile names have to start with `custom.` and to be equal to their filename.
+- Polling time should be a value between 1 and 86400 seconds (24 hours).
+- There could be issues if you start the daemonsets on "dirty" nodes, where some old custom profiles were left after stopping or uninstalling Kapparmor.  
+  - Always delete the pods mounting a given profile before deleting that profile from Kapparmor.
+  E.G: By default if you delete a pod all the profiles should be automatically deleted from that node, but the app crashes during the process. 
+
+
+## Testing
+[There is a whole project meant to be a demo for this one](https://github.com/tuxerrante/kapparmor-demo), have fun.
+
+Or you can find more info in [docs/testing.md](docs/testing.md)
+
+
+
+
+## Release process
+1. Commits and tags [should be signed](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work).  
+2. Update `config/config` file with the right app, chart and go version.  
+3. Do the same in the chart manifest `charts/kapparmor/Chart.yaml`.  
+4. Test it on a local cluster with `./build` scripts and following [docs/testing.md](docs/testing.md) instructions (go test, go lint, helm lint, helm template, helm install dry run...).  
+5. Update the chart Changelog with the most relevant commits of this release, this will automatically fill the release page.  
+6. Open the PR.  
+7. Merge.  
+8. Tag.  
+
 
 
 # External useful links
-- [https://emn178.github.io/online-tools/sha256.html](https://emn178.github.io/online-tools/sha256.html)
-- [https://github.com/udhos/equalfile/blob/v0.3.0/equalfile.go](https://github.com/udhos/equalfile/blob/v0.3.0/equalfile.go)
-- [https://github.com/kubernetes-sigs/security-profiles-operator/](https://github.com/kubernetes-sigs/security-profiles-operator/)
-- [https://github.com/kubernetes/kubernetes/blob/master/test/images/apparmor-loader/loader.go](https://github.com/kubernetes/kubernetes/blob/master/test/images/apparmor-loader/loader.go)
+- [KAppArmor Demo](https://github.com/tuxerrante/kapparmor-demo)
+- [Kubernetes.io tutorials on apparmor](https://kubernetes.io/docs/tutorials/security/apparmor/)
+- [Security Profiles Operator](https://github.com/kubernetes-sigs/security-profiles-operator/)
+- [Kubernetes apparmor-loader](https://github.com/kubernetes/kubernetes/blob/master/test/images/apparmor-loader/loader.go)
+
+# Credits
+- Thanks [@Noblesix960](https://github.com/Noblesix960) for helping improving the logo!
