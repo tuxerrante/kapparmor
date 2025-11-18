@@ -42,12 +42,12 @@ jobs:
         run: |
           cp -f ./*.md ghpages/ 2>/dev/null || true
           cp -f ./docs/*.md ghpages/docs/ 2>/dev/null || true
-          cp -f ./main/img/* ghpages/img/ 2>/dev/null || true
+          cp -f ./img/* ghpages/img/ 2>/dev/null || true
 
       - name: Commit and push to gh-pages
         run: |
           cd ghpages
-          git add *.md *.png *.jpg
+          git add *.md *.png *.jpg || true
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
