@@ -28,7 +28,7 @@ COPY --from=builder /builder/src/app/coverage.out .
 
 
 # --- Production image
-FROM ubuntu:25.04
+FROM ubuntu:questing-20251007
 LABEL Name=kapparmor
 LABEL Author="Affinito Alessandro"
 
