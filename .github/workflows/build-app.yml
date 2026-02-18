@@ -107,7 +107,7 @@ jobs:
       # Security scanner
       # https://github.com/aquasecurity/trivy-action
       - name: Run container image vulnerability scanner
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           # image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
           image-ref: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}"
