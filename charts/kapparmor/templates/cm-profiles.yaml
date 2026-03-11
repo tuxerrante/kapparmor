@@ -9,3 +9,4 @@ metadata:
     {{- toYaml . | nindent 4 }}
     {{- end }}
 data:
+  {{- toYaml .Values.profiles | nindent 2 }}

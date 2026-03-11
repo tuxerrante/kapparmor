@@ -79,3 +79,5 @@ serviceMonitor:
     release: kapparmor
   interval: 30s
   scrapeTimeout: 10s
+
+profiles:
