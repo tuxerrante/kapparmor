@@ -8,5 +8,9 @@ metadata:
     {{- with .Values.app.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
+{{- if .Values.profiles }}
 data:
   {{- toYaml .Values.profiles | nindent 2 }}
+{{- else }}
+data: {}
+{{- end }}
