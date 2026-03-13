@@ -1,0 +1,61 @@
+name: "Publish Helm chart to ghcr.io (OCI)"
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  CHART_PATH: charts/kapparmor
+
+permissions:
+  contents: read
+
+jobs:
+  publish-helm-oci:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install Helm
+        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+
+      - name: Log in to ghcr.io
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_ACTOR: ${{ github.actor }}
+        run: echo "$GH_TOKEN" | helm registry login "$REGISTRY" --username "$GH_ACTOR" --password-stdin
+
+      - name: Extract chart version
+        id: chart
+        run: |
+          version=$(grep '^version:' "$CHART_PATH/Chart.yaml" | awk '{print $2}' | tr -d '"')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Lint chart
+        run: helm lint "$CHART_PATH"
+
+      - name: Package chart
+        run: helm package "$CHART_PATH" --destination .helm-pkg
+
+      - name: Push chart to ghcr.io
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
+        run: helm push ".helm-pkg/kapparmor-${{ steps.chart.outputs.version }}.tgz" "oci://$REGISTRY/$REPO_OWNER/charts"
+
+      - name: Verify published chart
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
+        run: helm show chart "oci://$REGISTRY/$REPO_OWNER/charts/kapparmor" --version "${{ steps.chart.outputs.version }}"
