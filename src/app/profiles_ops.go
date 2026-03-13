@@ -20,7 +20,7 @@ func printLoadedProfiles(p map[string]bool) {
 
 	// Sort alphabetically the profiles and print them
 	slog.Default().Info("Profiles already on this node", slog.Int("count", len(p)))
-	loadedProfileNames := make([]string, len(p))
+	loadedProfileNames := make([]string, 0, len(p))
 	for loadedProfileName := range p {
 		loadedProfileNames = append(loadedProfileNames, loadedProfileName)
 	}

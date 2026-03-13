@@ -172,3 +172,20 @@ func TestMetricsServerHandler(t *testing.T) {
 		t.Error("Il body della risposta non contiene il valore corretto per 'test-server-profilo'")
 	}
 }
+
+// TestProfileUpdated verifies that ProfileUpdated is an alias for ProfileModified.
+func TestProfileUpdated(t *testing.T) {
+	resetMetrics()
+	testNodeName := getNodeNameFromEnv()
+
+	ProfileUpdated("profilo-updated")
+
+	expected := `
+		# HELP kapparmor_profile_operations_total Numero totale di operazioni sui profili (create, modify, delete).
+		# TYPE kapparmor_profile_operations_total counter
+		kapparmor_profile_operations_total{node_name="` + testNodeName + `",operation="modify",profile_name="profilo-updated"} 1
+	`
+	if err := testutil.CollectAndCompare(profileOperations, strings.NewReader(expected), "kapparmor_profile_operations_total"); err != nil {
+		t.Errorf("ProfileUpdated metric mismatch: %v", err)
+	}
+}
