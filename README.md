@@ -160,7 +160,25 @@ sudo aa-status
 
 ### Installation
 
-#### Via Helm (Recommended)
+#### Via Helm OCI (Recommended)
+
+```bash
+# Install directly from ghcr.io (no helm repo add needed)
+helm upgrade kapparmor --install \
+  --namespace kube-system \
+  --atomic \
+  --timeout 120s \
+  oci://ghcr.io/tuxerrante/charts/kapparmor
+
+# Or customize values
+helm upgrade kapparmor --install \
+  --namespace kube-system \
+  --set image.tag=v1.0.0 \
+  --set app.pollTime=30 \
+  oci://ghcr.io/tuxerrante/charts/kapparmor --version 0.3.1
+```
+
+#### Via Helm Repository
 
 ```bash
 # Add the Kapparmor Helm repository
@@ -172,13 +190,6 @@ helm upgrade kapparmor --install \
   --namespace kube-system \
   --atomic \
   --timeout 120s \
-  tuxerrante/kapparmor
-
-# Or customize values
-helm upgrade kapparmor --install \
-  --namespace kube-system \
-  --set image.tag=v1.0.0 \
-  --set app.pollTime=30 \
   tuxerrante/kapparmor
 ```
 
