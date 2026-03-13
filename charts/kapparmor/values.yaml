@@ -80,4 +80,16 @@ serviceMonitor:
   interval: 30s
   scrapeTimeout: 10s
 
-profiles:
+# AppArmor profiles to load into the kapparmor-profiles ConfigMap.
+# Profile names MUST start with "custom." prefix and the key must match
+# the profile name declared inside the profile body.
+# Example:
+#   profiles:
+#     custom.deny-write-outside-home: |
+#       profile custom.deny-write-outside-home flags=(attach_disconnected) {
+#         file,
+#         /home/** rw,
+#         deny /bin/** w,
+#         deny /etc/** w,
+#       }
+profiles: {}
