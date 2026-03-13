@@ -1,0 +1,40 @@
+suite: profiles ConfigMap tests
+templates:
+  - templates/cm-profiles.yaml
+
+tests:
+  - it: should render empty data when no profiles are set
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: data
+          value: {}
+
+  - it: should render profiles from values
+    set:
+      profiles:
+        custom.test-profile: |
+          profile custom.test-profile flags=(attach_disconnected) {
+            file,
+            deny /etc/** w,
+          }
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - isNotEmpty:
+          path: data
+      - matchRegex:
+          path: data["custom.test-profile"]
+          pattern: "profile custom\\.test-profile"
+
+  - it: should reject profiles without custom. prefix
+    set:
+      profiles:
+        bad-profile-name: |
+          profile bad-profile-name {
+            file,
+          }
+    asserts:
+      - failedTemplate:
+          errorMessage: 'Profile name "bad-profile-name" must start with ''custom.'' prefix'

@@ -8,4 +8,14 @@ metadata:
     {{- with .Values.app.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
+{{- if .Values.profiles }}
+{{- range $name, $content := .Values.profiles }}
+{{- if not (hasPrefix "custom." $name) }}
+{{- fail (printf "Profile name %q must start with 'custom.' prefix" $name) }}
+{{- end }}
+{{- end }}
 data:
+  {{- toYaml .Values.profiles | nindent 2 }}
+{{- else }}
+data: {}
+{{- end }}
