@@ -131,13 +131,11 @@ func TestLoadNewProfiles_EmptyConfigmap(t *testing.T) {
 		Logger:           slog.Default(),
 	}
 
-	// Empty configmap → no profiles to apply
+	// Empty configmap → areProfilesReadable returns (false, nil) → loadNewProfiles returns error
 	profiles, err := loadNewProfiles(cfg)
 
-	// An empty configmap returns (false, nil) from areProfilesReadable which
-	// means profilesAreReadable == false → error is returned.
 	if err == nil {
-		t.Log("no error returned for empty configmap (acceptable)")
+		t.Error("expected error for empty configmap (areProfilesReadable returns false)")
 	}
 
 	_ = profiles
@@ -241,11 +239,11 @@ func TestLoadNewProfiles_WithUnloadOrphans(t *testing.T) {
 		Logger:           slog.Default(),
 	}
 
-	// configmap is empty → orphan should be unloaded
+	// configmap is empty → areProfilesReadable returns (false, nil) → error expected
 	_, err := loadNewProfiles(cfg)
-
-	// empty configmap returns error from areProfilesReadable
-	_ = err
+	if err == nil {
+		t.Error("expected error for empty configmap directory")
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -391,16 +389,16 @@ func TestAreProfilesReadable_DirectoryEntry(t *testing.T) {
 		t.Fatalf("mkdir subdir: %v", err)
 	}
 
-	// Only a directory, no regular files → no profiles
+	// Only a directory, no regular files → no profiles.
+	// areProfilesReadable returns (true, {}) because files are present
+	// (the directory counts as an entry) but all are skipped.
 	ok, profiles := areProfilesReadable(tempDir)
 
-	// areProfilesReadable returns true with an empty map (not false)
-	// when only subdirectories are present (they are skipped, not an error).
+	// The directory entry is counted but skipped → function returns true with empty map
 	if !ok {
-		t.Log("ok=false when only subdirectories present (acceptable, len(files)>0 but all skipped)")
+		t.Error("expected ok=true when only subdirectories present (skipped, not an error)")
 	}
 
-	// profiles map should be empty since no regular profile files exist
 	if len(profiles) != 0 {
 		t.Errorf("expected empty profiles map, got %d entries", len(profiles))
 	}
