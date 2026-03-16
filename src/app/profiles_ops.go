@@ -44,7 +44,7 @@ func showProfilesDiff(cfg *AppConfig, filePath1, newProfileName string) {
 	srcHash, srcLines := profileDigest(srcBytes, srcErr)
 	dstHash, dstLines := profileDigest(dstBytes, dstErr)
 
-	slog.Default().Warn("Profile content changed",
+	attrs := []any{
 		slog.String("name", newProfileName),
 		slog.String("src_sha256", srcHash),
 		slog.Int("src_size", len(srcBytes)),
@@ -52,7 +52,15 @@ func showProfilesDiff(cfg *AppConfig, filePath1, newProfileName string) {
 		slog.String("dst_sha256", dstHash),
 		slog.Int("dst_size", len(dstBytes)),
 		slog.Int("dst_lines", dstLines),
-	)
+	}
+	if srcErr != nil {
+		attrs = append(attrs, slog.String("src_error", srcErr.Error()))
+	}
+	if dstErr != nil {
+		attrs = append(attrs, slog.String("dst_error", dstErr.Error()))
+	}
+
+	slog.Default().Warn("Profile content changed", attrs...)
 }
 
 func profileDigest(data []byte, readErr error) (hash string, lines int) {
@@ -61,7 +69,21 @@ func profileDigest(data []byte, readErr error) (hash string, lines int) {
 	}
 	h := sha256.Sum256(data)
 
-	return fmt.Sprintf("%x", h[:8]), bytes.Count(data, []byte("\n")) + 1
+	return fmt.Sprintf("%x", h[:]), countLines(data)
+}
+
+// countLines counts the number of lines in data using wc -l semantics:
+// returns 0 for empty input, counts newlines, and adds 1 if the last
+// line does not end with a newline character.
+func countLines(data []byte) int {
+	if len(data) == 0 {
+		return 0
+	}
+	n := bytes.Count(data, []byte("\n"))
+	if !bytes.HasSuffix(data, []byte("\n")) {
+		n++
+	}
+	return n
 }
 
 // calculateProfileChanges compares desired state (newProfiles) vs current state (customLoadedProfiles).
