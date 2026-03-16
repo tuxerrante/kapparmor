@@ -68,6 +68,47 @@ docker build --quiet -t test \
 
 To test Helm chart installation in a MicroK8s cluster, follow `docs/microk8s.md` instructions if you don't have any local cluster.
 
+## CI integration test (GitHub Actions)
+
+The workflow [`.github/workflows/integration-test.yml`](../.github/workflows/integration-test.yml) runs on every push/PR to `main` and provides **meaningful integration tests** (not just smoke tests) by using the same environment as the production image.
+
+### Why Ubuntu 24.04
+
+- The production image uses **`ubuntu:24.04`** (see [Dockerfile](../Dockerfile)).
+- The workflow uses **`runs-on: ubuntu-24.04`** so the GitHub runner matches that base and has **AppArmor available in the host kernel**.
+- That allows the test to run the kapparmor container with `--privileged` and host mounts and to **verify that a profile is actually loaded** into the host’s AppArmor, not only that the app starts.
+
+### What the workflow does
+
+1. **Builds** the kapparmor image (same Dockerfile as production).
+2. **Checks** that the host has AppArmor enabled (`aa-status --enabled`).
+3. **Runs** the container with:
+   - `--privileged`
+   - Bind-mount of `/sys/kernel/security` (host AppArmor interface)
+   - Bind-mount of `/etc` (so `/etc/apparmor.d/custom` is the host path)
+4. **Smoke test**: hits `/healthz` inside the container.
+5. **Injects** a test profile (`charts/kapparmor/profiles/custom.deny-write-outside-app`) into the container’s `/app/profiles` and waits for the poll cycle.
+6. **Asserts** that the profile appears in **`sudo apparmor_status --show=profiles`** on the host (real profile load into the kernel).
+
+This is the same idea as the local script **`build/test_on_docker.sh`** (privileged container + host mounts + profile injection), but automated in CI.
+
+### Running it locally (same idea)
+
+To reproduce the CI behaviour on a Linux host with AppArmor:
+
+```sh
+# From repo root; requires Docker and sudo
+./build/test_on_docker.sh
+```
+
+Or manually: build the image, run it with the mounts above, copy a profile into `/app/profiles`, wait for `POLL_TIME + 5` seconds, then run `sudo apparmor_status --show=profiles` and confirm the profile is listed.
+
+### When it runs
+
+- **Push** to `main`
+- **Pull requests** targeting `main`
+- **Manual** run via **Actions → Integration test (AppArmor) → Run workflow**
+
 ## E2E Tests on MicroK8s
 
 The E2E test suite validates KappArmor functionality end-to-end on a live Kubernetes cluster.
