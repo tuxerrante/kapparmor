@@ -68,6 +68,10 @@ docker build --quiet -t test \
 
 To test Helm chart installation in a MicroK8s cluster, follow `docs/microk8s.md` instructions if you don't have any local cluster.
 
+## CI integration test (GitHub Actions)
+
+[`.github/workflows/integration-test.yml`](../.github/workflows/integration-test.yml) runs on push/PR to `main` on **ubuntu-24.04** (same as the [Dockerfile](../Dockerfile) base), so the host has AppArmor. It builds the image, runs the container with `--privileged` and host mounts, injects a test profile, and asserts the profile appears in `apparmor_status`. Local equivalent: `./build/test_on_docker.sh`.
+
 ## E2E Tests on MicroK8s
 
 The E2E test suite validates KappArmor functionality end-to-end on a live Kubernetes cluster.

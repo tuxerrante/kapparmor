@@ -1,0 +1,97 @@
+# Integration tests on Ubuntu 24.04 (same as Dockerfile base) so the runner
+# has AppArmor in the kernel. We run the kapparmor container with privileged
+# + host mounts to use the host's AppArmor and verify profile load.
+# See docs/testing.md and build/test_on_docker.sh for local equivalents.
+
+name: Integration test (AppArmor)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  POLL_TIME: 10
+  CONTAINER_NAME: kapparmor-integration
+
+permissions:
+  contents: read
+
+jobs:
+  integration-docker:
+    # Match Dockerfile production stage: ubuntu:24.04 → runner ubuntu-24.04
+    # so AppArmor is available on the host and usable by the privileged container.
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd
+
+      - name: Build image
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294
+        with:
+          file: Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:integration-${{ github.sha }}
+          build-args: |
+            POLL_TIME=${{ env.POLL_TIME }}
+            PROFILES_DIR=/app/profiles
+
+      - name: Verify host AppArmor
+        run: |
+          cat /sys/module/apparmor/parameters/enabled
+          aa-status --enabled || true
+
+      - name: Prepare host for custom profiles
+        run: |
+          sudo mkdir -p /etc/apparmor.d/custom
+          sudo chmod 755 /etc/apparmor.d/custom
+
+      - name: Run kapparmor container (privileged + host AppArmor)
+        run: |
+          docker run -d --rm --privileged --init \
+            --name "${{ env.CONTAINER_NAME }}" \
+            -p 8080:8080 \
+            -e POLL_TIME=${{ env.POLL_TIME }} \
+            --mount type=bind,source=/sys/kernel/security,target=/sys/kernel/security \
+            --mount type=bind,source=/etc,target=/etc \
+            "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:integration-${{ github.sha }}"
+          sleep 5
+          docker ps
+
+      - name: Smoke – healthz
+        run: |
+          curl -sf http://localhost:8080/healthz | grep -q ok
+
+      - name: Inject test profile and wait for poll
+        env:
+          POLL_TIME: ${{ env.POLL_TIME }}
+        run: |
+          docker cp charts/kapparmor/profiles/custom.deny-write-outside-app \
+            "${{ env.CONTAINER_NAME }}:/app/profiles/custom.deny-write-outside-app"
+          sleep $((POLL_TIME + 5))
+
+      - name: Verify profile loaded (host AppArmor)
+        run: |
+          sudo apparmor_status --show=profiles 2>/dev/null | tee /tmp/aa-status.txt
+          grep -q 'custom.deny-write-outside-app' /tmp/aa-status.txt || (echo "Profile not in apparmor_status; app logs:"; docker logs "${{ env.CONTAINER_NAME }}" 2>&1 | tail -60; exit 1)
+
+      - name: Show app logs
+        if: always()
+        run: docker logs "${{ env.CONTAINER_NAME }}" 2>&1 | tail -100
+
+      - name: Stop container
+        if: always()
+        run: docker stop "${{ env.CONTAINER_NAME }}" --time 5 || true
