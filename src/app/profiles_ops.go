@@ -83,7 +83,7 @@ func calculateProfileChanges(cfg *AppConfig, newProfiles map[string]bool, custom
 			contentIsTheSame, err := HasTheSameContent(nil, filePath1, path.Join(cfg.EtcApparmord, newProfileName))
 			if err != nil {
 				// Error checking file contents
-				return nil, nil, fmt.Errorf("error checking content of %q vs %q: %w", filePath1, newProfileName, err)
+				return nil, nil, fmt.Errorf("error checking content of %q vs %q: %%w", filePath1, newProfileName, err)
 			}
 
 			if contentIsTheSame {
@@ -130,7 +130,7 @@ func getLoadedProfiles(cfg *AppConfig) (map[string]bool, map[string]bool, error)
 func getProfilesNamesFromFile(profilesPath, profileNamePrefix string) (map[string]bool, map[string]bool, error) {
 	profilesFile, err := os.Open(profilesPath) // #nosec G304 -- profilesPath is a system path
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to open %s: %w", profilesPath, err)
+		return nil, nil, fmt.Errorf("failed to open %s: %%w", profilesPath, err)
 	}
 
 	defer func() {
@@ -189,7 +189,7 @@ func execApparmor(cfg *AppConfig, args ...string) error {
 			slog.Default().Error("apparmor_parser stderr", slog.String("stderr", stderr.String()))
 		}
 
-		return fmt.Errorf("error loading profile >> %w >> %v", err, stderr)
+		return fmt.Errorf("error loading profile >> %%w >> %%v", err, stderr)
 	}
 
 	return nil
