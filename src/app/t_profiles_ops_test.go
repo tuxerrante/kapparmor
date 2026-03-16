@@ -338,13 +338,22 @@ func TestGetLoadedProfiles_NonexistentFile(t *testing.T) {
 	}
 }
 
-// TestGetNewProfiles_NonexistentDir tests with missing config directory.
-// Note: This test is commented out because areProfilesReadable calls os.Exit(1) on error,
-// which would crash the test. In production, the directory should always exist or the app
-// shouldn't start.
-func TestGetNewProfiles_NonexistentDir_Skipped(t *testing.T) {
-	// Skip this test - areProfilesReadable calls os.Exit on error
-	t.Skip("areProfilesReadable calls os.Exit(1) for nonexistent directories")
+// TestGetNewProfiles_NonexistentDir tests that a missing config directory
+// returns (false, nil) instead of crashing the process.
+func TestGetNewProfiles_NonexistentDir(t *testing.T) {
+	t.Parallel()
+
+	cfg := &AppConfig{
+		ConfigmapPath: "/nonexistent/path/that/does/not/exist",
+	}
+
+	readable, profiles := getNewProfiles(cfg)
+	if readable {
+		t.Error("expected readable=false for nonexistent directory")
+	}
+	if profiles != nil {
+		t.Errorf("expected nil profiles for nonexistent directory, got %v", profiles)
+	}
 }
 
 // TestExecApparmor_Success tests successful apparmor_parser execution.
