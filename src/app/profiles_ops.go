@@ -37,9 +37,9 @@ func printLoadedProfiles(p map[string]bool) {
 // showProfilesDiff logs metadata about changed profiles without exposing full content.
 // Full content is redacted to prevent information disclosure (threat T7).
 func showProfilesDiff(cfg *AppConfig, filePath1, newProfileName string) {
-	srcBytes, srcErr := os.ReadFile(filePath1)      // #nosec G304 -- path validated by caller
+	srcBytes, srcErr := os.ReadFile(filePath1) // #nosec G304 -- path validated by caller
 	dstPath := path.Join(cfg.EtcApparmord, newProfileName)
-	dstBytes, dstErr := os.ReadFile(dstPath)         // #nosec G304 -- path validated by caller
+	dstBytes, dstErr := os.ReadFile(dstPath) // #nosec G304 -- path validated by caller
 
 	srcHash, srcLines := profileDigest(srcBytes, srcErr)
 	dstHash, dstLines := profileDigest(dstBytes, dstErr)
