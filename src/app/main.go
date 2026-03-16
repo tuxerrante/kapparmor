@@ -294,7 +294,7 @@ func unloadProfile(cfg *AppConfig, fileName string) error {
 	filePath := path.Join(cfg.EtcApparmord, safeFileName)
 
 	// Check if the file exists first.
-	if _, err := os.Stat(filePath); errors.Is(os.ErrNotExist, err) {
+	if _, err := os.Stat(filePath); errors.Is(err, os.ErrNotExist) {
 		slog.Default().Info("Profile file does not exist, skipping unload", slog.String("profile", filePath))
 
 		return nil // Nothing to do
