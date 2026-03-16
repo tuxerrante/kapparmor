@@ -63,6 +63,7 @@ jobs:
         run: |
           docker run -d --rm --privileged --init \
             --name "${{ env.CONTAINER_NAME }}" \
+            -p 8080:8080 \
             -e POLL_TIME=${{ env.POLL_TIME }} \
             --mount type=bind,source=/sys/kernel/security,target=/sys/kernel/security \
             --mount type=bind,source=/etc,target=/etc \
@@ -72,7 +73,7 @@ jobs:
 
       - name: Smoke – healthz
         run: |
-          docker exec "${{ env.CONTAINER_NAME }}" wget -qO- http://127.0.0.1:8080/healthz | grep -q ok
+          curl -sf http://localhost:8080/healthz | grep -q ok
 
       - name: Inject test profile and wait for poll
         env:
