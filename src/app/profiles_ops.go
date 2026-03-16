@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"log/slog"
 	"os"
@@ -33,16 +34,34 @@ func printLoadedProfiles(p map[string]bool) {
 	}
 }
 
-// showProfilesDiff shows the difference original and current profiles.
+// showProfilesDiff logs metadata about changed profiles without exposing full content.
+// Full content is redacted to prevent information disclosure (threat T7).
 func showProfilesDiff(cfg *AppConfig, filePath1, newProfileName string) {
-	slog.Default().Warn("Content changed, logging diff...", slog.String("name", newProfileName))
-	fileBytes1, _ := os.ReadFile(filePath1)
-	fileBytes2, _ := os.ReadFile(path.Join(cfg.EtcApparmord, newProfileName))
-	slog.Default().Warn("--- SOURCE FILE ---")
-	slog.Default().Warn(string(fileBytes1))
-	slog.Default().Warn("--- DEST FILE   ---")
-	slog.Default().Warn(string(fileBytes2))
-	slog.Default().Warn("--- END DIFF    ---")
+	srcBytes, srcErr := os.ReadFile(filePath1)      // #nosec G304 -- path validated by caller
+	dstPath := path.Join(cfg.EtcApparmord, newProfileName)
+	dstBytes, dstErr := os.ReadFile(dstPath)         // #nosec G304 -- path validated by caller
+
+	srcHash, srcLines := profileDigest(srcBytes, srcErr)
+	dstHash, dstLines := profileDigest(dstBytes, dstErr)
+
+	slog.Default().Warn("Profile content changed",
+		slog.String("name", newProfileName),
+		slog.String("src_sha256", srcHash),
+		slog.Int("src_size", len(srcBytes)),
+		slog.Int("src_lines", srcLines),
+		slog.String("dst_sha256", dstHash),
+		slog.Int("dst_size", len(dstBytes)),
+		slog.Int("dst_lines", dstLines),
+	)
+}
+
+func profileDigest(data []byte, readErr error) (hash string, lines int) {
+	if readErr != nil {
+		return "<read-error>", 0
+	}
+	h := sha256.Sum256(data)
+
+	return fmt.Sprintf("%x", h[:8]), bytes.Count(data, []byte("\n")) + 1
 }
 
 // calculateProfileChanges compares desired state (newProfiles) vs current state (customLoadedProfiles).
