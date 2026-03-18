@@ -10,7 +10,7 @@ RUN go get    -d -v .           &&\
 
 
 # --- Testing image
-FROM ubuntu:25.04
+FROM ubuntu:26.04
 LABEL Name=kapparmor
 LABEL Author="Affinito Alessandro"
 
