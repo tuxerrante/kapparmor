@@ -18,9 +18,9 @@ def run_cmd(cmd):
 
 
 def print_section(title):
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  {title}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
 
 def main():
@@ -166,9 +166,9 @@ def main():
             metrics = resp.read().decode("utf-8")
 
             kapparmor_metrics = [
-                l
-                for l in metrics.split("\n")
-                if "kapparmor_" in l and not l.startswith("#")
+                line
+                for line in metrics.split("\n")
+                if "kapparmor_" in line and not line.startswith("#")
             ]
 
             if kapparmor_metrics:

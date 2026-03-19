@@ -127,14 +127,14 @@ def test_metrics():
             metrics = resp.read().decode("utf-8")
 
             kapparmor_lines = [
-                l
-                for l in metrics.split("\n")
-                if "kapparmor_" in l and not l.startswith("#")
+                line
+                for line in metrics.split("\n")
+                if "kapparmor_" in line and not line.startswith("#")
             ]
             if kapparmor_lines:
                 print(f"[PASS] Found {len(kapparmor_lines)} metric lines on pod:")
-                for l in kapparmor_lines[:10]:  # Show first 10
-                    print(f"       {l}")
+                for line in kapparmor_lines[:10]:  # Show first 10
+                    print(f"       {line}")
             else:
                 print("[WARN] No kapparmor metrics on pod /metrics!")
 
