@@ -36,10 +36,9 @@ func printLoadedProfiles(p map[string]bool) {
 
 // showProfilesDiff logs metadata about changed profiles without exposing full content.
 // Full content is redacted to prevent information disclosure (threat T7).
-func showProfilesDiff(cfg *AppConfig, filePath1, newProfileName string) {
-	srcBytes, srcErr := os.ReadFile(filePath1) // #nosec G304 -- path validated by caller
-	dstPath := path.Join(cfg.EtcApparmord, newProfileName)
-	dstBytes, dstErr := os.ReadFile(dstPath) // #nosec G304 -- path validated by caller
+func showProfilesDiff(cfg *AppConfig, newProfileName string) {
+	srcBytes, srcErr := readProfileBytes(cfg.ConfigmapRoot, cfg.ConfigmapPath, newProfileName)
+	dstBytes, dstErr := readProfileBytes(cfg.EtcRoot, cfg.EtcApparmord, newProfileName)
 
 	srcHash, srcLines := profileDigest(srcBytes, srcErr)
 	dstHash, dstLines := profileDigest(dstBytes, dstErr)
@@ -83,6 +82,7 @@ func countLines(data []byte) int {
 	if !bytes.HasSuffix(data, []byte("\n")) {
 		n++
 	}
+
 	return n
 }
 
@@ -102,19 +102,20 @@ func calculateProfileChanges(cfg *AppConfig, newProfiles map[string]bool, custom
 		if customLoadedProfiles[newProfileName] {
 			slog.Default().Info("Checking profile", slog.String("path", filePath1))
 
-			contentIsTheSame, err := HasTheSameContent(nil, filePath1, path.Join(cfg.EtcApparmord, newProfileName))
-			if err != nil {
-				// Error checking file contents
-				return nil, nil, fmt.Errorf("error checking content of %q vs %q: %w", filePath1, newProfileName, err)
+			srcBytes, errSrc := readProfileBytes(cfg.ConfigmapRoot, cfg.ConfigmapPath, newProfileName)
+			dstBytes, errDst := readProfileBytes(cfg.EtcRoot, cfg.EtcApparmord, newProfileName)
+			if errSrc != nil || errDst != nil {
+				return nil, nil, fmt.Errorf("error checking content of profile %q: configmap: %v; etc: %v",
+					newProfileName, errSrc, errDst)
 			}
 
-			if contentIsTheSame {
+			if profileBytesEqual(srcBytes, dstBytes) {
 				slog.Default().Info("Contents are the same, skipping", slog.String("name", newProfileName))
 
 				continue
 			}
 			slog.Default().Info("Content changed, scheduling replacement", slog.String("name", newProfileName))
-			showProfilesDiff(cfg, filePath1, newProfileName)
+			showProfilesDiff(cfg, newProfileName)
 			metrics.ProfileModified(newProfileName)
 		} else {
 			slog.Default().Info("New profile found, scheduling for load", slog.String("name", newProfileName))
@@ -136,7 +137,7 @@ func calculateProfileChanges(cfg *AppConfig, newProfiles map[string]bool, custom
 
 // It reads the files provided in the ConfigmapPath.
 func getNewProfiles(cfg *AppConfig) (bool, map[string]bool) {
-	return areProfilesReadable(cfg.ConfigmapPath)
+	return areProfilesReadable(cfg)
 }
 
 // It reads a list of profile names from a singe file under KERNEL_PATH.

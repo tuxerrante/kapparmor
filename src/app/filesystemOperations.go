@@ -36,14 +36,20 @@ func isSafePath(p string) bool {
 		}
 	}
 
+	// Allow paths under the OS temp directory (e.g. from testing.TempDir in unit tests).
+	td := filepath.Clean(os.TempDir())
+	if td != "." && strings.HasPrefix(clean, filepath.ToSlash(td)) {
+		return true
+	}
+
 	return false
 }
 
-func preFlightChecks(cfg *AppConfig) (int, error) {
+func preFlightChecks(cfg *AppConfig) (pollTime int, cleanup func(), err error) {
 	// Environment variable type check
-	pollTime, err := strconv.Atoi(cfg.PollTimeArg)
+	pollTime, err = strconv.Atoi(cfg.PollTimeArg)
 	if err != nil {
-		return 0, fmt.Errorf(
+		return 0, nil, fmt.Errorf(
 			">> It was not possible to convert env var POLL_TIME %v to an integer. Error: %v",
 			pollTime,
 			err)
@@ -55,7 +61,7 @@ func preFlightChecks(cfg *AppConfig) (int, error) {
 	}
 
 	if pollTime > MaxAllowedPollingTime {
-		return 0, fmt.Errorf(
+		return 0, nil, fmt.Errorf(
 			">> Too high value for POLL_TIME (%v). Please set a number between 0 and %d",
 			pollTime,
 			MaxAllowedPollingTime)
@@ -76,7 +82,7 @@ func preFlightChecks(cfg *AppConfig) (int, error) {
 		}
 
 		if found == "" {
-			return 0, err
+			return 0, nil, err
 		}
 
 		cfg.ProfilerFullPath = found
@@ -87,13 +93,19 @@ func preFlightChecks(cfg *AppConfig) (int, error) {
 	if _, err := os.Stat(cfg.EtcApparmord); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(cfg.EtcApparmord, rwx_rx_no)
 		if err != nil {
-			return 0, err
+			return 0, nil, err
 		}
 
 		slog.Default().Info("Directory created", slog.String("path", cfg.EtcApparmord))
 	}
 
-	return pollTime, nil
+	if err := openProfileRoots(cfg); err != nil {
+		return 0, nil, err
+	}
+
+	cleanup = func() { closeProfileRoots(cfg) }
+
+	return pollTime, cleanup, nil
 }
 
 // HasTheSameContent compares the byte content of two given files.
@@ -201,10 +213,19 @@ func compareBytes(f1, f2 fs.File) (bool, error) {
 }
 
 // areProfilesReadable checks if all files in the given folder are readable AppArmor profiles.
-func areProfilesReadable(folderName string) (bool, map[string]bool) {
+func areProfilesReadable(cfg *AppConfig) (bool, map[string]bool) {
+	folderName := cfg.ConfigmapPath
 	filenames := map[string]bool{}
 
-	files, err := os.ReadDir(folderName)
+	var files []fs.DirEntry
+	var err error
+
+	if cfg.ConfigmapRoot != nil {
+		files, err = fs.ReadDir(cfg.ConfigmapRoot.FS(), ".")
+	} else {
+		files, err = os.ReadDir(folderName)
+	}
+
 	if err != nil {
 		slog.Default().Error("readdir error", slog.Any("error", err))
 		os.Exit(1)
