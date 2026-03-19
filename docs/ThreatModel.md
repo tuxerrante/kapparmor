@@ -365,17 +365,13 @@ allowedPrefixes := []string{"/app/", "/etc/", "/sys/kernel/security/apparmor/", 
 **Likelihood:** Medium (verbose logging)
 
 **Mitigation Status:** ✅ **MITIGATED**
-- **Control:** Structured logging with explicit field selection (slog)
-- **Evidence:** `main.go` uses typed log fields (no raw dumps):
-  ```go
-  slog.Default().Info("Configuration initialized",
-      slog.String("profiles_dir", config.ConfigmapPath),
-      slog.String("poll_time", config.PollTimeArg))
-  ```
+- **Control:** Structured logging with explicit field selection (slog); profile change events log only non-sensitive metadata.
+- **Evidence:** `main.go` uses typed log fields (no raw dumps). When a profile’s ConfigMap copy differs from the on-disk copy, `showProfilesDiff` logs SHA-256 digests, sizes, and line counts—not rule bodies (`profiles_ops.go`). Regression coverage: `TestShowProfilesDiff_T7_NoContentInLogs`.
+- **Filesystem scope:** ConfigMap and host profile directories are accessed via [`os.Root`](https://pkg.go.dev/os#Root) (`ConfigmapRoot`, `EtcRoot` in `roots.go` / `preFlightChecks`) so opens stay within the mounted trees.
 
-**Residual Risk:** Diff logging shows full file content (`showProfilesDiff`)
+**Residual Risk:** Low—error fields may include OS path strings from read failures; full profile text is not logged.
 
-**Recommendation:** Redact sensitive sections in diffs, log only hashes
+**Recommendation:** (Met) Log hashes/metadata only for diffs; optional hardening: redact path prefixes in logged errors if policy requires.
 
 ---
 
@@ -413,7 +409,7 @@ app:
   maxProfiles: 100
   maxProfileSize: "1MB"
 ```
-Enforce in `areProfilesReadable()` function
+Enforce in `areProfilesReadable(cfg *AppConfig)` (`filesystemOperations.go`)
 
 ---
 
@@ -954,7 +950,7 @@ const (
     MaxProfileSize = 1 * 1024 * 1024 // 1 MB
 )
 
-func areProfilesReadable(folderName string) (bool, map[string]bool) {
+func areProfilesReadable(cfg *AppConfig) (bool, map[string]bool) {
     // ...existing code...
     
     if len(filenames) > MaxProfiles {
