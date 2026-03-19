@@ -57,16 +57,11 @@ func TestPrintLoadedProfiles(t *testing.T) {
 
 // TestShowProfilesDiff tests the profile diff display.
 func TestShowProfilesDiff(t *testing.T) {
-	// Create temporary directory and files
 	tempDir := t.TempDir()
 
-	srcFile := path.Join(tempDir, "src.profile")
-	srcContent := []byte(`profile custom.test flags=(attach_disconnected) {
-  /home/** r,
-  /tmp/** w,
-}`)
-	if err := os.WriteFile(srcFile, srcContent, 0o644); err != nil {
-		t.Fatalf("failed to create test file: %v", err)
+	configDir := path.Join(tempDir, "config")
+	if err := os.Mkdir(configDir, 0o755); err != nil {
+		t.Fatalf("failed to create config dir: %v", err)
 	}
 
 	dstDir := path.Join(tempDir, "dest")
@@ -74,21 +69,31 @@ func TestShowProfilesDiff(t *testing.T) {
 		t.Fatalf("failed to create test directory: %v", err)
 	}
 
-	dstFile := path.Join(dstDir, "test.profile")
+	const profileName = "custom.test"
+	srcContent := []byte(`profile custom.test flags=(attach_disconnected) {
+  /home/** r,
+  /tmp/** w,
+}`)
+	if err := os.WriteFile(path.Join(configDir, profileName), srcContent, 0o644); err != nil {
+		t.Fatalf("failed to create test file: %v", err)
+	}
+
 	dstContent := []byte(`profile custom.test flags=(attach_disconnected) {
   /home/** r,
   /var/** w,
 }`)
-	if err := os.WriteFile(dstFile, dstContent, 0o644); err != nil {
+	if err := os.WriteFile(path.Join(dstDir, profileName), dstContent, 0o644); err != nil {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
 	cfg := &AppConfig{
-		EtcApparmord: dstDir,
+		ConfigmapPath: configDir,
+		EtcApparmord:  dstDir,
 	}
+	testOpenProfileRoots(t, cfg)
 
 	// This should not panic
-	showProfilesDiff(cfg, srcFile, "test.profile")
+	showProfilesDiff(cfg, profileName)
 }
 
 // TestCalculateProfileChanges tests the change calculation logic.
@@ -277,8 +282,13 @@ func TestPrintLogSeparator(t *testing.T) {
 func TestShowProfilesDiff_WithMissingFile(t *testing.T) {
 	tempDir := t.TempDir()
 
-	srcFile := path.Join(tempDir, "src.profile")
-	if err := os.WriteFile(srcFile, []byte("src content"), 0o644); err != nil {
+	configDir := path.Join(tempDir, "config")
+	if err := os.Mkdir(configDir, 0o755); err != nil {
+		t.Fatalf("failed to create config dir: %v", err)
+	}
+
+	const name = "nonexistent.profile"
+	if err := os.WriteFile(path.Join(configDir, name), []byte("src content"), 0o644); err != nil {
 		t.Fatalf("failed to create src file: %v", err)
 	}
 
@@ -288,11 +298,13 @@ func TestShowProfilesDiff_WithMissingFile(t *testing.T) {
 	}
 
 	cfg := &AppConfig{
-		EtcApparmord: dstDir,
+		ConfigmapPath: configDir,
+		EtcApparmord:  dstDir,
 	}
+	testOpenProfileRoots(t, cfg)
 
 	// Should handle missing destination file gracefully
-	showProfilesDiff(cfg, srcFile, "nonexistent.profile")
+	showProfilesDiff(cfg, name)
 }
 
 // TestCalculateProfileChanges_NonexistentProfile tests with missing source file.
@@ -303,6 +315,7 @@ func TestCalculateProfileChanges_NonexistentProfile(t *testing.T) {
 		ConfigmapPath: tempDir,
 		EtcApparmord:  tempDir,
 	}
+	testOpenProfileRoots(t, cfg)
 
 	newProfiles := map[string]bool{
 		"custom.nonexistent": true,
@@ -444,6 +457,7 @@ func TestCalculateProfileChanges_IdenticalContent(t *testing.T) {
 		ConfigmapPath: configDir,
 		EtcApparmord:  destDir,
 	}
+	testOpenProfileRoots(t, cfg)
 
 	newProfiles := map[string]bool{
 		"custom.test": true,
@@ -605,8 +619,11 @@ func TestShowProfilesDiff_T7_NoContentInLogs(t *testing.T) {
 	srcContent := "profile custom.secret {\n  /secret/** r,\n}\n"
 	dstContent := "profile custom.secret {\n  /other/** r,\n}\n"
 
-	srcFile := path.Join(tempDir, "custom.secret")
-	if err := os.WriteFile(srcFile, []byte(srcContent), 0o644); err != nil {
+	configDir := path.Join(tempDir, "config")
+	if err := os.Mkdir(configDir, 0o755); err != nil {
+		t.Fatalf("failed to create config dir: %v", err)
+	}
+	if err := os.WriteFile(path.Join(configDir, "custom.secret"), []byte(srcContent), 0o644); err != nil {
 		t.Fatalf("failed to create src file: %v", err)
 	}
 
@@ -614,8 +631,7 @@ func TestShowProfilesDiff_T7_NoContentInLogs(t *testing.T) {
 	if err := os.Mkdir(dstDir, 0o755); err != nil {
 		t.Fatalf("failed to create dest dir: %v", err)
 	}
-	dstFile := path.Join(dstDir, "custom.secret")
-	if err := os.WriteFile(dstFile, []byte(dstContent), 0o644); err != nil {
+	if err := os.WriteFile(path.Join(dstDir, "custom.secret"), []byte(dstContent), 0o644); err != nil {
 		t.Fatalf("failed to create dst file: %v", err)
 	}
 
@@ -625,8 +641,9 @@ func TestShowProfilesDiff_T7_NoContentInLogs(t *testing.T) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
 	defer slog.SetDefault(originalDefault)
 
-	cfg := &AppConfig{EtcApparmord: dstDir}
-	showProfilesDiff(cfg, srcFile, "custom.secret")
+	cfg := &AppConfig{ConfigmapPath: configDir, EtcApparmord: dstDir}
+	testOpenProfileRoots(t, cfg)
+	showProfilesDiff(cfg, "custom.secret")
 
 	output := buf.String()
 
@@ -658,8 +675,11 @@ func TestShowProfilesDiff_T7_NoContentInLogs(t *testing.T) {
 func TestShowProfilesDiff_T7_ErrorFieldsPresent(t *testing.T) {
 	tempDir := t.TempDir()
 
-	srcFile := path.Join(tempDir, "custom.missing")
-	// Do NOT create the src file so the read will fail.
+	configDir := path.Join(tempDir, "config")
+	if err := os.Mkdir(configDir, 0o755); err != nil {
+		t.Fatalf("failed to create config dir: %v", err)
+	}
+	// Do NOT create custom.missing under config so the read will fail.
 
 	dstDir := path.Join(tempDir, "dest")
 	if err := os.Mkdir(dstDir, 0o755); err != nil {
@@ -671,8 +691,9 @@ func TestShowProfilesDiff_T7_ErrorFieldsPresent(t *testing.T) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
 	defer slog.SetDefault(originalDefault)
 
-	cfg := &AppConfig{EtcApparmord: dstDir}
-	showProfilesDiff(cfg, srcFile, "custom.missing")
+	cfg := &AppConfig{ConfigmapPath: configDir, EtcApparmord: dstDir}
+	testOpenProfileRoots(t, cfg)
+	showProfilesDiff(cfg, "custom.missing")
 
 	output := buf.String()
 

@@ -63,7 +63,12 @@ func Test_preFlightChecks(t *testing.T) {
 		PollTimeArgInt, errAtoi := strconv.Atoi(cfg.PollTimeArg)
 
 		t.Run(tt.name, func(t *testing.T) {
-			if got, err := preFlightChecks(cfg); got != tt.want {
+			got, cleanup, err := preFlightChecks(cfg)
+			if cleanup != nil {
+				defer cleanup()
+			}
+
+			if got != tt.want {
 				// Input can't be converted to an integer
 				if errAtoi != nil {
 					return

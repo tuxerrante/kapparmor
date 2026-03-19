@@ -97,7 +97,7 @@ func TestAreProfilesReadable(t *testing.T) {
 	os.WriteFile(validProfile, content, 0o644)
 
 	t.Run("folder with valid profile", func(t *testing.T) {
-		readable, profiles := areProfilesReadable(tmp)
+		readable, profiles := areProfilesReadable(&AppConfig{ConfigmapPath: tmp})
 		assertBool(t, readable, true)
 
 		if !profiles[testingFileName] {
@@ -107,7 +107,7 @@ func TestAreProfilesReadable(t *testing.T) {
 
 	t.Run("folder with hidden file", func(t *testing.T) {
 		os.WriteFile(filepath.Join(tmp, ".hidden"), []byte("ignored"), 0o644)
-		readable, profiles := areProfilesReadable(tmp)
+		readable, profiles := areProfilesReadable(&AppConfig{ConfigmapPath: tmp})
 		assertBool(t, readable, true)
 
 		if profiles[".hidden"] {
@@ -120,16 +120,26 @@ func TestPreFlightChecks_createsDir(t *testing.T) {
 	t.Parallel()
 
 	tmp := t.TempDir()
+	profilesDir := filepath.Join(tmp, "profiles")
+	_ = os.MkdirAll(profilesDir, 0o755)
+
+	fakeParser := filepath.Join(tmp, "apparmor_parser")
+	if err := os.WriteFile(fakeParser, []byte("#!/bin/sh\nexit 0\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+
 	cfg := &AppConfig{
 		PollTimeArg:       "10",
-		ProfilerFullPath:  "/bin/true", // exists
+		ProfilerFullPath:  fakeParser,
+		ConfigmapPath:     profilesDir,
 		EtcApparmord:      filepath.Join(tmp, "custom"),
-		ProfilerBinFolder: "/sbin",
+		ProfilerBinFolder: filepath.Dir(fakeParser),
 		Logger:            slog.Default(),
 	}
 
-	poll, err := preFlightChecks(cfg)
+	poll, cleanup, err := preFlightChecks(cfg)
 	ok(t, err)
+	defer cleanup()
 
 	if poll != 10 {
 		t.Fatalf("expected poll time 10, got %d", poll)
