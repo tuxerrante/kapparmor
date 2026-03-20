@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 // openProfileRoots opens os.Root handles for the configmap volume and the host
@@ -52,7 +52,7 @@ func readProfileBytes(root *os.Root, basePath, name string) ([]byte, error) {
 	}
 
 	// #nosec G304 -- basePath is configured root; name is a validated profile leaf
-	return os.ReadFile(path.Join(basePath, name))
+	return os.ReadFile(filepath.Join(basePath, name))
 }
 
 // profileBytesEqual mirrors HasTheSameContent trimming semantics for comparing
