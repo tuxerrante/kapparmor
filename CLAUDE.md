@@ -70,6 +70,19 @@ The app is a single Go package (`package main`) in `src/app/`. Key flow:
 - The `TESTING=true` env var enables test-specific behavior (panic recovery, profile printing).
 - Linters like `gosec` and `govet` are excluded for test files (configured in `.golangci.yml`).
 
+## CI Pipeline (GitHub Actions)
+
+Unit tests, fuzz tests, and coverage run **inside the Docker build** (Dockerfile build stage), not as a standalone workflow. The key CI workflows that gate PRs:
+
+- **`build-app.yml`** (`1. Create app`) — Builds the Docker image targeting `test-coverage`, which executes `go test` (with coverage) and fuzz tests during the build. Uploads coverage to Codecov. Runs on pushes to `dev`, `feature/*`, and tags.
+- **`integration-test.yml`** (`Integration test (AppArmor)`) — Builds the full Docker image (which also runs all unit/fuzz tests in the build stage), then runs the container with privileged host AppArmor mounts for smoke and integration testing. **Runs on PRs to `main`** — this is the primary quality gate that blocks merging if unit tests fail.
+- **`golangci-lint.yml`** — Runs `golangci-lint` on PRs and pushes to `main`, `feature/*`, `fix/*`.
+- **`ensure-sha-pinned-actions.yml`** — Validates all GitHub Actions use SHA-pinned references. Runs on PRs and pushes to `main` that touch `.github/workflows/`.
+- **`codeql.yml`** — CodeQL static analysis for Go.
+- **`scorecard.yml`** — OpenSSF Scorecard supply-chain security analysis.
+
+**Important:** Do not create a separate unit test workflow — tests are already executed via the Dockerfile build stage in `build-app.yml` and `integration-test.yml`. Adding a standalone `go test` workflow would be redundant.
+
 ## Configuration
 
 Shared build config lives in `config/config` (APP_VERSION, CHART_VERSION, GO_VERSION, POLL_TIME, HEALTHZPORT). The Makefile sources this file.

@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"log/slog"
 	"os"
@@ -33,16 +34,56 @@ func printLoadedProfiles(p map[string]bool) {
 	}
 }
 
-// showProfilesDiff shows the difference original and current profiles.
-func showProfilesDiff(cfg *AppConfig, filePath1, newProfileName string) {
-	slog.Default().Warn("Content changed, logging diff...", slog.String("name", newProfileName))
-	fileBytes1, _ := os.ReadFile(filePath1)
-	fileBytes2, _ := os.ReadFile(path.Join(cfg.EtcApparmord, newProfileName))
-	slog.Default().Warn("--- SOURCE FILE ---")
-	slog.Default().Warn(string(fileBytes1))
-	slog.Default().Warn("--- DEST FILE   ---")
-	slog.Default().Warn(string(fileBytes2))
-	slog.Default().Warn("--- END DIFF    ---")
+// showProfilesDiff logs metadata about changed profiles without exposing full content.
+// Full content is redacted to prevent information disclosure (threat T7).
+func showProfilesDiff(cfg *AppConfig, newProfileName string) {
+	srcBytes, srcErr := readProfileBytes(cfg.ConfigmapRoot, cfg.ConfigmapPath, newProfileName)
+	dstBytes, dstErr := readProfileBytes(cfg.EtcRoot, cfg.EtcApparmord, newProfileName)
+
+	srcHash, srcLines := profileDigest(srcBytes, srcErr)
+	dstHash, dstLines := profileDigest(dstBytes, dstErr)
+
+	attrs := []any{
+		slog.String("name", newProfileName),
+		slog.String("src_sha256", srcHash),
+		slog.Int("src_size", len(srcBytes)),
+		slog.Int("src_lines", srcLines),
+		slog.String("dst_sha256", dstHash),
+		slog.Int("dst_size", len(dstBytes)),
+		slog.Int("dst_lines", dstLines),
+	}
+	if srcErr != nil {
+		attrs = append(attrs, slog.String("src_error", srcErr.Error()))
+	}
+	if dstErr != nil {
+		attrs = append(attrs, slog.String("dst_error", dstErr.Error()))
+	}
+
+	slog.Default().Warn("Profile content changed", attrs...)
+}
+
+func profileDigest(data []byte, readErr error) (hash string, lines int) {
+	if readErr != nil {
+		return "<read-error>", 0
+	}
+	h := sha256.Sum256(data)
+
+	return fmt.Sprintf("%x", h[:]), countLines(data)
+}
+
+// countLines counts the number of lines in data using wc -l semantics:
+// returns 0 for empty input, counts newlines, and adds 1 if the last
+// line does not end with a newline character.
+func countLines(data []byte) int {
+	if len(data) == 0 {
+		return 0
+	}
+	n := bytes.Count(data, []byte("\n"))
+	if !bytes.HasSuffix(data, []byte("\n")) {
+		n++
+	}
+
+	return n
 }
 
 // calculateProfileChanges compares desired state (newProfiles) vs current state (customLoadedProfiles).
@@ -61,19 +102,20 @@ func calculateProfileChanges(cfg *AppConfig, newProfiles map[string]bool, custom
 		if customLoadedProfiles[newProfileName] {
 			slog.Default().Info("Checking profile", slog.String("path", filePath1))
 
-			contentIsTheSame, err := HasTheSameContent(nil, filePath1, path.Join(cfg.EtcApparmord, newProfileName))
-			if err != nil {
-				// Error checking file contents
-				return nil, nil, fmt.Errorf("error checking content of %q vs %q: %w", filePath1, newProfileName, err)
+			srcBytes, errSrc := readProfileBytes(cfg.ConfigmapRoot, cfg.ConfigmapPath, newProfileName)
+			dstBytes, errDst := readProfileBytes(cfg.EtcRoot, cfg.EtcApparmord, newProfileName)
+			if errSrc != nil || errDst != nil {
+				return nil, nil, fmt.Errorf("error checking content of profile %q: configmap: %v; etc: %v",
+					newProfileName, errSrc, errDst)
 			}
 
-			if contentIsTheSame {
+			if profileBytesEqual(srcBytes, dstBytes) {
 				slog.Default().Info("Contents are the same, skipping", slog.String("name", newProfileName))
 
 				continue
 			}
 			slog.Default().Info("Content changed, scheduling replacement", slog.String("name", newProfileName))
-			showProfilesDiff(cfg, filePath1, newProfileName)
+			showProfilesDiff(cfg, newProfileName)
 			metrics.ProfileModified(newProfileName)
 		} else {
 			slog.Default().Info("New profile found, scheduling for load", slog.String("name", newProfileName))
@@ -95,7 +137,7 @@ func calculateProfileChanges(cfg *AppConfig, newProfiles map[string]bool, custom
 
 // It reads the files provided in the ConfigmapPath.
 func getNewProfiles(cfg *AppConfig) (bool, map[string]bool) {
-	return areProfilesReadable(cfg.ConfigmapPath)
+	return areProfilesReadable(cfg)
 }
 
 // It reads a list of profile names from a singe file under KERNEL_PATH.

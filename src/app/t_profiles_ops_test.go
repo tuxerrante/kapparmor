@@ -1,6 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"errors"
+	"fmt"
+	"log/slog"
 	"os"
 	"path"
 	"strings"
@@ -52,16 +57,11 @@ func TestPrintLoadedProfiles(t *testing.T) {
 
 // TestShowProfilesDiff tests the profile diff display.
 func TestShowProfilesDiff(t *testing.T) {
-	// Create temporary directory and files
 	tempDir := t.TempDir()
 
-	srcFile := path.Join(tempDir, "src.profile")
-	srcContent := []byte(`profile custom.test flags=(attach_disconnected) {
-  /home/** r,
-  /tmp/** w,
-}`)
-	if err := os.WriteFile(srcFile, srcContent, 0o644); err != nil {
-		t.Fatalf("failed to create test file: %v", err)
+	configDir := path.Join(tempDir, "config")
+	if err := os.Mkdir(configDir, 0o755); err != nil {
+		t.Fatalf("failed to create config dir: %v", err)
 	}
 
 	dstDir := path.Join(tempDir, "dest")
@@ -69,21 +69,31 @@ func TestShowProfilesDiff(t *testing.T) {
 		t.Fatalf("failed to create test directory: %v", err)
 	}
 
-	dstFile := path.Join(dstDir, "test.profile")
+	const profileName = "custom.test"
+	srcContent := []byte(`profile custom.test flags=(attach_disconnected) {
+  /home/** r,
+  /tmp/** w,
+}`)
+	if err := os.WriteFile(path.Join(configDir, profileName), srcContent, 0o644); err != nil {
+		t.Fatalf("failed to create test file: %v", err)
+	}
+
 	dstContent := []byte(`profile custom.test flags=(attach_disconnected) {
   /home/** r,
   /var/** w,
 }`)
-	if err := os.WriteFile(dstFile, dstContent, 0o644); err != nil {
+	if err := os.WriteFile(path.Join(dstDir, profileName), dstContent, 0o644); err != nil {
 		t.Fatalf("failed to create test file: %v", err)
 	}
 
 	cfg := &AppConfig{
-		EtcApparmord: dstDir,
+		ConfigmapPath: configDir,
+		EtcApparmord:  dstDir,
 	}
+	testOpenProfileRoots(t, cfg)
 
 	// This should not panic
-	showProfilesDiff(cfg, srcFile, "test.profile")
+	showProfilesDiff(cfg, profileName)
 }
 
 // TestCalculateProfileChanges tests the change calculation logic.
@@ -272,8 +282,13 @@ func TestPrintLogSeparator(t *testing.T) {
 func TestShowProfilesDiff_WithMissingFile(t *testing.T) {
 	tempDir := t.TempDir()
 
-	srcFile := path.Join(tempDir, "src.profile")
-	if err := os.WriteFile(srcFile, []byte("src content"), 0o644); err != nil {
+	configDir := path.Join(tempDir, "config")
+	if err := os.Mkdir(configDir, 0o755); err != nil {
+		t.Fatalf("failed to create config dir: %v", err)
+	}
+
+	const name = "nonexistent.profile"
+	if err := os.WriteFile(path.Join(configDir, name), []byte("src content"), 0o644); err != nil {
 		t.Fatalf("failed to create src file: %v", err)
 	}
 
@@ -283,11 +298,13 @@ func TestShowProfilesDiff_WithMissingFile(t *testing.T) {
 	}
 
 	cfg := &AppConfig{
-		EtcApparmord: dstDir,
+		ConfigmapPath: configDir,
+		EtcApparmord:  dstDir,
 	}
+	testOpenProfileRoots(t, cfg)
 
 	// Should handle missing destination file gracefully
-	showProfilesDiff(cfg, srcFile, "nonexistent.profile")
+	showProfilesDiff(cfg, name)
 }
 
 // TestCalculateProfileChanges_NonexistentProfile tests with missing source file.
@@ -298,6 +315,7 @@ func TestCalculateProfileChanges_NonexistentProfile(t *testing.T) {
 		ConfigmapPath: tempDir,
 		EtcApparmord:  tempDir,
 	}
+	testOpenProfileRoots(t, cfg)
 
 	newProfiles := map[string]bool{
 		"custom.nonexistent": true,
@@ -439,6 +457,7 @@ func TestCalculateProfileChanges_IdenticalContent(t *testing.T) {
 		ConfigmapPath: configDir,
 		EtcApparmord:  destDir,
 	}
+	testOpenProfileRoots(t, cfg)
 
 	newProfiles := map[string]bool{
 		"custom.test": true,
@@ -512,5 +531,176 @@ another invalid line
 
 	if len(customProfiles) != 0 {
 		t.Error("expected empty custom profiles for invalid format")
+	}
+}
+
+// TestCountLines tests the countLines helper with various edge cases.
+func TestCountLines(t *testing.T) {
+	tests := []struct {
+		name  string
+		input []byte
+		want  int
+	}{
+		{name: "empty data", input: []byte{}, want: 0},
+		{name: "single line without newline", input: []byte("hello"), want: 1},
+		{name: "single line with trailing newline", input: []byte("hello\n"), want: 1},
+		{name: "multiple lines with trailing newline", input: []byte("a\nb\nc\n"), want: 3},
+		{name: "multiple lines without trailing newline", input: []byte("a\nb\nc"), want: 3},
+		{name: "only newline", input: []byte("\n"), want: 1},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := countLines(tc.input)
+			if got != tc.want {
+				t.Errorf("countLines(%q) = %d, want %d", tc.input, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestProfileDigest tests the profileDigest function with various inputs.
+func TestProfileDigest(t *testing.T) {
+	t.Run("normal content returns correct full sha256 and line count", func(t *testing.T) {
+		data := []byte("profile custom.test {\n  /tmp/** rw,\n}\n")
+		h := sha256.Sum256(data)
+		expectedHash := fmt.Sprintf("%x", h[:])
+
+		hash, lines := profileDigest(data, nil)
+
+		if hash != expectedHash {
+			t.Errorf("expected full SHA-256 %q, got %q", expectedHash, hash)
+		}
+		if len(hash) != 64 {
+			t.Errorf("expected 64 hex chars for full SHA-256, got %d", len(hash))
+		}
+		if lines != 3 {
+			t.Errorf("expected 3 lines, got %d", lines)
+		}
+	})
+
+	t.Run("empty content returns hash and zero lines", func(t *testing.T) {
+		hash, lines := profileDigest([]byte{}, nil)
+		if hash == "<read-error>" {
+			t.Error("expected valid hash for empty content, not <read-error>")
+		}
+		if len(hash) != 64 {
+			t.Errorf("expected 64 hex chars, got %d", len(hash))
+		}
+		if lines != 0 {
+			t.Errorf("expected 0 lines for empty content, got %d", lines)
+		}
+	})
+
+	t.Run("content with trailing newline counts correctly", func(t *testing.T) {
+		data := []byte("line1\nline2\n")
+		_, lines := profileDigest(data, nil)
+		if lines != 2 {
+			t.Errorf("expected 2 lines for trailing-newline content, got %d", lines)
+		}
+	})
+
+	t.Run("read error returns read-error sentinel and zero lines", func(t *testing.T) {
+		hash, lines := profileDigest(nil, errors.New("permission denied"))
+		if hash != "<read-error>" {
+			t.Errorf("expected <read-error>, got %q", hash)
+		}
+		if lines != 0 {
+			t.Errorf("expected 0 lines on error, got %d", lines)
+		}
+	})
+}
+
+// TestShowProfilesDiff_T7_NoContentInLogs is the T7 security regression test:
+// verifies that showProfilesDiff logs metadata fields but NOT the raw file content.
+func TestShowProfilesDiff_T7_NoContentInLogs(t *testing.T) {
+	tempDir := t.TempDir()
+
+	srcContent := "profile custom.secret {\n  /secret/** r,\n}\n"
+	dstContent := "profile custom.secret {\n  /other/** r,\n}\n"
+
+	configDir := path.Join(tempDir, "config")
+	if err := os.Mkdir(configDir, 0o755); err != nil {
+		t.Fatalf("failed to create config dir: %v", err)
+	}
+	if err := os.WriteFile(path.Join(configDir, "custom.secret"), []byte(srcContent), 0o644); err != nil {
+		t.Fatalf("failed to create src file: %v", err)
+	}
+
+	dstDir := path.Join(tempDir, "dest")
+	if err := os.Mkdir(dstDir, 0o755); err != nil {
+		t.Fatalf("failed to create dest dir: %v", err)
+	}
+	if err := os.WriteFile(path.Join(dstDir, "custom.secret"), []byte(dstContent), 0o644); err != nil {
+		t.Fatalf("failed to create dst file: %v", err)
+	}
+
+	// Capture slog output to a buffer.
+	var buf bytes.Buffer
+	originalDefault := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	defer slog.SetDefault(originalDefault)
+
+	cfg := &AppConfig{ConfigmapPath: configDir, EtcApparmord: dstDir}
+	testOpenProfileRoots(t, cfg)
+	showProfilesDiff(cfg, "custom.secret")
+
+	output := buf.String()
+
+	// Must contain metadata fields.
+	if !strings.Contains(output, "src_sha256") {
+		t.Error("expected log output to contain src_sha256")
+	}
+	if !strings.Contains(output, "dst_sha256") {
+		t.Error("expected log output to contain dst_sha256")
+	}
+	if !strings.Contains(output, "src_size") {
+		t.Error("expected log output to contain src_size")
+	}
+	if !strings.Contains(output, "src_lines") {
+		t.Error("expected log output to contain src_lines")
+	}
+
+	// Must NOT contain actual file content strings (T7 redaction check).
+	if strings.Contains(output, "/secret/**") {
+		t.Error("log output must not contain raw profile content (/secret/**)")
+	}
+	if strings.Contains(output, "/other/**") {
+		t.Error("log output must not contain raw profile content (/other/**)")
+	}
+}
+
+// TestShowProfilesDiff_T7_ErrorFieldsPresent verifies that src_error/dst_error are
+// logged when file reads fail.
+func TestShowProfilesDiff_T7_ErrorFieldsPresent(t *testing.T) {
+	tempDir := t.TempDir()
+
+	configDir := path.Join(tempDir, "config")
+	if err := os.Mkdir(configDir, 0o755); err != nil {
+		t.Fatalf("failed to create config dir: %v", err)
+	}
+	// Do NOT create custom.missing under config so the read will fail.
+
+	dstDir := path.Join(tempDir, "dest")
+	if err := os.Mkdir(dstDir, 0o755); err != nil {
+		t.Fatalf("failed to create dest dir: %v", err)
+	}
+
+	var buf bytes.Buffer
+	originalDefault := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	defer slog.SetDefault(originalDefault)
+
+	cfg := &AppConfig{ConfigmapPath: configDir, EtcApparmord: dstDir}
+	testOpenProfileRoots(t, cfg)
+	showProfilesDiff(cfg, "custom.missing")
+
+	output := buf.String()
+
+	if !strings.Contains(output, "src_error") {
+		t.Error("expected log output to contain src_error when src file is missing")
+	}
+	if !strings.Contains(output, "dst_error") {
+		t.Error("expected log output to contain dst_error when dst file is missing")
 	}
 }

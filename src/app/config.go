@@ -14,6 +14,8 @@ var profileOperationsMutex sync.Mutex
 type AppConfig struct {
 	ConfigmapPath     string
 	EtcApparmord      string
+	ConfigmapRoot     *os.Root // confines reads to configmap mount tree
+	EtcRoot           *os.Root // confines reads/writes to host custom.d dir
 	PollTimeArg       string
 	ProfilerBinFolder string
 	ProfilerFullPath  string

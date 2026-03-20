@@ -778,13 +778,13 @@ EOF
 
 	# Wait for the container status block to exist, or time out
 	log_info "Waiting for pod $pod8_name container status to be populated..."
-  microk8s kubectl wait pod/$pod8_name -n "$TEST_NS" \
+	microk8s kubectl wait pod/$pod8_name -n "$TEST_NS" \
 		--for=jsonpath='{.status.containerStatuses[0].state.waiting.reason}' \
 		--timeout=30s 2>&1 | tee -a "$LOG_FILE" || true
 
 	local pod8_status=$(microk8s kubectl get pod $pod8_name -n "$TEST_NS" \
 		-o jsonpath='{.status.phase}' 2>/dev/null || echo "NotFound")
-  microk8s kubectl get pod $pod8_name -n "$TEST_NS" -o yaml | tee -a "$LOG_FILE" || true 
+	microk8s kubectl get pod $pod8_name -n "$TEST_NS" -o yaml | tee -a "$LOG_FILE" || true
 	# local container_status=$(microk8s kubectl get pod $pod8_name -n "$TEST_NS" \
 	# -o jsonpath='{.status.containerStatuses[0].state.waiting.reason}' 2>/dev/null || echo "")
 	# Get the reason from EITHER the waiting or terminated state

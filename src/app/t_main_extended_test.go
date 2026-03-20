@@ -33,6 +33,7 @@ func TestRunApp_ShutdownImmediately(t *testing.T) {
 		ConfigmapPath:    configmapDir,
 		EtcApparmord:     etcApparmordDir,
 		KernelPath:       kernelPath,
+		PollTimeArg:      "1",
 		ProfilerFullPath: "/nonexistent/parser", // Won't actually be called
 		Logger:           slog.Default(),
 	}
@@ -74,6 +75,7 @@ func TestRunApp_WithValidProfiles(t *testing.T) {
 		ConfigmapPath:    configmapDir,
 		EtcApparmord:     etcApparmordDir,
 		KernelPath:       kernelPath,
+		PollTimeArg:      "1",
 		ProfilerFullPath: "apparmor_parser",
 		Logger:           slog.Default(),
 	}
@@ -108,6 +110,7 @@ func TestPollProfiles_ContextCancellation(t *testing.T) {
 		ConfigmapPath:    configmapDir,
 		EtcApparmord:     etcApparmordDir,
 		KernelPath:       kernelPath,
+		PollTimeArg:      "1",
 		ProfilerFullPath: "apparmor_parser",
 		Logger:           slog.Default(),
 	}

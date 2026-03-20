@@ -26,7 +26,7 @@ vet:
 
 py-lint:
 	@echo -e "\n> python linting with flake8"
-	@docker run -ti --rm -v $(CURDIR):/apps alpine/flake8:7.3.0 --ignore E501,W503,F541 --statistics --exit-zero ./
+	@docker run --rm -v $(CURDIR):/apps -w /apps alpine/flake8:7.3.0 --ignore E501,W503,F541 --statistics --exit-zero ./
 
 go-lint:
 	@echo -e "\n> golangci-lint"

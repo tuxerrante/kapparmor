@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -33,10 +34,12 @@ func main() {
 
 // RunApp starts the poller and handles graceful shutdown.
 // It blocks until a stop signal is received or ctx is canceled.
+//
+//nolint:funlen // linear startup/shutdown; splitting obscures the flow
 func RunApp(parentCtx context.Context, cfg *AppConfig) error {
 	const contextTimeout = 20
 	slog.SetDefault(cfg.Logger)
-	pollTime, err := preFlightChecks(cfg)
+	pollTime, cleanup, err := preFlightChecks(cfg)
 	if err != nil {
 		cfg.Logger.Error("the app can't start",
 			slog.Any("error", err),
@@ -47,6 +50,8 @@ func RunApp(parentCtx context.Context, cfg *AppConfig) error {
 
 		return err
 	}
+	defer cleanup()
+
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
 
@@ -250,7 +255,15 @@ func loadProfile(cfg *AppConfig, profilePath string) error {
 // Remove all custom profiles from the kernel, reading from ETC_APPARMORD folder.
 func unloadAllProfiles(cfg *AppConfig) error {
 	slog.Default().Info("Unloading all custom profiles from kernel and filesystem...")
-	dirEntries, err := os.ReadDir(cfg.EtcApparmord)
+	var dirEntries []fs.DirEntry
+	var err error
+
+	if cfg.EtcRoot != nil {
+		dirEntries, err = fs.ReadDir(cfg.EtcRoot.FS(), ".")
+	} else {
+		dirEntries, err = os.ReadDir(cfg.EtcApparmord)
+	}
+
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			slog.Default().Warn("Custom profile directory does not exist, nothing to unload",
@@ -294,7 +307,14 @@ func unloadProfile(cfg *AppConfig, fileName string) error {
 	filePath := path.Join(cfg.EtcApparmord, safeFileName)
 
 	// Check if the file exists first.
-	if _, err := os.Stat(filePath); errors.Is(os.ErrNotExist, err) {
+	var statErr error
+	if cfg.EtcRoot != nil {
+		_, statErr = cfg.EtcRoot.Stat(safeFileName)
+	} else {
+		_, statErr = os.Stat(filePath)
+	}
+
+	if errors.Is(statErr, os.ErrNotExist) {
 		slog.Default().Info("Profile file does not exist, skipping unload", slog.String("profile", filePath))
 
 		return nil // Nothing to do
@@ -313,7 +333,14 @@ func unloadProfile(cfg *AppConfig, fileName string) error {
 	}
 
 	// 2. Now try to remove the file, even if kernel removal failed
-	if err := os.Remove(filePath); err != nil && !errors.Is(err, os.ErrNotExist) {
+	var err error
+	if cfg.EtcRoot != nil {
+		err = cfg.EtcRoot.Remove(safeFileName)
+	} else {
+		err = os.Remove(filePath)
+	}
+
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		// Log any error *except* "not found".
 		// If it's not found, that's fine.
 		slog.Default().Error("failed to remove profile file from disk",

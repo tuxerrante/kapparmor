@@ -84,6 +84,17 @@ func preFlightChecksInit(t *testing.T) (*AppConfig, *os.File) {
 }
 
 // writeParserScript creates a script that returns the given exit code and writes to stderr if specified.
+// testOpenProfileRoots opens [os.Root] handles for the test config (must set ConfigmapPath and EtcApparmord).
+func testOpenProfileRoots(t *testing.T, cfg *AppConfig) {
+	t.Helper()
+
+	if err := openProfileRoots(cfg); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Cleanup(func() { closeProfileRoots(cfg) })
+}
+
 func writeParserScript(t *testing.T, dir string, exitCode int, writeStderr bool) string {
 	t.Helper()
 

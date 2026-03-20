@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Kapparmor E2E test runner on MicroK8s 
+Kapparmor E2E test runner on MicroK8s
 
 Features:
 - Improved helm deployment with streaming output (no --wait / --atomic)
@@ -967,7 +967,7 @@ class TestSuite:
                 # If Prometheus has ANY kapparmor series, proceed; otherwise fallback
                 # (don't check if all are 0 because new profile hasn't been created yet)
                 try:
-                    prom_healthy = prom_instant_query(local_port, "up")
+                    prom_instant_query(local_port, "up")
                     self.logger.info(
                         "Prometheus is healthy, continuing with metrics tests..."
                     )
