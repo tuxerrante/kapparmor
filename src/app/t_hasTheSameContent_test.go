@@ -159,6 +159,30 @@ func TestCopyFileContents(t *testing.T) {
 	}
 }
 
+func TestAreProfilesReadable_NonexistentDir(t *testing.T) {
+	t.Parallel()
+
+	readable, profiles := areProfilesReadable("/nonexistent/path/abc123")
+	assertBool(t, readable, false)
+	if profiles != nil {
+		t.Fatalf("expected nil profiles for nonexistent dir, got %v", profiles)
+	}
+}
+
+func TestCompareLocalFiles_ReadError(t *testing.T) {
+	t.Parallel()
+
+	tmp := makeSafeDirForTest(t)
+	existing := filepath.Join(tmp, "existing.profile")
+	os.WriteFile(existing, []byte(testProfileData), 0o644)
+
+	missing := filepath.Join(tmp, "missing.profile")
+	_, err := HasTheSameContent(nil, existing, missing)
+	if err == nil {
+		t.Fatal("expected error when comparing with nonexistent file")
+	}
+}
+
 // ---- small edge check: invalid fs path ----.
 type badFS struct{ fs.FS }
 

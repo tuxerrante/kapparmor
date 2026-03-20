@@ -152,7 +152,12 @@ func TestLoadProfile_ErrorHandling(t *testing.T) {
 
 // TestLoadProfile_Success tests successful profile loading (without apparmor_parser).
 func TestLoadProfile_Success(t *testing.T) {
-	tempDir := t.TempDir()
+	// Use /tmp so paths pass isSafePath on all platforms
+	tempDir, err := os.MkdirTemp("/tmp", "test-loadprofile-*")
+	if err != nil {
+		t.Fatalf("mkdirtemp: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
 
 	// Create source profile
 	srcProfile := path.Join(tempDir, "src", "custom.test")
@@ -173,9 +178,7 @@ func TestLoadProfile_Success(t *testing.T) {
 		ProfilerFullPath: "true", // 'true' always succeeds
 	}
 
-	err := loadProfile(cfg, srcProfile)
-
-	if err != nil {
+	if err := loadProfile(cfg, srcProfile); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
 
