@@ -114,13 +114,15 @@ func compareLocalFiles(filePath1, filePath2 string) (bool, error) {
 	fileBytes1, err := os.ReadFile(filePath1) // #nosec G304 -- path validated
 	if err != nil {
 		slog.Default().Error("read file error", slog.Any("error", err))
-		os.Exit(1)
+
+		return false, fmt.Errorf("reading %s: %w", filePath1, err)
 	}
 
 	fileBytes2, err := os.ReadFile(filePath2) // #nosec G304 -- path validated
 	if err != nil {
 		slog.Default().Error("read file error", slog.Any("error", err))
-		os.Exit(1)
+
+		return false, fmt.Errorf("reading %s: %w", filePath2, err)
 	}
 
 	trimmedBytes1 := bytes.TrimSpace(fileBytes1)
@@ -207,7 +209,8 @@ func areProfilesReadable(folderName string) (bool, map[string]bool) {
 	files, err := os.ReadDir(folderName)
 	if err != nil {
 		slog.Default().Error("readdir error", slog.Any("error", err))
-		os.Exit(1)
+
+		return false, nil
 	}
 
 	if len(files) == 0 {
@@ -237,7 +240,8 @@ func areProfilesReadable(folderName string) (bool, map[string]bool) {
 				slog.String("folder", folderName),
 				slog.String("filename", filename),
 				slog.Any("error", err))
-			os.Exit(1)
+
+			return false, nil
 		}
 
 		slog.Default().Info("profile candidate", slog.String("name", filename))
@@ -463,7 +467,8 @@ func CopyFile(src, dst string) error {
 	sfi, err := os.Stat(src)
 	if err != nil {
 		slog.Default().Error("stat src error", slog.Any("error", err))
-		os.Exit(1)
+
+		return fmt.Errorf("CopyFile: stat source %s: %w", src, err)
 	}
 
 	if !sfi.Mode().IsRegular() {
