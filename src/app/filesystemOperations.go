@@ -38,8 +38,10 @@ func isSafePath(p string) bool {
 
 	// Allow paths under the OS temp directory (e.g. from testing.TempDir in unit tests).
 	td := filepath.Clean(os.TempDir())
-	if td != "." && strings.HasPrefix(clean, filepath.ToSlash(td)) {
-		return true
+	if td != "." {
+		if rel, err := filepath.Rel(td, cleanFS); err == nil && !filepath.IsAbs(rel) && !strings.HasPrefix(rel, "..") {
+			return true
+		}
 	}
 
 	return false
