@@ -40,6 +40,7 @@ Kapparmor is a **cloud-native security enforcer** that simplifies AppArmor profi
     - [🔗 External References](#-external-references)
     - [📖 Learning Resources](#-learning-resources)
   - [Release Process](#release-process)
+  - [Contributing](#contributing)
   - [Community \& Support](#community--support)
   - [License](#license)
   - [Credits \& Acknowledgments](#credits--acknowledgments)
@@ -452,11 +453,26 @@ See the **[KAppArmor Demo project](https://github.com/tuxerrante/kapparmor-demo)
 
 ---
 
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- How to report bugs and request features
+- How to set up a development environment
+- Coding standards and testing requirements
+- The pull request process
+
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md).
+
+For security vulnerabilities, see [SECURITY.md](SECURITY.md).
+
+---
+
 ## Community & Support
 
 - 🐛 **Found a bug?** [Open an issue](https://github.com/tuxerrante/kapparmor/issues)
 - 💡 **Feature request?** [Start a discussion](https://github.com/tuxerrante/kapparmor/discussions)
 - 📚 **Need help?** Check the [docs](./docs)
+- 📋 **Changelog:** See [CHANGELOG.md](CHANGELOG.md) for release history
 
 ---
 
