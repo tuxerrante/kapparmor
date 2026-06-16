@@ -93,6 +93,7 @@ func calculateProfileChanges(cfg *AppConfig, newProfiles map[string]bool, custom
 	toUnload []string,
 	err error,
 ) {
+	managedProfiles := 0
 	newProfilesToApply := make([]string, 0, len(newProfiles))
 
 	for newProfileName := range newProfiles {
@@ -100,6 +101,7 @@ func calculateProfileChanges(cfg *AppConfig, newProfiles map[string]bool, custom
 
 		// Does it exist a profile with the same name already loaded?
 		if customLoadedProfiles[newProfileName] {
+			managedProfiles = managedProfiles + 1
 			slog.Default().Info("Checking profile", slog.String("path", filePath1))
 
 			srcBytes, errSrc := readProfileBytes(cfg.ConfigmapRoot, cfg.ConfigmapPath, newProfileName)
@@ -123,6 +125,8 @@ func calculateProfileChanges(cfg *AppConfig, newProfiles map[string]bool, custom
 
 		newProfilesToApply = append(newProfilesToApply, filePath1)
 	}
+
+	metrics.SetProfileCount(managedProfiles)
 
 	loadedProfilesToUnload := make([]string, 0, len(customLoadedProfiles))
 
