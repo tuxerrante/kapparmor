@@ -83,6 +83,8 @@ Unit tests, fuzz tests, and coverage run **inside the Docker build** (Dockerfile
 
 **Important:** Do not create a separate unit test workflow — tests are already executed via the Dockerfile build stage in `build-app.yml` and `integration-test.yml`. Adding a standalone `go test` workflow would be redundant.
 
+**Branch naming for CI matters:** if you need the branch-triggered Docker build and test coverage workflow before merge, use a `feature/*` branch. `build-app.yml` does not run on `fix/*` or `refactor/*` pushes.
+
 ## Configuration
 
 Shared build config lives in `config/config` (APP_VERSION, CHART_VERSION, GO_VERSION, POLL_TIME, HEALTHZPORT). The Makefile sources this file.
