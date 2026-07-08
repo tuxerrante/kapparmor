@@ -101,6 +101,8 @@ func RunApp(parentCtx context.Context, cfg *AppConfig) error {
 	if err := unloadAllProfiles(cfg); err != nil {
 		cfg.Logger.Error("failed to unload all profiles during shutdown", slog.Any("error", err))
 		// Don't return error - attempt best-effort cleanup
+	} else {
+		metrics.SetProfileCount(0)
 	}
 
 	cfg.Logger.Info("The eagle has landed. Over and out.")
@@ -198,39 +200,66 @@ func loadNewProfiles(cfg *AppConfig) ([]string, error) {
 	}
 
 	// 4. Execute apparmor_parser --replace
-	printLogSeparator()
-	slog.Default().Info("Apparmor REPLACE and apply new profiles..")
-
-	// Collect errors.
-	var applyErrors []error
-	for _, profilePath := range newProfilesToApply {
-		if err := loadProfile(cfg, profilePath); err != nil {
-			slog.Default().Error("apply profile error", slog.Any("error", err))
-			applyErrors = append(applyErrors, err)
-		}
-	}
+	applyErrors := applyProfiles(cfg, newProfilesToApply, customLoadedProfiles)
 
 	// 5. Execute apparmor_parser --remove
-	if len(loadedProfilesToUnload) > 0 {
-		printLogSeparator()
-		slog.Default().Info("AppArmor REMOVE orphans profiles..")
-
-		for _, profileFileName := range loadedProfilesToUnload {
-			if err := unloadProfile(cfg, profileFileName); err != nil {
-				slog.Default().Error("remove orphan profile error", slog.Any("error", err))
-				applyErrors = append(applyErrors, err)
-			}
-		}
-	}
+	applyErrors = append(applyErrors, unloadProfiles(cfg, loadedProfilesToUnload)...)
 
 	slog.Default().Info("> Done! > Waiting next poll..")
 	printLogSeparator()
+
+	if err := publishManagedProfileCount(cfg, newProfiles); err != nil {
+		applyErrors = append(applyErrors, err)
+	}
 
 	if len(applyErrors) > 0 {
 		return newProfilesToApply, fmt.Errorf("encountered %d errors during profile operations", len(applyErrors))
 	}
 
 	return newProfilesToApply, nil
+}
+
+func applyProfiles(cfg *AppConfig, profilePaths []string, customLoadedProfiles map[string]bool) []error {
+	printLogSeparator()
+	slog.Default().Info("Apparmor REPLACE and apply new profiles..")
+
+	var applyErrors []error
+	for _, profilePath := range profilePaths {
+		profileName := path.Base(profilePath)
+		isNewProfile := !customLoadedProfiles[profileName]
+
+		if err := loadProfile(cfg, profilePath); err != nil {
+			slog.Default().Error("apply profile error", slog.Any("error", err))
+			applyErrors = append(applyErrors, err)
+
+			continue
+		}
+
+		if isNewProfile {
+			metrics.ProfileCreated(profileName)
+		}
+	}
+
+	return applyErrors
+}
+
+func unloadProfiles(cfg *AppConfig, profileNames []string) []error {
+	if len(profileNames) == 0 {
+		return nil
+	}
+
+	printLogSeparator()
+	slog.Default().Info("AppArmor REMOVE orphans profiles..")
+
+	var unloadErrors []error
+	for _, profileFileName := range profileNames {
+		if err := unloadProfile(cfg, profileFileName); err != nil {
+			slog.Default().Error("remove orphan profile error", slog.Any("error", err))
+			unloadErrors = append(unloadErrors, err)
+		}
+	}
+
+	return unloadErrors
 }
 
 // Load an apparmor profile into the kernel.
@@ -245,11 +274,31 @@ func loadProfile(cfg *AppConfig, profilePath string) error {
 		return fmt.Errorf("failed to copy profile to destination: %w", err)
 	}
 
-	// Extract profile name from path for metrics
-	profileName := path.Base(profilePath)
-	metrics.ProfileCreated(profileName)
+	return nil
+}
+
+func publishManagedProfileCount(cfg *AppConfig, desiredProfiles map[string]bool) error {
+	_, customLoadedProfiles, err := getLoadedProfiles(cfg)
+	if err != nil {
+		return fmt.Errorf("error refreshing existing profiles for metrics: %w", err)
+	}
+
+	delete(customLoadedProfiles, "")
+	metrics.SetProfileCount(countManagedProfiles(desiredProfiles, customLoadedProfiles))
 
 	return nil
+}
+
+func countManagedProfiles(desiredProfiles, customLoadedProfiles map[string]bool) int {
+	managedProfiles := 0
+
+	for profileName := range desiredProfiles {
+		if customLoadedProfiles[profileName] {
+			managedProfiles++
+		}
+	}
+
+	return managedProfiles
 }
 
 // Remove all custom profiles from the kernel, reading from ETC_APPARMORD folder.

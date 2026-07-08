@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.1] - 2025-11
 
+### Changed
+
+- **Managed Profiles Gauge Fix**: `kapparmor_profiles_managed` now reconciles from the post-sync managed profile state, so already-loaded unchanged profiles are counted correctly without double-counting modified profiles.
+
 ### Added
 
 - **Prometheus Metrics Integration**: Complete metrics package enabling observability
