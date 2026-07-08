@@ -44,19 +44,17 @@ func getNodeNameFromEnv() string {
 
 // Metrics setters
 
-// ProfileCreated increments create counter and increments gauge.
+// ProfileCreated increments the create counter.
 func ProfileCreated(p string) {
 	profileOperations.WithLabelValues("create", p).Inc()
-	currentProfiles.Inc()
 }
 
-// ProfileDeleted increments delete counter and decrements gauge.
+// ProfileDeleted increments the delete counter.
 func ProfileDeleted(p string) {
 	profileOperations.WithLabelValues("delete", p).Inc()
-	currentProfiles.Dec()
 }
 
-// ProfileModified is an alias used by tests for updates.
+// ProfileModified increments the modify counter.
 func ProfileModified(p string) {
 	profileOperations.WithLabelValues("modify", p).Inc()
 }

@@ -114,6 +114,25 @@ func TestSetProfileCount(t *testing.T) {
 	}
 }
 
+func TestProfileOperationsDoNotChangeManagedGauge(t *testing.T) {
+	resetMetrics()
+	testNodeName := getNodeNameFromEnv()
+
+	SetProfileCount(7)
+	ProfileCreated("profilo-a")
+	ProfileModified("profilo-b")
+	ProfileDeleted("profilo-c")
+
+	expected := `
+		# HELP kapparmor_profiles_managed Numero totale di profili AppArmor attualmente gestiti.
+		# TYPE kapparmor_profiles_managed gauge
+		kapparmor_profiles_managed{node_name="` + testNodeName + `"} 7
+	`
+	if err := testutil.CollectAndCompare(currentProfiles, strings.NewReader(expected), "kapparmor_profiles_managed"); err != nil {
+		t.Errorf("Metrica kapparmor_profiles_managed non corrispondente: %v", err)
+	}
+}
+
 func TestGetNodeNameFromEnv(t *testing.T) {
 	// 1. Test con NODE_NAME impostato
 	t.Setenv("NODE_NAME", "test-nodo-123")
