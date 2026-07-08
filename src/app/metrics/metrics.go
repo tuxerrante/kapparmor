@@ -74,7 +74,7 @@ func ProfileDeleted(p string) {
 	DefaultProfileMetrics().ProfileDeleted(p)
 }
 
-// ProfileModified increments the modify counter for compatibility callers.
+// ProfileModified increments the modify counter.
 func ProfileModified(p string) {
 	DefaultProfileMetrics().ProfileModified(p)
 }
