@@ -42,6 +42,8 @@ make e2e-case2   # In-use profile deletion
 make e2e-case3   # Prometheus metrics
 ```
 
+For integration-test planning or execution, read `docs/testing.md` first. It documents both the existing MicroK8s E2E flow and the Ubuntu Lima + `k3s` smoke path, including the validated `macOS arm64 -> Ubuntu arm64 guest` matrix and how to adapt the commands for Linux `amd64`.
+
 ## Architecture
 
 The app is a single Go package (`package main`) in `src/app/`. Key flow:
