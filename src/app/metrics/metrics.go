@@ -9,27 +9,47 @@ import (
 )
 
 var (
-	nodeName = getNodeNameFromEnv()
+	nodeName             = getNodeNameFromEnv()
+	defaultProfileMetric = newProfileMetrics()
 
-	// profileOperations counts create/modify/delete operations per profile.
-	profileOperations = promauto.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace:   "kapparmor",
-			Name:        "profile_operations_total",
-			Help:        "Numero totale di operazioni sui profili (create, modify, delete).",
-			ConstLabels: prometheus.Labels{"node_name": nodeName},
-		},
-		[]string{"operation", "profile_name"},
-	)
-
-	// currentProfiles tracks how many profiles are currently managed.
-	currentProfiles = promauto.NewGauge(prometheus.GaugeOpts{
-		Namespace:   "kapparmor",
-		Name:        "profiles_managed",
-		Help:        "Numero totale di profili AppArmor attualmente gestiti.",
-		ConstLabels: prometheus.Labels{"node_name": nodeName},
-	})
+	// These aliases preserve the package-level API while routing through the owner object.
+	profileOperations, currentProfiles = aliasesFor(defaultProfileMetric)
 )
+
+// ProfileMetrics owns the Prometheus counters and gauges published by the app.
+type ProfileMetrics struct {
+	profileOperations *prometheus.CounterVec
+	managedProfiles   prometheus.Gauge
+}
+
+func aliasesFor(m *ProfileMetrics) (*prometheus.CounterVec, prometheus.Gauge) {
+	return m.profileOperations, m.managedProfiles
+}
+
+func newProfileMetrics() *ProfileMetrics {
+	return &ProfileMetrics{
+		profileOperations: promauto.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace:   "kapparmor",
+				Name:        "profile_operations_total",
+				Help:        "Numero totale di operazioni sui profili (create, modify, delete).",
+				ConstLabels: prometheus.Labels{"node_name": nodeName},
+			},
+			[]string{"operation", "profile_name"},
+		),
+		managedProfiles: promauto.NewGauge(prometheus.GaugeOpts{
+			Namespace:   "kapparmor",
+			Name:        "profiles_managed",
+			Help:        "Numero totale di profili AppArmor attualmente gestiti.",
+			ConstLabels: prometheus.Labels{"node_name": nodeName},
+		}),
+	}
+}
+
+// DefaultProfileMetrics returns the process-wide metrics owner.
+func DefaultProfileMetrics() *ProfileMetrics {
+	return defaultProfileMetric
+}
 
 func getNodeNameFromEnv() string {
 	if n := os.Getenv("NODE_NAME"); n != "" {
@@ -46,17 +66,17 @@ func getNodeNameFromEnv() string {
 
 // ProfileCreated increments the create counter.
 func ProfileCreated(p string) {
-	profileOperations.WithLabelValues("create", p).Inc()
+	DefaultProfileMetrics().ProfileCreated(p)
 }
 
 // ProfileDeleted increments the delete counter.
 func ProfileDeleted(p string) {
-	profileOperations.WithLabelValues("delete", p).Inc()
+	DefaultProfileMetrics().ProfileDeleted(p)
 }
 
 // ProfileModified increments the modify counter.
 func ProfileModified(p string) {
-	profileOperations.WithLabelValues("modify", p).Inc()
+	DefaultProfileMetrics().ProfileModified(p)
 }
 
 // ProfileUpdated kept for compatibility.
@@ -66,5 +86,25 @@ func ProfileUpdated(p string) {
 
 // SetProfileCount sets the gauge to c.
 func SetProfileCount(c int) {
-	currentProfiles.Set(float64(c))
+	DefaultProfileMetrics().SetProfileCount(c)
+}
+
+// ProfileCreated increments the create counter.
+func (m *ProfileMetrics) ProfileCreated(p string) {
+	m.profileOperations.WithLabelValues("create", p).Inc()
+}
+
+// ProfileDeleted increments the delete counter.
+func (m *ProfileMetrics) ProfileDeleted(p string) {
+	m.profileOperations.WithLabelValues("delete", p).Inc()
+}
+
+// ProfileModified increments the modify counter.
+func (m *ProfileMetrics) ProfileModified(p string) {
+	m.profileOperations.WithLabelValues("modify", p).Inc()
+}
+
+// SetProfileCount sets the managed profile gauge to c.
+func (m *ProfileMetrics) SetProfileCount(c int) {
+	m.managedProfiles.Set(float64(c))
 }
