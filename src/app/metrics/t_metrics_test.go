@@ -24,8 +24,7 @@ func resetMetrics() {
 	nodeName = getNodeNameFromEnv()
 
 	defaultProfileMetric = newProfileMetrics()
-	profileOperations = defaultProfileMetric.profileOperations
-	currentProfiles = defaultProfileMetric.managedProfiles
+	profileOperations, currentProfiles = aliasesFor(defaultProfileMetric)
 }
 
 func TestProfileOperations(t *testing.T) {
@@ -35,7 +34,7 @@ func TestProfileOperations(t *testing.T) {
 	// Create operation
 	ProfileCreated("profile-a")
 	expectedCreate := `
-		# HELP kapparmor_profile_operations_total Total number of profile operations (create, modify, delete).
+		# HELP kapparmor_profile_operations_total Numero totale di operazioni sui profili (create, modify, delete).
 		# TYPE kapparmor_profile_operations_total counter
 		kapparmor_profile_operations_total{node_name="` + testNodeName + `",operation="create",profile_name="profile-a"} 1
 	`
@@ -47,7 +46,7 @@ func TestProfileOperations(t *testing.T) {
 	ProfileModified("profile-b")
 	ProfileModified("profile-b")
 	expectedModify := `
-		# HELP kapparmor_profile_operations_total Total number of profile operations (create, modify, delete).
+		# HELP kapparmor_profile_operations_total Numero totale di operazioni sui profili (create, modify, delete).
 		# TYPE kapparmor_profile_operations_total counter
 		kapparmor_profile_operations_total{node_name="` + testNodeName + `",operation="create",profile_name="profile-a"} 1
 		kapparmor_profile_operations_total{node_name="` + testNodeName + `",operation="modify",profile_name="profile-b"} 2
@@ -59,7 +58,7 @@ func TestProfileOperations(t *testing.T) {
 	// Delete operation
 	ProfileDeleted("profile-c")
 	expectedDelete := `
-		# HELP kapparmor_profile_operations_total Total number of profile operations (create, modify, delete).
+		# HELP kapparmor_profile_operations_total Numero totale di operazioni sui profili (create, modify, delete).
 		# TYPE kapparmor_profile_operations_total counter
 		kapparmor_profile_operations_total{node_name="` + testNodeName + `",operation="create",profile_name="profile-a"} 1
 		kapparmor_profile_operations_total{node_name="` + testNodeName + `",operation="modify",profile_name="profile-b"} 2
@@ -76,7 +75,7 @@ func TestSetProfileCount(t *testing.T) {
 
 	SetProfileCount(42)
 	expected := `
-		# HELP kapparmor_profiles_managed Total number of AppArmor profiles currently managed.
+		# HELP kapparmor_profiles_managed Numero totale di profili AppArmor attualmente gestiti.
 		# TYPE kapparmor_profiles_managed gauge
 		kapparmor_profiles_managed{node_name="` + testNodeName + `"} 42
 	`
@@ -87,7 +86,7 @@ func TestSetProfileCount(t *testing.T) {
 	// Verify that the gauge can be updated.
 	SetProfileCount(10)
 	expectedUpdate := `
-		# HELP kapparmor_profiles_managed Total number of AppArmor profiles currently managed.
+		# HELP kapparmor_profiles_managed Numero totale di profili AppArmor attualmente gestiti.
 		# TYPE kapparmor_profiles_managed gauge
 		kapparmor_profiles_managed{node_name="` + testNodeName + `"} 10
 	`
@@ -106,7 +105,7 @@ func TestProfileOperationsDoNotChangeManagedGauge(t *testing.T) {
 	ProfileDeleted("profile-c")
 
 	expected := `
-		# HELP kapparmor_profiles_managed Total number of AppArmor profiles currently managed.
+		# HELP kapparmor_profiles_managed Numero totale di profili AppArmor attualmente gestiti.
 		# TYPE kapparmor_profiles_managed gauge
 		kapparmor_profiles_managed{node_name="` + testNodeName + `"} 7
 	`

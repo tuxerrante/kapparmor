@@ -13,8 +13,7 @@ var (
 	defaultProfileMetric = newProfileMetrics()
 
 	// These aliases keep the existing test helpers and package-level API intact.
-	profileOperations = defaultProfileMetric.profileOperations
-	currentProfiles   = defaultProfileMetric.managedProfiles
+	profileOperations, currentProfiles = aliasesFor(defaultProfileMetric)
 )
 
 // ProfileMetrics owns the Prometheus counters and gauges published by the app.
@@ -23,13 +22,17 @@ type ProfileMetrics struct {
 	managedProfiles   prometheus.Gauge
 }
 
+func aliasesFor(m *ProfileMetrics) (*prometheus.CounterVec, prometheus.Gauge) {
+	return m.profileOperations, m.managedProfiles
+}
+
 func newProfileMetrics() *ProfileMetrics {
 	return &ProfileMetrics{
 		profileOperations: promauto.NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace:   "kapparmor",
 				Name:        "profile_operations_total",
-				Help:        "Total number of profile operations (create, modify, delete).",
+				Help:        "Numero totale di operazioni sui profili (create, modify, delete).",
 				ConstLabels: prometheus.Labels{"node_name": nodeName},
 			},
 			[]string{"operation", "profile_name"},
@@ -37,7 +40,7 @@ func newProfileMetrics() *ProfileMetrics {
 		managedProfiles: promauto.NewGauge(prometheus.GaugeOpts{
 			Namespace:   "kapparmor",
 			Name:        "profiles_managed",
-			Help:        "Total number of AppArmor profiles currently managed.",
+			Help:        "Numero totale di profili AppArmor attualmente gestiti.",
 			ConstLabels: prometheus.Labels{"node_name": nodeName},
 		}),
 	}
@@ -71,7 +74,7 @@ func ProfileDeleted(p string) {
 	DefaultProfileMetrics().ProfileDeleted(p)
 }
 
-// ProfileModified is an alias used by tests for updates.
+// ProfileModified increments the modify counter for compatibility callers.
 func ProfileModified(p string) {
 	DefaultProfileMetrics().ProfileModified(p)
 }
