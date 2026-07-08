@@ -1,263 +1,309 @@
-You can find here also some indication on how to [set up a Microk8s environment in a Linux virtual machine](./microk8s.md).
+# Testing Guide
 
-[You can find HERE](https://gist.github.com/tuxerrante/9f9adf29405418427622b1e85d8c8263) instructions to fastly setup a devops dedicated ubuntu (virtual) machine.
+Kapparmor has two practical local integration paths:
+
+- `test/e2e.py` plus the `make e2e*` targets for MicroK8s-based automation.
+- Ubuntu Lima plus `k3s` for a single-node smoke test that exercises the real AppArmor host flow on Ubuntu.
+
+Use the MicroK8s path when you want the existing scripted test cases. Use the Lima path when you want a production-like Ubuntu/AppArmor node and a fast way to validate DaemonSet behavior end-to-end.
+
+## Quick Checks
+
+```bash
+# Unit tests
+make test
+
+# Coverage
+make test-coverage
+
+# Lint
+make lint
+```
+
+## CI Container Integration
+
+GitHub Actions already runs an Ubuntu-based container integration check in `.github/workflows/integration-test.yml`.
+That job validates the container with AppArmor-capable host mounts, but it does not exercise the full Kubernetes DaemonSet path.
+Use `./build/test_on_docker.sh` for the closest local equivalent.
+
+## MicroK8s E2E
+
+The built-in end-to-end harness is `test/e2e.py`. It is currently MicroK8s-specific because it shells out to `microk8s kubectl` and `microk8s ctr`.
+
+Common entry points:
+
+```bash
+# Run all cases and build/side-load the image
+make e2e-sideload
+
+# Focused cases
+make e2e-case1   # profile management
+make e2e-case2   # in-use profile deletion
+make e2e-case3   # metrics validation
+```
+
+Prerequisites:
+
+- MicroK8s 1.30+
+- Helm 3+
+- Docker
+- Python 3.9+
+
+The harness already supports image side-loading and writes a timestamped log under `output/`.
+If you need a MicroK8s environment inside a Linux VM, see `docs/microk8s.md`.
+
+## Ubuntu Lima + k3s Smoke
+
+This path is useful when you want to validate the real Ubuntu host integration:
+
+- ConfigMap projected volume updates
+- `apparmor_parser --replace` and `--remove`
+- persisted files under `/etc/apparmor.d/custom`
+- kernel state under `/sys/kernel/security/apparmor/profiles`
+- pod metrics exposed on `/metrics`
+
+It is a smoke test, not a replacement for the MicroK8s test harness.
+
+### Tested Matrix
+
+This smoke path was validated with the following environment:
+
+| Layer | Validated setup |
+| --- | --- |
+| Host | macOS on Apple Silicon |
+| Guest VM | Lima `template:ubuntu-24.04` |
+| Guest architecture | `arm64` / `aarch64` |
+| Cluster | single-node `k3s` |
+| Built image | `linux/arm64` |
+
+The commands below are written for that matrix first.
+
+### Host vs Guest Scope
+
+- `Host` means your local shell, where you run `limactl`, `docker`, and `helm`.
+- `Guest` means commands executed inside the Ubuntu VM through `limactl shell "$VM" -- ...`.
+- Unless noted otherwise, the snippets below are run on the host shell and invoke guest commands explicitly where needed.
 
 ### Requirements
 
-```sh
-sudo apt install yamllint
-sudo snap install shfmt
-go install github.com/yannh/kubeconform/cmd/kubeconform@latest
+- macOS with Lima installed
+- Docker on the host
+- Helm on the host
+- Apple Silicon hosts should build `linux/arm64` images to match the default Lima VM architecture
 
-# Check all pre-commit hooks are installed
-pre-commit run --config .pre-commit-config.yaml -v --hook-stage pre-commit --all-files
+### Linux amd64 Adaptation
+
+If you are running on native Linux `amd64`, or on an Ubuntu `amd64` VM without Lima:
+
+- skip the Lima-specific host setup and run the guest commands directly on that Linux machine;
+- replace `limactl shell "$VM" -- bash -lc '<cmd>'` with either `bash -lc '<cmd>'` locally or the equivalent `ssh` wrapper for your VM;
+- build `linux/amd64` images instead of `linux/arm64`, or omit `--platform` if the build host and Kubernetes node already match;
+- keep the Helm values, ConfigMaps, and smoke assertions the same.
+
+If you are on macOS Intel or any other `amd64` guest/node, the same rule applies: the image architecture must match the Kubernetes node architecture.
+
+### Capture Results
+
+To keep a full transcript of the smoke test, start a local typescript before running the commands:
+
+```bash
+mkdir -p output
+script -q "output/lima-k3s-smoke-$(date -u +%Y%m%d_%H%M%S).log"
 ```
 
-### How to initialize this project
+When the smoke test is finished, type `exit` to close the transcript.
 
-```sh
-helm create kapparmor
-sudo usermod -aG docker $USER
+### 1. Create the Ubuntu VM (run on host)
 
-# Create mod files in root dir
-go mod init github.com/tuxerrante/kapparmor
-go mod init ./src/app/
+```bash
+REPO=$(pwd)
+VM=kapparmor-ubuntu2404
+
+limactl start --name="$VM" template:ubuntu-24.04
+
+limactl shell "$VM" -- bash -lc 'curl -sfL https://get.k3s.io | sh -'
+
+limactl shell "$VM" -- bash -lc 'sudo k3s kubectl get nodes -o wide'
+limactl shell "$VM" -- bash -lc 'cat /sys/module/apparmor/parameters/enabled && command -v apparmor_parser'
 ```
 
-### Test the app locally
+Expected result:
 
-Test Helm Chart creation
+- the node is `Ready`
+- `/sys/module/apparmor/parameters/enabled` prints `Y`
+- `apparmor_parser` exists in the guest
 
-```sh
-# --- Check the Helm chart
-# https://github.com/helm/chart-testing/issues/464
-echo Linting the Helm chart
-helm lint --debug --strict  charts/kapparmor/
+Lima mounts the repo into the guest at the same absolute path, so the guest-side `kubectl apply -f` commands below can reuse `${REPO}`.
 
-docker run -it --network host --workdir=/data --volume ~/.kube/config:/root/.kube/config:ro \
-  --volume $(pwd):/data quay.io/helmpack/chart-testing:latest \
-  /bin/sh -c "git config --global --add safe.directory /data; ct lint --print-config --charts ./charts/kapparmor"
+### 2. Build and Import the Test Image (run on host)
 
-# Replace here a commit id being part of an image tag
-export IMAGE_TAG="0.1.6-dev"
-helm upgrade kapparmor --install --dry-run \
-    --atomic \
-    --timeout 30s \
-    --debug \
-    --namespace test \
-    --set image.tag=$IMAGE_TAG  charts/kapparmor/
+Run these commands from the repo root or from the worktree you want to validate:
 
-```
+```bash
+APP_VERSION=$(awk -F= '/^APP_VERSION=/{print $2}' config/config)
+APP_TAG="${APP_VERSION}-dev"
 
-Test the app inside a container:
-
-```sh
-# --- Build and run the container image
-docker build --quiet -t test \
-  --build-arg POLL_TIME=5 \
+# Validated path: macOS Apple Silicon host -> Ubuntu arm64 guest
+docker build --platform linux/arm64 \
+  -t "ghcr.io/tuxerrante/kapparmor:${APP_TAG}" \
+  --build-arg POLL_TIME=20 \
   --build-arg PROFILES_DIR=/app/profiles \
-  -f Dockerfile.dev . &&\
-  echo &&\
-  docker run --rm -it --privileged \
-  --mount type=bind,source='/sys/kernel/security',target='/sys/kernel/security'  \
-  --mount type=bind,source='/etc',target='/etc' \
-  --mount type=bind,source='/sbin',target='/sbin' \
-  --name kapparmor test
+  -f Dockerfile \
+  .
 
+docker save "ghcr.io/tuxerrante/kapparmor:${APP_TAG}" | \
+  limactl shell "$VM" -- bash -lc 'sudo k3s ctr images import /dev/stdin'
 ```
 
-To test Helm chart installation in a MicroK8s cluster, follow `docs/microk8s.md` instructions if you don't have any local cluster.
+On Linux `amd64`, use `--platform linux/amd64` or omit `--platform` when the host and node architecture already match.
 
-## CI integration test (GitHub Actions)
+### 3. Deploy the Helm Chart Against the Local Image (run on host)
 
-[`.github/workflows/integration-test.yml`](../.github/workflows/integration-test.yml) runs on push/PR to `main` on **ubuntu-24.04** (same as the [Dockerfile](../Dockerfile) base), so the host has AppArmor. It builds the image, runs the container with `--privileged` and host mounts, injects a test profile, and asserts the profile appears in `apparmor_status`. Local equivalent: `./build/test_on_docker.sh`.
+```bash
+NS=security
+GIT_SHA=$(git rev-parse --short=12 HEAD)
+CHART_PATH="${REPO}/charts/kapparmor"
 
-## E2E Tests on MicroK8s
+limactl shell "$VM" -- bash -lc \
+  "sudo k3s kubectl create namespace ${NS} --dry-run=client -o yaml | sudo k3s kubectl apply -f -"
 
-The E2E test suite validates KappArmor functionality end-to-end on a live Kubernetes cluster.
+helm template kapparmor "${CHART_PATH}" \
+  --namespace "${NS}" \
+  --set image.pullPolicy=IfNotPresent \
+  --set image.tag="${APP_TAG}" \
+  --set service.enabled=true \
+  --set "podAnnotations.gitCommit=${GIT_SHA}" | \
+  limactl shell "$VM" -- bash -lc 'sudo k3s kubectl apply -f -'
 
-### Prerequisites
+limactl shell "$VM" -- bash -lc \
+  "sudo k3s kubectl rollout status daemonset/kapparmor -n ${NS} --timeout=180s"
 
-- MicroK8s 1.30+ (see `docs/microk8s.md` for setup)
-- Helm 3.0+ (for chart deployment)
-- Docker (for image building and side-loading)
-- Python 3.9+ (with stdlib only, no external dependencies)
-- Configuration files:
-  - `./config/config` (APP_VERSION, POLL_TIME, etc.)
-  - `$HOME/.config/secrets` (GH_WRITE_PKG_TOKEN, K8S_NODE_IP - optional)
-
-### Quick Start
-
-**Run all tests with image side-loading (no GHCR token needed):**
-
-```sh
-python3 test/e2e_refactored.py --sideload
+POD=$(limactl shell "$VM" -- bash -lc \
+  "sudo k3s kubectl get pods -n ${NS} -l app.kubernetes.io/name=kapparmor -o jsonpath='{.items[0].metadata.name}'")
 ```
 
-**Run specific test case:**
+### 4. Useful Helpers (define on host shell)
 
-```sh
-# Profile management test (create/list/delete profiles)
-python3 test/e2e_refactored.py --sideload --run case1
+The following helpers make the smoke test repeatable:
 
-# In-use profile deletion test
-python3 test/e2e_refactored.py --sideload --run case2
+```bash
+dump_metrics() {
+  limactl shell "$VM" -- bash -lc "
+    sudo k3s kubectl port-forward -n ${NS} pod/${POD} 18080:8080 >/tmp/kap-pf.log 2>&1 &
+    PF=\$!
+    sleep 3
+    curl -fsS http://127.0.0.1:18080/metrics | grep '^kapparmor_'
+    rc=\$?
+    kill \$PF
+    wait \$PF 2>/dev/null
+    exit \$rc
+  "
+}
+
+dump_host_state() {
+  limactl shell "$VM" -- bash -lc "
+    echo '--- FILE'
+    if sudo test -f /etc/apparmor.d/custom/custom.deny-write-outside-home; then
+      echo 'FILE_PRESENT true'
+      sudo cat /etc/apparmor.d/custom/custom.deny-write-outside-home
+    else
+      echo 'FILE_PRESENT false'
+    fi
+    echo '--- KERNEL'
+    if sudo grep -q 'custom.deny-write-outside-home' /sys/kernel/security/apparmor/profiles; then
+      echo PRESENT
+    else
+      echo ABSENT
+    fi
+  "
+}
 ```
 
-**Run with custom namespaces:**
+### 5. Smoke Sequence (run on host shell)
 
-```sh
-python3 test/e2e_refactored.py --sideload \
-  --target-ns security \
-  --test-ns kapparmor-test
+Use the shipped ConfigMaps under `test/`:
+
+- `test/cm-kapparmor-empty.yml`
+- `test/cm-kapparmor-home-profile.yml`
+- `test/cm-kapparmor-home-profile-edited.yml`
+
+Recommended sequence:
+
+```bash
+# Baseline
+limactl shell "$VM" -- bash -lc "sudo k3s kubectl apply -n ${NS} -f ${REPO}/test/cm-kapparmor-empty.yml"
+sleep 35
+dump_host_state
+dump_metrics
+
+# Create
+limactl shell "$VM" -- bash -lc "sudo k3s kubectl apply -n ${NS} -f ${REPO}/test/cm-kapparmor-home-profile.yml"
+sleep 45
+dump_host_state
+dump_metrics
+
+# Modify
+limactl shell "$VM" -- bash -lc "sudo k3s kubectl apply -n ${NS} -f ${REPO}/test/cm-kapparmor-home-profile-edited.yml"
+sleep 45
+dump_host_state
+dump_metrics
+
+# Delete
+limactl shell "$VM" -- bash -lc "sudo k3s kubectl apply -n ${NS} -f ${REPO}/test/cm-kapparmor-empty.yml"
+sleep 50
+dump_host_state
+dump_metrics
 ```
 
-### Configuration
+Expected pass criteria:
 
-**Environment Variables** (can be set in `./config/config` or as env vars):
+- Baseline:
+  - no file under `/etc/apparmor.d/custom/custom.deny-write-outside-home`
+  - kernel state is `ABSENT`
+  - `kapparmor_profiles_managed` is `0`
+- After create:
+  - file exists on disk
+  - kernel state is `PRESENT`
+  - `kapparmor_profile_operations_total{operation="create",profile_name="custom.deny-write-outside-home"}` is `1`
+  - `kapparmor_profiles_managed` is `1`
+- After modify:
+  - on-node file content reflects the edited ConfigMap
+  - kernel state remains `PRESENT`
+  - `modify` counter increments to `1`
+  - `kapparmor_profiles_managed` stays `1`
+- After delete:
+  - file is removed from `/etc/apparmor.d/custom`
+  - kernel state is `ABSENT`
+  - `delete` counter increments to `1`
+  - `kapparmor_profiles_managed` returns to `0`
 
-- `APP_VERSION`: Version string for the KappArmor app (default: read from config)
-- `POLL_TIME`: Health check polling interval in seconds (default: 5)
-- `TARGET_NS`: Namespace where KappArmor runs (default: `security`)
-- `TEST_NS`: Namespace for test workloads (default: `kapparmor-test`)
-- `HEALTHZPORT`: Port for health checks (default: 8080)
+### ConfigMap Convergence and First-Load Latency
 
-**Secrets** (optional, in `$HOME/.config/secrets`):
+Current behavior is polling-based.
 
-- `GH_WRITE_PKG_TOKEN`: GitHub token for pushing images to GHCR (if not using `--sideload`)
-- `K8S_NODE_IP`: Node IP for MicroK8s networking configuration
+- Kubernetes updates projected ConfigMap volumes asynchronously by rotating the `..data` symlink.
+- Kapparmor notices those changes only when the next polling cycle reads `/app/profiles`.
+- With the chart default `POLL_TIME=30`, the first observable reconcile after a ConfigMap change may take roughly one projected-volume refresh plus one poll interval. In practice, budget about `45-60s`.
 
-### Command-Line Options
+If lower latency is required, the recommended implementation is:
 
-```sh
-python3 test/e2e_refactored.py [OPTIONS]
+1. run one eager reconcile before entering the periodic ticker, so profiles already present at pod startup load immediately;
+2. add an `fsnotify` watch on `/app/profiles` and trigger reconcile when the projected volume swaps `..data` or profile symlinks;
+3. keep the periodic ticker as a safety net in case a watch event is missed.
 
-Options:
-  --target-ns NAMESPACE      Namespace for KappArmor DaemonSet (default: security)
-  --test-ns NAMESPACE        Namespace for test workloads (default: kapparmor-test)
-  --chart PATH              Path to Helm chart (default: charts/kapparmor)
-  --skip-build              Skip Docker image build (use existing image)
-  --sideload                Side-load image into MicroK8s (no GHCR token needed)
-  --run {all,case1,case2,case3}  Which tests to run (default: all)
-  --log-file PATH           Custom log file location (default: logs/e2e_test_TIMESTAMP.log)
-  -h, --help               Show help message
+Shortening `POLL_TIME` reduces the worst-case delay, but by itself it does not make post-projection loads immediate.
+
+### Cleanup
+
+```bash
+limactl shell "$VM" -- bash -lc 'sudo k3s kubectl delete namespace security --ignore-not-found'
+limactl delete --force "$VM"
 ```
 
-### Test Cases
+If you want to keep the VM for repeated smoke runs, skip the final `limactl delete` and just redeploy the namespace.
 
-**Case 1: Profile Management**
+## Additional References
 
-- Creates ConfigMap with custom AppArmor profiles
-- Verifies profiles are loaded into the system
-- Lists loaded profiles to confirm deployment
-- Deletes profiles via ConfigMap removal
-- Verifies profiles are unloaded from the system
-
-**Case 2: In-Use Profile Deletion**
-
-- Creates and loads a restrictive profile
-- Deploys a pod using the profile
-- Attempts to delete the in-use profile
-- Verifies profile remains (protected from deletion)
-- Cleans up pod and then successfully deletes profile
-
-**Case 3: Prometheus Metrics Validation**
-
-- Validates that Prometheus metrics are exposed on `/metrics` endpoint
-- Checks for required metrics:
-  - `kapparmor_profile_operations_total`: Counter for create/modify/delete operations
-  - `kapparmor_profiles_managed`: Gauge for currently managed profiles
-- Attempts PromQL queries (if Prometheus is available)
-- Verifies metrics are being collected and exposed correctly
-
-### Troubleshooting
-
-**Problem: "chart requires kubeVersion: >= 1.23.0-0"**
-
-- **Solution**: Ensure your MicroK8s version is 1.23+
-
-  ```sh
-  microk8s version
-  ```
-
-**Problem: "Docker image not found"**
-
-- **Solution**: Add `--skip-build` is only valid if image already exists
-
-  ```sh
-  docker image ls | grep kapparmor
-  ```
-
-**Problem: "Could not connect to GHCR / push failed"**
-
-- **Solution**: Use `--sideload` flag to avoid pushing to registry
-
-  ```sh
-  python3 test/e2e_refactored.py --sideload
-  ```
-
-**Problem: "Config file not found"**
-
-- **Solution**: Ensure `config/config` exists with required variables
-
-  ```sh
-  cat config/config  # Should have APP_VERSION, POLL_TIME, etc.
-  ```
-
-**Problem: "Metrics endpoint not responding" (Case 3)**
-
-- **Solution**: Verify KappArmor pod is running and healthy
-
-  ```sh
-  microk8s kubectl get pods -n security -l app.kubernetes.io/name=kapparmor
-  microk8s kubectl logs -n security -l app.kubernetes.io/name=kapparmor | grep metrics
-  ```
-
-- Note: The metrics endpoint is exposed on port 8080 by default (see HEALTHZPORT in config/config)
-
-**Problem: "PromQL queries failing" (Case 3)**
-
-- **Solution**: This is optional and only works if Prometheus is installed
-
-  ```sh
-  microk8s kubectl get svc -A | grep prometheus
-  ```
-
-- Test case will skip Prometheus checks if not available (non-blocking)
-
-### CI/CD Integration
-
-**GitHub Actions Example**:
-
-```yaml
-- name: Run E2E Tests
-  run: |
-    python3 test/e2e_refactored.py --sideload --run all
-    
-- name: Upload Logs
-  if: always()
-  uses: actions/upload-artifact@v4
-  with:
-    name: e2e-test-logs
-    path: logs/e2e_test_*.log
-```
-
-### Test on the Kubernetes cluster
-
-You can start a binary check inside the pod shell like this:
-
-```sh
-kapparmor_pod=$(kubectl get pods -l app.kubernetes.io/name=kapparmor --no-headers |grep Running |head -n1 |cut -d' ' -f1)
-kubectl exec -it $kapparmor_pod -- cat /proc/1/attr/current
-kubectl exec -it $kapparmor_pod -- cat /sys/module/apparmor/parameters/enabled
-kubectl exec -it $kapparmor_pod -- cat /sys/kernel/security/apparmor/profiles |sort
-
-# --- https://github.com/genuinetools/amicontained/releases
-export AMICONTAINED_SHA256="d8c49e2cf44ee9668219acd092ed961fc1aa420a6e036e0822d7a31033776c9f"
-curl -fSL "https://github.com/genuinetools/amicontained/releases/download/v0.4.9/amicontained-linux-amd64" -o "/usr/local/bin/amicontained" \
- && echo "${AMICONTAINED_SHA256}  /usr/local/bin/amicontained" | sha256sum -c - \
- && chmod a+x "/usr/local/bin/amicontained"
-amicontained -h
-
-
-```
+- `docs/microk8s.md` for a Linux VM MicroK8s setup
+- `.github/workflows/integration-test.yml` for the Ubuntu-based container integration check used in CI
+- `build/test_on_docker.sh` for the closest non-Kubernetes local equivalent
