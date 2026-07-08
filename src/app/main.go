@@ -102,7 +102,7 @@ func RunApp(parentCtx context.Context, cfg *AppConfig) error {
 		cfg.Logger.Error("failed to unload all profiles during shutdown", slog.Any("error", err))
 		// Don't return error - attempt best-effort cleanup
 	} else {
-		metrics.SetProfileCount(0)
+		metrics.DefaultProfileMetrics().SetManagedProfiles(0)
 	}
 
 	cfg.Logger.Info("The eagle has landed. Over and out.")
@@ -223,6 +223,7 @@ func applyProfiles(cfg *AppConfig, profilePaths []string, customLoadedProfiles m
 	printLogSeparator()
 	slog.Default().Info("Apparmor REPLACE and apply new profiles..")
 
+	metricsOwner := metrics.DefaultProfileMetrics()
 	var applyErrors []error
 	for _, profilePath := range profilePaths {
 		profileName := path.Base(profilePath)
@@ -236,7 +237,7 @@ func applyProfiles(cfg *AppConfig, profilePaths []string, customLoadedProfiles m
 		}
 
 		if isNewProfile {
-			metrics.ProfileCreated(profileName)
+			metricsOwner.ProfileCreated(profileName)
 		}
 	}
 
@@ -284,7 +285,7 @@ func publishManagedProfileCount(cfg *AppConfig, desiredProfiles map[string]bool)
 	}
 
 	delete(customLoadedProfiles, "")
-	metrics.SetProfileCount(countManagedProfiles(desiredProfiles, customLoadedProfiles))
+	metrics.DefaultProfileMetrics().SetManagedProfiles(countManagedProfiles(desiredProfiles, customLoadedProfiles))
 
 	return nil
 }
@@ -418,7 +419,7 @@ func unloadProfile(cfg *AppConfig, fileName string) error {
 
 	// Extract profile name from path for metrics
 	profileName := path.Base(fileName)
-	metrics.ProfileDeleted(profileName)
+	metrics.DefaultProfileMetrics().ProfileDeleted(profileName)
 
 	return nil
 }

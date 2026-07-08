@@ -116,7 +116,7 @@ func calculateProfileChanges(cfg *AppConfig, newProfiles map[string]bool, custom
 			}
 			slog.Default().Info("Content changed, scheduling replacement", slog.String("name", newProfileName))
 			showProfilesDiff(cfg, newProfileName)
-			metrics.ProfileModified(newProfileName)
+			metrics.DefaultProfileMetrics().ProfileModified(newProfileName)
 		} else {
 			slog.Default().Info("New profile found, scheduling for load", slog.String("name", newProfileName))
 		}
