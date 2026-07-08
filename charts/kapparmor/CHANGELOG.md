@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Managed Profiles Gauge Fix**: `kapparmor_profiles_managed` now reconciles from the post-sync managed profile state, so already-loaded unchanged profiles are counted correctly without double-counting modified profiles.
+- **Profile Operations Counter Semantics**: `kapparmor_profile_operations_total{operation="create"}` now increments only after a successful first-time profile load, while modified profiles increment `operation="modify"` only after a successful replace.
 
 ### Added
 

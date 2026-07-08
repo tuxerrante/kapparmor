@@ -54,7 +54,7 @@ func ProfileDeleted(p string) {
 	profileOperations.WithLabelValues("delete", p).Inc()
 }
 
-// ProfileModified is an alias used by tests for updates.
+// ProfileModified increments the modify counter.
 func ProfileModified(p string) {
 	profileOperations.WithLabelValues("modify", p).Inc()
 }
