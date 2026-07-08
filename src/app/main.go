@@ -101,9 +101,8 @@ func RunApp(parentCtx context.Context, cfg *AppConfig) error {
 	if err := unloadAllProfiles(cfg); err != nil {
 		cfg.Logger.Error("failed to unload all profiles during shutdown", slog.Any("error", err))
 		// Don't return error - attempt best-effort cleanup
-	} else {
-		metrics.SetProfileCount(0)
 	}
+	metrics.SetProfileCount(0)
 
 	cfg.Logger.Info("The eagle has landed. Over and out.")
 
@@ -220,6 +219,10 @@ func loadNewProfiles(cfg *AppConfig) ([]string, error) {
 }
 
 func applyProfiles(cfg *AppConfig, profilePaths []string, customLoadedProfiles map[string]bool) []error {
+	if len(profilePaths) == 0 {
+		return nil
+	}
+
 	printLogSeparator()
 	slog.Default().Info("Apparmor REPLACE and apply new profiles..")
 
@@ -237,6 +240,8 @@ func applyProfiles(cfg *AppConfig, profilePaths []string, customLoadedProfiles m
 
 		if isNewProfile {
 			metrics.ProfileCreated(profileName)
+		} else {
+			metrics.ProfileModified(profileName)
 		}
 	}
 
@@ -278,13 +283,20 @@ func loadProfile(cfg *AppConfig, profilePath string) error {
 }
 
 func publishManagedProfileCount(cfg *AppConfig, desiredProfiles map[string]bool) error {
+	// Refresh kernel state after apply/remove so the gauge reflects authoritative post-sync state.
 	_, customLoadedProfiles, err := getLoadedProfiles(cfg)
 	if err != nil {
 		return fmt.Errorf("error refreshing existing profiles for metrics: %w", err)
 	}
 
 	delete(customLoadedProfiles, "")
-	metrics.SetProfileCount(countManagedProfiles(desiredProfiles, customLoadedProfiles))
+	managedProfiles := countManagedProfiles(desiredProfiles, customLoadedProfiles)
+	slog.Default().Debug("publishing managed profile gauge",
+		slog.Int("desired_profiles", len(desiredProfiles)),
+		slog.Int("loaded_custom_profiles", len(customLoadedProfiles)),
+		slog.Int("managed_profiles", managedProfiles),
+	)
+	metrics.SetProfileCount(managedProfiles)
 
 	return nil
 }

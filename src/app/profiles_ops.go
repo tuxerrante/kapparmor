@@ -11,8 +11,6 @@ import (
 	"path"
 	"sort"
 	"strings"
-
-	"github.com/tuxerrante/kapparmor/src/app/metrics"
 )
 
 // printLoadedProfiles prints node apparmor loaded profiles.
@@ -116,7 +114,6 @@ func calculateProfileChanges(cfg *AppConfig, newProfiles map[string]bool, custom
 			}
 			slog.Default().Info("Content changed, scheduling replacement", slog.String("name", newProfileName))
 			showProfilesDiff(cfg, newProfileName)
-			metrics.ProfileModified(newProfileName)
 		} else {
 			slog.Default().Info("New profile found, scheduling for load", slog.String("name", newProfileName))
 		}
