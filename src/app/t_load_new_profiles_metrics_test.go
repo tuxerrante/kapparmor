@@ -264,3 +264,73 @@ func TestLoadNewProfilesPublishesGaugeAfterPartialFailure(t *testing.T) {
 		t.Fatalf("expected create counter for failed profile to stay at 0, got %.0f", got)
 	}
 }
+
+func TestLoadNewProfilesIgnoresManagedGaugePublishFailure(t *testing.T) {
+	cfg, _ := preFlightChecksInit(t)
+	cfg.ProfilerFullPath = writeKernelUpdatingParser(t, cfg)
+
+	const orphanProfile = "custom.metricsorphan"
+	if err := os.WriteFile(filepath.Join(cfg.ConfigmapPath, ".ignored"), []byte("ignored"), 0o600); err != nil {
+		t.Fatalf("write hidden file: %v", err)
+	}
+
+	// Point the kernel profile list at the same file that orphan cleanup removes so
+	// publishManagedProfileCount fails only after the unload work has completed.
+	cfg.KernelPath = filepath.Join(cfg.EtcApparmord, orphanProfile)
+	writeKernelProfiles(t, cfg.KernelPath, orphanProfile)
+	metrics.SetProfileCount(9)
+
+	appliedProfiles, err := loadNewProfiles(cfg)
+	if err != nil {
+		t.Fatalf("loadNewProfiles should ignore managed gauge publish failures: %v", err)
+	}
+
+	if len(appliedProfiles) != 0 {
+		t.Fatalf("expected no profiles to apply, got %v", appliedProfiles)
+	}
+
+	if got := managedProfilesGaugeValue(t); got != 9 {
+		t.Fatalf("expected managed gauge to stay at the last published value, got %.0f", got)
+	}
+
+	if got := profileOperationCounterValue(t, "delete", orphanProfile); got != 1 {
+		t.Fatalf("expected delete counter to be 1, got %.0f", got)
+	}
+
+	if _, err := os.Stat(filepath.Join(cfg.EtcApparmord, orphanProfile)); !os.IsNotExist(err) {
+		t.Fatalf("expected orphan profile to be removed from disk, got err=%v", err)
+	}
+}
+
+func TestLoadProfileRollsBackKernelLoadWhenCopyFails(t *testing.T) {
+	cfg, _ := preFlightChecksInit(t)
+	cfg.ProfilerFullPath = writeKernelUpdatingParser(t, cfg)
+
+	const profileName = "custom.metricsrollback"
+	profilePath := filepath.Join(cfg.ConfigmapPath, profileName)
+	writeProfileFile(t, cfg.ConfigmapPath, profileName, fmt.Sprintf("profile %s { }\n", profileName))
+
+	badDestination := filepath.Join(filepath.Dir(cfg.EtcApparmord), "not-a-directory")
+	if err := os.WriteFile(badDestination, []byte("not a directory"), 0o600); err != nil {
+		t.Fatalf("write bad destination marker: %v", err)
+	}
+	cfg.EtcApparmord = badDestination
+
+	err := loadProfile(cfg, profilePath)
+	if err == nil {
+		t.Fatal("expected loadProfile to fail when profile persistence fails")
+	}
+
+	if !strings.Contains(err.Error(), "failed to copy profile to destination") {
+		t.Fatalf("expected copy failure error, got %v", err)
+	}
+
+	_, customLoadedProfiles, err := getLoadedProfiles(cfg)
+	if err != nil {
+		t.Fatalf("getLoadedProfiles: %v", err)
+	}
+
+	if customLoadedProfiles[profileName] {
+		t.Fatalf("expected %s to be removed from kernel after rollback", profileName)
+	}
+}

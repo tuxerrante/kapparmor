@@ -208,7 +208,7 @@ func loadNewProfiles(cfg *AppConfig) ([]string, error) {
 	printLogSeparator()
 
 	if err := publishManagedProfileCount(cfg, newProfiles); err != nil {
-		applyErrors = append(applyErrors, err)
+		slog.Default().Warn("failed to publish managed profile gauge", slog.Any("error", err))
 	}
 
 	if len(applyErrors) > 0 {
@@ -276,6 +276,14 @@ func loadProfile(cfg *AppConfig, profilePath string) error {
 	slog.Default().Info("Copying profile", slog.String("dest", cfg.EtcApparmord))
 
 	if err := CopyFile(profilePath, cfg.EtcApparmord); err != nil {
+		// Keep kernel and persisted state aligned so later cleanup and metrics stay reliable.
+		if rollbackErr := execApparmor(cfg, "--verbose", "--remove", profilePath); rollbackErr != nil {
+			return fmt.Errorf(
+				"failed to copy profile to destination and rollback kernel state: %w",
+				errors.Join(err, rollbackErr),
+			)
+		}
+
 		return fmt.Errorf("failed to copy profile to destination: %w", err)
 	}
 
