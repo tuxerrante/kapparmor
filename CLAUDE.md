@@ -42,6 +42,8 @@ make e2e-case2   # In-use profile deletion
 make e2e-case3   # Prometheus metrics
 ```
 
+For integration-test planning or execution, read `docs/testing.md` first. It documents both the existing MicroK8s E2E flow and the Ubuntu Lima + `k3s` smoke path, including the validated `macOS arm64 -> Ubuntu arm64 guest` matrix and how to adapt the commands for Linux `amd64`.
+
 ## Architecture
 
 The app is a single Go package (`package main`) in `src/app/`. Key flow:
@@ -82,6 +84,8 @@ Unit tests, fuzz tests, and coverage run **inside the Docker build** (Dockerfile
 - **`scorecard.yml`** — OpenSSF Scorecard supply-chain security analysis.
 
 **Important:** Do not create a separate unit test workflow — tests are already executed via the Dockerfile build stage in `build-app.yml` and `integration-test.yml`. Adding a standalone `go test` workflow would be redundant.
+
+**Branch naming for CI matters:** if you need the branch-triggered Docker build and test coverage workflow before merge, use a `feature/*` branch. `build-app.yml` does not run on `fix/*` or `refactor/*` pushes.
 
 ## Configuration
 
