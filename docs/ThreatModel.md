@@ -805,7 +805,7 @@ graph TD
 | **Code** | Secrets Scanning | Gitleaks (pre-commit) | ✅ |
 | **Test** | Unit Tests | Race-enabled tests with coverage reporting | ✅ |
 | **Test** | Fuzz Testing | `FuzzIsProfileNameCorrect` | ✅ |
-| **Test** | Vulnerability Scanning | Gosec, Trivy, CodeQL | ✅ |
+| **Test** | Vulnerability Scanning | Gosec, Trivy, CodeQL, Snyk | ✅ |
 | **Build** | Signed Commits | Recommended; not enforced | ⚠️ |
 | **Build** | Hardened CI | Harden-Runner, egress audit | ✅ |
 | **Build** | Dependency Pinning | go.mod, image digests | ✅ |

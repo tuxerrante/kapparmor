@@ -43,6 +43,7 @@ We follow responsible disclosure: once a fix is published, the advisory will be 
 
 This project uses the following tools for ongoing vulnerability monitoring:
 
+- **Snyk** – dependency analysis on pull requests
 - **Trivy** – container image scanning in CI for CRITICAL/HIGH findings
 - **CodeQL** – static analysis in CI
 - **Dependabot** – weekly dependency update PRs

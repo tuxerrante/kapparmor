@@ -130,7 +130,7 @@ Kapparmor is built with security as a core principle:
 ✅ **Threat Modeling** – [Comprehensive STRIDE analysis](./docs/ThreatModel.md)
 ✅ **Code Quality** – Race-enabled unit tests, fuzzing, linting, and measured coverage
 ✅ **Supply Chain** – Pinned CI actions and automated dependency monitoring
-✅ **Vulnerability Scanning** – CodeQL, Gosec, and Trivy analysis
+✅ **Vulnerability Scanning** – CodeQL, Gosec, Trivy, and Snyk analysis
 ✅ **Least Privilege** – Scoped Kubernetes access with documented privileged host requirements
 
 👉 **[Read the full security threat model](./docs/ThreatModel.md)** for detailed analysis of risks and mitigations.
