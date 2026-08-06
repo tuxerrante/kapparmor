@@ -57,13 +57,16 @@ test-coverage:
 
 docker-test:
 	@echo "> docker build (test-coverage)"
-	@docker build --target test-coverage --tag "ghcr.io/tuxerrante/$(APP):$(APP_VERSION)-dev" .
+	@docker build --target test-coverage \
+		--build-arg MIN_COVERAGE=$(MIN_COVERAGE) \
+		--tag "ghcr.io/tuxerrante/$(APP):$(APP_VERSION)-dev" .
 
 docker-build:
 	@echo "> docker build - building production image"
 	@docker build --tag "ghcr.io/tuxerrante/$(APP):$(APP_VERSION)-dev" \
 		--build-arg POLL_TIME=$(POLL_TIME) \
 		--build-arg PROFILES_DIR=/app/profiles \
+		--build-arg MIN_COVERAGE=$(MIN_COVERAGE) \
 		-f Dockerfile \
 		.
 

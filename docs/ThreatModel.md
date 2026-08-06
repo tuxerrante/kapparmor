@@ -836,7 +836,7 @@ graph TD
 #### Dynamic Analysis (DAST)
 
 ⚠️ **Container Scanning** (Trivy)
-- Severity: `CRITICAL,HIGH` findings block builds
+- Severity: Fixable `CRITICAL,HIGH` findings block builds
 - Scan: OS packages only (not Go binaries)
 
 ❌ **Penetration Testing**
@@ -1163,7 +1163,7 @@ data:
 |------|-------------|--------|----------|
 | **Code Coverage** | >=69% | ✅ Enforced by local and container builds | [![codecov](https://codecov.io/gh/tuxerrante/kapparmor/branch/main/graph/badge.svg)](https://codecov.io/gh/tuxerrante/kapparmor) |
 | **Static Analysis** | Zero HIGH/CRITICAL | ✅ | CodeQL, golangci-lint pass |
-| **Vulnerability Scan** | Zero HIGH/CRITICAL | ✅ | Trivy blocks on findings |
+| **Vulnerability Scan** | Zero fixable HIGH/CRITICAL | ✅ | Trivy blocks on fixable findings |
 | **Signed Commits** | Recommended | ⚠️ | Not enforced by repository settings |
 | **Dependency Updates** | Weekly | ✅ | Dependabot + cron |
 | **Secrets Detection** | Pre-commit | ✅ | Gitleaks hook |
