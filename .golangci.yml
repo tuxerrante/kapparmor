@@ -1,7 +1,7 @@
 version: "2"
 
 linters:
-  default: fast 
+  default: fast
   enable:
     - depguard
   # enable:

@@ -628,14 +628,14 @@ metadata:
 data:
   custom.deny-write-outside-home: |
     #include <tunables/global>
-    
+
     profile custom.deny-write-outside-home flags=(attach_disconnected,mediate_deleted) {
       #include <abstractions/base>
-      
+
       file,
       network,
       capability,
-      
+
       # Allow writes only in /home
       /home/** rw,
       deny /** w,

@@ -17,7 +17,7 @@ all: fmt vet lint test-coverage docker-build docker-scan
 
 fmt:
 	@echo "> go fmt"
-	gofmt -s -w src/ 
+	gofmt -s -w src/
 	@echo "> shfmt"
 	shfmt --write --simplify -ln bash build/
 
@@ -111,7 +111,7 @@ helm-lint:
 
 precommit:
 	@echo "> pre-commit run --all-files"
-	@pre-commit run --all-files || true
+	@pre-commit run --all-files
 
 clean:
 	@rm -f $(COVER)

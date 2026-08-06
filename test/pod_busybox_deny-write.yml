@@ -7,7 +7,7 @@ spec:
     appArmorProfile:
         type: Localhost
         localhostProfile: custom.deny-write-outside-home
- 
+
   containers:
     - name: busy-dontwrite
       image: busybox
