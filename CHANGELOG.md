@@ -44,12 +44,6 @@ See [GitHub release](https://github.com/tuxerrante/kapparmor/releases/tag/kappar
 
 ---
 
-## [0.1.9] - 2024-02-19
-
-See [GitHub release](https://github.com/tuxerrante/kapparmor/releases/tag/v0.1.9).
-
----
-
 ## [0.1.7] - 2025-05-07
 
 See [GitHub release](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.7).
@@ -59,6 +53,12 @@ See [GitHub release](https://github.com/tuxerrante/kapparmor/releases/tag/kappar
 ## [0.1.6] - 2024-07-17
 
 See [GitHub release](https://github.com/tuxerrante/kapparmor/releases/tag/kapparmor-0.1.6).
+
+---
+
+## [0.1.9] - 2024-02-19
+
+See [GitHub release](https://github.com/tuxerrante/kapparmor/releases/tag/v0.1.9).
 
 ---
 

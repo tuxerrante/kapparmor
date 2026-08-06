@@ -470,7 +470,7 @@ For security vulnerabilities, see [SECURITY.md](SECURITY.md).
 ## Community & Support
 
 - 🐛 **Found a bug?** [Open an issue](https://github.com/tuxerrante/kapparmor/issues)
-- 💡 **Feature request?** [Open an enhancement issue](https://github.com/tuxerrante/kapparmor/issues/new)
+- 💡 **Feature request?** [Open an enhancement issue](https://github.com/tuxerrante/kapparmor/issues/new?labels=enhancement)
 - 📚 **Need help?** Check the [docs](./docs)
 - 📋 **Changelog:** See [CHANGELOG.md](CHANGELOG.md) for release history
 

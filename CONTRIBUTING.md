@@ -37,7 +37,8 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 
 ### Suggesting Features
 
-Open an issue labeled `enhancement`. Describe the use case and the value it brings.
+Open an [issue labeled `enhancement`](https://github.com/tuxerrante/kapparmor/issues/new?labels=enhancement).
+Describe the use case and the value it brings.
 
 ### Submitting Code Changes
 
