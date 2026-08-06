@@ -115,8 +115,8 @@ jobs:
           ignore-unfixed: true
           vuln-type: "os"
           severity: "CRITICAL,HIGH"
+          exit-code: "1"
           timeout: 5m
-          output: "trivy-results.sarif"
 
   # Pages https://github.com/tuxerrante/kapparmor/settings/pages
   # https://helm.sh/docs/topics/chart_repository/#github-pages-example

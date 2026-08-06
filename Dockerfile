@@ -18,8 +18,17 @@ RUN cd /builder/src/app &&\
     go test -v -vet off -fuzz=Fuzz -fuzztime=60s -run ^t_fuzz* .
 
 # Run coverage tests on all packages
+ARG MIN_COVERAGE=69
 RUN cd /builder/src/app &&\
-    go test -v -coverprofile=coverage.out -covermode=count ./...
+    go test -v -coverprofile=coverage.out -covermode=count ./... &&\
+    go tool cover -func=coverage.out > coverage-summary.txt &&\
+    coverage="$(awk '/^total:/ {sub(/%/, "", $3); print $3}' coverage-summary.txt)" &&\
+    rm coverage-summary.txt &&\
+    test -n "$coverage" &&\
+    awk -v coverage="$coverage" -v minimum="$MIN_COVERAGE" 'BEGIN {\
+      printf "Total coverage: %.1f%% (minimum: %.1f%%)\n", coverage, minimum;\
+      if (coverage < minimum) exit 1;\
+    }'
 
 
 # --- Publish test coverage results

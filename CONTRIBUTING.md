@@ -117,7 +117,7 @@ Every non-trivial change **must** include appropriate tests:
 | Refactoring | Existing tests must continue to pass |
 | Security fix | Test that demonstrates the vulnerability is fixed |
 
-- Coverage is measured in CI and reported through Codecov. Changes must not materially reduce coverage.
+- Coverage must remain at or above the repository's 69% CI floor and is reported through Codecov.
 - Test files use the `t_` name prefix (e.g., `t_myfeature_test.go`).
 - Fuzz tests are encouraged for functions that process external input.
 - Run `make test-coverage` to verify coverage locally.

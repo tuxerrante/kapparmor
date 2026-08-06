@@ -5,6 +5,7 @@ APP := kapparmor
 PKG := ./src/app/...
 BIN_DIR := ./.go/bin
 COVER := coverage.out
+MIN_COVERAGE ?= 69
 GOLANGCI_LINT_VERSION ?= v2.6.0
 GOLANGCI_LINT         := $(BIN_DIR)/golangci-lint
 DEFAULT_LOG_DIR := ./output
@@ -44,7 +45,15 @@ test:
 test-coverage:
 	@echo "> go test with coverage"
 	@go test -coverprofile=$(COVER) $(PKG)
-	@go tool cover -func=$(COVER) | tail -n 1 || true
+	@coverage=$$(go tool cover -func=$(COVER) | awk '/^total:/ {sub(/%/, "", $$3); print $$3}'); \
+	if [ -z "$$coverage" ]; then \
+		echo "Unable to determine test coverage"; \
+		exit 1; \
+	fi; \
+	awk -v coverage="$$coverage" -v minimum="$(MIN_COVERAGE)" 'BEGIN { \
+		printf "Total coverage: %.1f%% (minimum: %.1f%%)\n", coverage, minimum; \
+		if (coverage < minimum) exit 1; \
+	}'
 
 docker-test:
 	@echo "> docker build (test-coverage)"
