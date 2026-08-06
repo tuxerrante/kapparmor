@@ -37,7 +37,7 @@ This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.
 
 ### Suggesting Features
 
-Open a [GitHub Discussion](https://github.com/tuxerrante/kapparmor/discussions) or an issue labeled `enhancement`. Describe the use case and the value it brings.
+Open an issue labeled `enhancement`. Describe the use case and the value it brings.
 
 ### Submitting Code Changes
 
@@ -51,9 +51,9 @@ Open a [GitHub Discussion](https://github.com/tuxerrante/kapparmor/discussions) 
    ```bash
    make fmt vet lint test-coverage
    ```
-5. Commit with a signed commit (`git commit -s -S`) and a meaningful message.
+5. Commit with a meaningful message. Signed commits are encouraged.
 6. Push your branch and open a Pull Request against `main`.
-7. At least one maintainer review and approval is required before merging.
+7. Request maintainer review before merging.
 
 ---
 
@@ -101,7 +101,7 @@ See [docs/testing.md](docs/testing.md) for detailed testing instructions includi
 - **Error handling**: Always wrap errors with context; never silently discard errors.
 - **Security**: Follow OWASP Go best practices. Run `gosec` locally if in doubt.
 - **Documentation**: Public functions and types must have godoc comments.
-- **Commits**: Must be signed (`git config commit.gpgsign true`).
+- **Commits**: Signed commits are encouraged but are not currently enforced.
 
 ---
 
@@ -116,7 +116,7 @@ Every non-trivial change **must** include appropriate tests:
 | Refactoring | Existing tests must continue to pass |
 | Security fix | Test that demonstrates the vulnerability is fixed |
 
-- Minimum coverage target: **80%** (enforced via Codecov).
+- Coverage is measured in CI and reported through Codecov. Changes must not materially reduce coverage.
 - Test files use the `t_` name prefix (e.g., `t_myfeature_test.go`).
 - Fuzz tests are encouraged for functions that process external input.
 - Run `make test-coverage` to verify coverage locally.
@@ -129,7 +129,7 @@ Every non-trivial change **must** include appropriate tests:
 2. Ensure the CI pipeline passes (build, lint, test, security scan).
 3. Update documentation (`README.md`, `docs/`) if your change affects user-facing behaviour.
 4. Update `charts/kapparmor/CHANGELOG.md` for user-visible changes.
-5. PRs require **at least one approving review** from a maintainer.
+5. Obtain maintainer review before merging. Repository settings do not currently enforce a minimum approval count.
 6. Squash-merge or rebase-merge is preferred to keep a clean history.
 
 ---

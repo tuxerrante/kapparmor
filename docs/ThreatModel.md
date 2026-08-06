@@ -525,13 +525,12 @@ securityContext:
 **Status:** ✅ **ADDRESSED**
 
 **Controls:**
-1. Dependabot for Go modules (.github/dependabot.yaml)
-2. Trivy image scanning (build-app.yml)
+1. Dependabot for Go modules, Docker, and GitHub Actions (`.github/dependabot.yml`)
+2. Trivy image scanning (`.github/workflows/build-app.yml`)
 3. Go vulnerability scanning (`go vet`, `gosec` via golangci-lint)
-4. Pinned dependencies in go.mod
-5. SBOM generation (implicit via go.mod)
+4. Versioned Go dependencies in `go.mod`
 
-**Evidence:** Go Report Card badge shows "A+" rating
+**Gap:** Release SBOM generation and provenance attestations are not yet configured.
 
 ---
 
@@ -804,10 +803,10 @@ graph TD
 | **Code** | Input Validation | `isValidFilename`, `isSafePath` | ✅ |
 | **Code** | Static Analysis | CodeQL, golangci-lint | ✅ |
 | **Code** | Secrets Scanning | Gitleaks (pre-commit) | ✅ |
-| **Test** | Unit Tests | 43 test files, >80% coverage target | ✅ |
+| **Test** | Unit Tests | Race-enabled tests with coverage reporting | ✅ |
 | **Test** | Fuzz Testing | `FuzzIsProfileNameCorrect` | ✅ |
-| **Test** | Vulnerability Scanning | Gosec, Trivy, Snyk | ✅ |
-| **Build** | Signed Commits | GPG verification | ✅ |
+| **Test** | Vulnerability Scanning | Gosec, Trivy, CodeQL | ✅ |
+| **Build** | Signed Commits | Recommended; not enforced | ⚠️ |
 | **Build** | Hardened CI | Harden-Runner, egress audit | ✅ |
 | **Build** | Dependency Pinning | go.mod, image digests | ✅ |
 | **Deploy** | Image Signing | ⚠️ Missing (Cosign) | ❌ |
@@ -837,9 +836,9 @@ graph TD
 #### Dynamic Analysis (DAST)
 
 ⚠️ **Container Scanning** (Trivy)
-- Severity: `CRITICAL,HIGH` block builds
+- Severity: Reports `CRITICAL,HIGH` findings
 - Scan: OS packages only (not Go binaries)
-- Gap: Runtime behavior not tested
+- Gap: Findings are not yet configured to fail the workflow
 
 ❌ **Penetration Testing**
 - Not automated
@@ -850,11 +849,11 @@ graph TD
 ### 3. Supply Chain Security
 
 ✅ **OpenSSF Scorecard** (.github/workflows/scorecard.yml)
-- Badge: [8391](https://www.bestpractices.dev/projects/8391)
-- Checks: Branch protection, signed commits, pinned actions
+- Best Practices progress: [8391](https://www.bestpractices.dev/projects/8391)
+- Checks include branch protection, signed releases, and pinned dependencies
 
-✅ **Dependabot** (.github/dependabot.yaml)
-- Ecosystem: `gomod`
+✅ **Dependabot** (.github/dependabot.yml)
+- Ecosystems: `gomod`, Docker, and GitHub Actions
 - Frequency: Weekly
 - Auto-PR for updates
 
@@ -1163,10 +1162,10 @@ data:
 
 | Gate | Requirement | Status | Evidence |
 |------|-------------|--------|----------|
-| **Code Coverage** | >80% | ⚠️ Target (current: measure via Codecov) | [![codecov](https://codecov.io/gh/tuxerrante/kapparmor/branch/main/graph/badge.svg)](https://codecov.io/gh/tuxerrante/kapparmor) |
+| **Code Coverage** | Prevent material regression | ⚠️ Measured, threshold not enforced | [![codecov](https://codecov.io/gh/tuxerrante/kapparmor/branch/main/graph/badge.svg)](https://codecov.io/gh/tuxerrante/kapparmor) |
 | **Static Analysis** | Zero HIGH/CRITICAL | ✅ | CodeQL, golangci-lint pass |
-| **Vulnerability Scan** | Zero HIGH/CRITICAL | ✅ | Trivy blocks on findings |
-| **Signed Commits** | 100% | ✅ | `.git/config`: `commit.gpgsign = true` |
+| **Vulnerability Scan** | Report HIGH/CRITICAL | ⚠️ | Trivy reports findings but does not fail CI |
+| **Signed Commits** | Recommended | ⚠️ | Not enforced by repository settings |
 | **Dependency Updates** | Weekly | ✅ | Dependabot + cron |
 | **Secrets Detection** | Pre-commit | ✅ | Gitleaks hook |
 | **Dockerfile Security** | Best practices | ✅ | Hadolint, multi-stage, digest pins |
@@ -1294,9 +1293,9 @@ Kapparmor demonstrates **strong security posture** with 78% of identified threat
 ### Key Strengths
 1. Comprehensive input validation with fuzz testing
 2. Minimal attack surface through standard library usage
-3. Extensive CI/CD security gates (CodeQL, Trivy, Scorecard, Harden-Runner)
+3. CI/CD security analysis (CodeQL, Trivy, Scorecard, Harden-Runner)
 4. Defensive coding patterns (mutex locks, panic recovery, context cancellation)
-5. No external runtime dependencies
+5. Restricted, allowlisted runtime dependencies
 
 ### Critical Gaps
 1. **Resource exhaustion protection** (P1: Profile limits)
@@ -1316,7 +1315,7 @@ Kapparmor demonstrates **strong security posture** with 78% of identified threat
 - **Prepared By:** [@tuxerrante](https://github.com/tuxerrante) + Claude.ai
 - **Reviewed By:** [Pending]
 - **Approved By:** [Pending]
-- **Next Review:** Q2 2026 or upon major architecture change
+- **Next Review:** Q4 2026 or upon major architecture change
 
 ---
 
