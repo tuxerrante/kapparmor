@@ -81,3 +81,4 @@ repos:
         entry: bash -c 'make test && make test-coverage'
         language: system
         files: '\.go$'
+        pass_filenames: false

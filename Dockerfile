@@ -24,7 +24,7 @@ RUN cd /builder/src/app &&\
     go tool cover -func=coverage.out > coverage-summary.txt &&\
     coverage="$(awk '/^total:/ {sub(/%/, "", $3); print $3}' coverage-summary.txt)" &&\
     rm coverage-summary.txt &&\
-    test -n "$coverage" &&\
+    if [ -z "$coverage" ]; then echo "Unable to determine test coverage"; exit 1; fi &&\
     awk -v coverage="$coverage" -v minimum="$MIN_COVERAGE" 'BEGIN {\
       printf "Total coverage: %.1f%% (minimum: %.1f%%)\n", coverage, minimum;\
       if (coverage < minimum) exit 1;\
