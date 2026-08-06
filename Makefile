@@ -5,6 +5,7 @@ APP := kapparmor
 PKG := ./src/app/...
 BIN_DIR := ./.go/bin
 COVER := coverage.out
+MIN_COVERAGE ?= 69
 GOLANGCI_LINT_VERSION ?= v2.6.0
 GOLANGCI_LINT         := $(BIN_DIR)/golangci-lint
 DEFAULT_LOG_DIR := ./output
@@ -16,7 +17,7 @@ all: fmt vet lint test-coverage docker-build docker-scan
 
 fmt:
 	@echo "> go fmt"
-	gofmt -s -w src/ 
+	gofmt -s -w src/
 	@echo "> shfmt"
 	shfmt --write --simplify -ln bash build/
 
@@ -44,17 +45,28 @@ test:
 test-coverage:
 	@echo "> go test with coverage"
 	@go test -coverprofile=$(COVER) $(PKG)
-	@go tool cover -func=$(COVER) | tail -n 1 || true
+	@coverage=$$(go tool cover -func=$(COVER) | awk '/^total:/ {sub(/%/, "", $$3); print $$3}'); \
+	if [ -z "$$coverage" ]; then \
+		echo "Unable to determine test coverage"; \
+		exit 1; \
+	fi; \
+	awk -v coverage="$$coverage" -v minimum="$(MIN_COVERAGE)" 'BEGIN { \
+		printf "Total coverage: %.1f%% (minimum: %.1f%%)\n", coverage, minimum; \
+		if (coverage < minimum) exit 1; \
+	}'
 
 docker-test:
 	@echo "> docker build (test-coverage)"
-	@docker build --target test-coverage --tag "ghcr.io/tuxerrante/$(APP):$(APP_VERSION)-dev" .
+	@docker build --target test-coverage \
+		--build-arg MIN_COVERAGE=$(MIN_COVERAGE) \
+		--tag "ghcr.io/tuxerrante/$(APP):$(APP_VERSION)-dev" .
 
 docker-build:
 	@echo "> docker build - building production image"
 	@docker build --tag "ghcr.io/tuxerrante/$(APP):$(APP_VERSION)-dev" \
 		--build-arg POLL_TIME=$(POLL_TIME) \
 		--build-arg PROFILES_DIR=/app/profiles \
+		--build-arg MIN_COVERAGE=$(MIN_COVERAGE) \
 		-f Dockerfile \
 		.
 
@@ -99,7 +111,7 @@ helm-lint:
 
 precommit:
 	@echo "> pre-commit run --all-files"
-	@pre-commit run --all-files || true
+	@pre-commit run --all-files
 
 clean:
 	@rm -f $(COVER)

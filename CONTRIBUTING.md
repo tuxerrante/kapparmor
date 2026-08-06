@@ -50,7 +50,7 @@ Describe the use case and the value it brings.
 3. Add or update tests as required (see [Testing Requirements](#testing-requirements)).
 4. Ensure all quality gates pass locally:
    ```bash
-   make fmt vet lint test-coverage
+   make fmt vet lint test-coverage precommit
    ```
 5. Commit with a meaningful message. Signed commits are encouraged.
 6. Push your branch and open a Pull Request against `main`.
@@ -65,8 +65,10 @@ Describe the use case and the value it brings.
 - Go 1.25+
 - Docker (for container builds)
 - `make`
+- `pre-commit`
 - `golangci-lint` (installed automatically by `make go-lint`)
 - Helm 3 (for chart linting)
+- `yq`, `yamllint`, and `kubeconform` (for rendered chart validation)
 - A MicroK8s or Kubernetes cluster for end-to-end tests (optional)
 
 ### Quick Start
@@ -117,7 +119,7 @@ Every non-trivial change **must** include appropriate tests:
 | Refactoring | Existing tests must continue to pass |
 | Security fix | Test that demonstrates the vulnerability is fixed |
 
-- Coverage is measured in CI and reported through Codecov. Changes must not materially reduce coverage.
+- Coverage must remain at or above the repository's 69% CI floor and is reported through Codecov.
 - Test files use the `t_` name prefix (e.g., `t_myfeature_test.go`).
 - Fuzz tests are encouraged for functions that process external input.
 - Run `make test-coverage` to verify coverage locally.

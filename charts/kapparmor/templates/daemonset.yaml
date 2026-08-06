@@ -20,7 +20,7 @@ spec:
     metadata:
       annotations:
         gitCommit: {{ (default .Chart.AppVersion .Values.podAnnotations.gitCommit) | trunc 63 | quote }}
-        {{- with (omit (default dict .Values.podAnnotations) "gitCommit") }} 
+        {{- with (omit (default dict .Values.podAnnotations) "gitCommit") }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
@@ -108,4 +108,3 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-  

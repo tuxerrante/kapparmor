@@ -27,7 +27,7 @@ repos:
         verbose: true
 
   - repo: https://github.com/golangci/golangci-lint
-    rev: v2.5.0
+    rev: v2.6.0
     hooks:
       - id: golangci-lint
         args: ["-c", ".golangci.yml", "--timeout=5m"]
@@ -56,7 +56,7 @@ repos:
 
       - id: lint-rendered-helm
         name: Lint rendered Helm chart YAML
-        entry: bash -c "source ./config/config && helm template --set image.tag=${APP_VERSION}-dev charts/kapparmor | yq . > testdata/rendered.yaml && yamllint testdata/rendered.yaml && kubeconform --summary testdata/rendered.yaml"
+        entry: bash -c "mkdir -p testdata && source ./config/config && helm template --set image.tag=${APP_VERSION}-dev charts/kapparmor | yq . > testdata/rendered.yaml && yamllint testdata/rendered.yaml && kubeconform --summary testdata/rendered.yaml"
         language: system
         pass_filenames: false
         always_run: true
@@ -71,13 +71,14 @@ repos:
 
       - id: govet
         name: go vet
-        entry: go vet ./go/...
+        entry: go vet ./src/...
         language: system
         files: '\.go$'
         pass_filenames: false
 
       - id: gotest
-        name: go test
-        entry: bash -c 'go test -v -race -coverprofile=coverage.out -covermode=atomic ./...'
+        name: go test and coverage gate
+        entry: bash -c 'make test && make test-coverage'
         language: system
         files: '\.go$'
+        pass_filenames: false

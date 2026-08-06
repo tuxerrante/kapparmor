@@ -6,7 +6,7 @@ on:
     branches:
       - main
       - feature/*
-      - fix/* 
+      - fix/*
   pull_request:
 permissions:
   contents: read

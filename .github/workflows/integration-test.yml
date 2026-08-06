@@ -49,6 +49,17 @@ jobs:
             POLL_TIME=${{ env.POLL_TIME }}
             PROFILES_DIR=/app/profiles
 
+      - name: Scan image for HIGH and CRITICAL vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:integration-${{ github.sha }}"
+          format: "table"
+          ignore-unfixed: true
+          vuln-type: "os"
+          severity: "CRITICAL,HIGH"
+          exit-code: "1"
+          timeout: 5m
+
       - name: Verify host AppArmor
         run: |
           cat /sys/module/apparmor/parameters/enabled

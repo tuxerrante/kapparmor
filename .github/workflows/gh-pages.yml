@@ -23,7 +23,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 1
-      
+
       - name: Checkout gh-pages
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -51,6 +51,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update docs for GH pages" 
+            git commit -m "Update docs for GH pages"
             git push origin gh-pages
           fi

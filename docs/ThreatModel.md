@@ -836,9 +836,8 @@ graph TD
 #### Dynamic Analysis (DAST)
 
 ⚠️ **Container Scanning** (Trivy)
-- Severity: Reports `CRITICAL,HIGH` findings
+- Severity: Fixable `CRITICAL,HIGH` findings block builds
 - Scan: OS packages only (not Go binaries)
-- Gap: Findings are not yet configured to fail the workflow
 
 ❌ **Penetration Testing**
 - Not automated
@@ -1162,9 +1161,9 @@ data:
 
 | Gate | Requirement | Status | Evidence |
 |------|-------------|--------|----------|
-| **Code Coverage** | Prevent material regression | ⚠️ Measured, threshold not enforced | [![codecov](https://codecov.io/gh/tuxerrante/kapparmor/branch/main/graph/badge.svg)](https://codecov.io/gh/tuxerrante/kapparmor) |
+| **Code Coverage** | >=69% | ✅ Enforced by local and container builds | [![codecov](https://codecov.io/gh/tuxerrante/kapparmor/branch/main/graph/badge.svg)](https://codecov.io/gh/tuxerrante/kapparmor) |
 | **Static Analysis** | Zero HIGH/CRITICAL | ✅ | CodeQL, golangci-lint pass |
-| **Vulnerability Scan** | Report HIGH/CRITICAL | ⚠️ | Trivy reports findings but does not fail CI |
+| **Vulnerability Scan** | Zero fixable HIGH/CRITICAL | ✅ | Trivy blocks on fixable findings |
 | **Signed Commits** | Recommended | ⚠️ | Not enforced by repository settings |
 | **Dependency Updates** | Weekly | ✅ | Dependabot + cron |
 | **Secrets Detection** | Pre-commit | ✅ | Gitleaks hook |
