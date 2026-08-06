@@ -100,8 +100,8 @@ This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubern
 🔐 **Enterprise-Grade Security**
 - Input validation with fuzz testing
 - Secure coding practices (SSDLC)
-- Supply chain security (signed commits, Harden-Runner, CodeQL)
-- Zero external runtime dependencies
+- Supply chain security (pinned CI actions, Harden-Runner, CodeQL)
+- Restricted dependency policy enforced by `depguard`
 
 ⚡ **Kubernetes-Native**
 - DaemonSet-based deployment
@@ -118,8 +118,8 @@ This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubern
 📈 **Production-Ready**
 - Comprehensive test coverage
 - CI/CD security gates
-- OpenSSF Best Practices certified
-- No privileged escalation vectors
+- [OpenSSF Best Practices](https://www.bestpractices.dev/projects/8391) progress tracked publicly
+- Privileged host access documented in the [threat model](./docs/ThreatModel.md)
 
 ---
 
@@ -127,11 +127,11 @@ This work was inspired by [kubernetes/apparmor-loader](https://github.com/kubern
 
 Kapparmor is built with security as a core principle:
 
-✅ **Threat Modeling** – [Comprehensive STRIDE analysis](./docs/ThreatModel.md)  
-✅ **Code Quality** – 80%+ test coverage, zero high-severity CodeQL alerts  
-✅ **Supply Chain** – Pinned dependencies, signed commits, SBOM tracking  
-✅ **Vulnerability Scanning** – Trivy, Gosec, Snyk integration  
-✅ **Least Privilege** – Minimal RBAC, no elevated capabilities unless required  
+✅ **Threat Modeling** – [Comprehensive STRIDE analysis](./docs/ThreatModel.md)
+✅ **Code Quality** – Race-enabled unit tests, fuzzing, linting, and measured coverage
+✅ **Supply Chain** – Pinned CI actions and automated dependency monitoring
+✅ **Vulnerability Scanning** – CodeQL, Gosec, Trivy, and Snyk analysis
+✅ **Least Privilege** – Scoped Kubernetes access with documented privileged host requirements
 
 👉 **[Read the full security threat model](./docs/ThreatModel.md)** for detailed analysis of risks and mitigations.
 
@@ -444,12 +444,12 @@ See the **[KAppArmor Demo project](https://github.com/tuxerrante/kapparmor-demo)
 2. ✏️ Update `charts/kapparmor/Chart.yaml` with matching version
 3. 🧪 Run unit and integration tests (see `Makefile`)
 4. ✏️ Update `charts/kapparmor/CHANGELOG.md`
-5. 📝 Open PR, get reviews
+5. 📝 Open a PR for maintainer review
 6. ✅ Merge to main
-7. 🏷️ Create signed Git tag: `git tag -s v1.0.0`
+7. 🏷️ Create a version tag
 8. 🚀 GitHub Actions automatically builds and publishes
 
-**Note:** Commits must be signed (`git config commit.gpgsign true`)
+Signed commits and tags are encouraged but are not currently enforced by repository settings.
 
 ---
 
@@ -470,7 +470,7 @@ For security vulnerabilities, see [SECURITY.md](SECURITY.md).
 ## Community & Support
 
 - 🐛 **Found a bug?** [Open an issue](https://github.com/tuxerrante/kapparmor/issues)
-- 💡 **Feature request?** [Start a discussion](https://github.com/tuxerrante/kapparmor/discussions)
+- 💡 **Feature request?** [Open an enhancement issue](https://github.com/tuxerrante/kapparmor/issues/new?labels=enhancement)
 - 📚 **Need help?** Check the [docs](./docs)
 - 📋 **Changelog:** See [CHANGELOG.md](CHANGELOG.md) for release history
 
