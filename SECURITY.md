@@ -43,8 +43,8 @@ We follow responsible disclosure: once a fix is published, the advisory will be 
 
 This project uses the following tools for ongoing vulnerability monitoring:
 
-- **Snyk** – automatic vulnerability detection and automated fix PRs
-- **Trivy** – container image scanning in CI (blocks on CRITICAL/HIGH findings)
+- **Snyk** – dependency analysis on pull requests
+- **Trivy** – container image scanning in CI that blocks fixable CRITICAL/HIGH findings
 - **CodeQL** – static analysis in CI
 - **Dependabot** – weekly dependency update PRs
 - **Gosec** – Go security analysis in CI
