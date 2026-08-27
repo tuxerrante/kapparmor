@@ -128,13 +128,15 @@ func compareLocalFiles(filePath1, filePath2 string) (bool, error) {
 	fileBytes1, err := os.ReadFile(filePath1) // #nosec G304 -- path validated
 	if err != nil {
 		slog.Default().Error("read file error", slog.Any("error", err))
-		os.Exit(1)
+
+		return false, fmt.Errorf("reading %s: %w", filePath1, err)
 	}
 
 	fileBytes2, err := os.ReadFile(filePath2) // #nosec G304 -- path validated
 	if err != nil {
 		slog.Default().Error("read file error", slog.Any("error", err))
-		os.Exit(1)
+
+		return false, fmt.Errorf("reading %s: %w", filePath2, err)
 	}
 
 	trimmedBytes1 := bytes.TrimSpace(fileBytes1)
@@ -230,7 +232,8 @@ func areProfilesReadable(cfg *AppConfig) (bool, map[string]bool) {
 
 	if err != nil {
 		slog.Default().Error("readdir error", slog.Any("error", err))
-		os.Exit(1)
+
+		return false, nil
 	}
 
 	if len(files) == 0 {
@@ -260,7 +263,8 @@ func areProfilesReadable(cfg *AppConfig) (bool, map[string]bool) {
 				slog.String("folder", folderName),
 				slog.String("filename", filename),
 				slog.Any("error", err))
-			os.Exit(1)
+
+			return false, nil
 		}
 
 		slog.Default().Info("profile candidate", slog.String("name", filename))
@@ -479,14 +483,19 @@ func isCharInSlice(char rune, slice []rune) bool {
 // between the two files. If that fail, copy the file contents from src to dst.
 // Credits: https://stackoverflow.com/a/21067803/3673430
 func CopyFile(src, dst string) error {
+	if !isSafePath(src) || !isSafePath(dst) {
+		return fmt.Errorf("CopyFile: unsafe path detected (src=%s, dst=%s)", src, dst)
+	}
+
 	// dst is the destination directory
 	srcFileName := filepath.Base(src)
 	dstCompleteFileName := path.Join(dst, srcFileName)
 
-	sfi, err := os.Stat(src)
+	sfi, err := os.Stat(src) // #nosec G304 -- path validated by isSafePath above
 	if err != nil {
 		slog.Default().Error("stat src error", slog.Any("error", err))
-		os.Exit(1)
+
+		return fmt.Errorf("CopyFile: stat source %s: %w", src, err)
 	}
 
 	if !sfi.Mode().IsRegular() {

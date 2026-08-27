@@ -51,9 +51,14 @@ func TestIsProfileNameCorrect(t *testing.T) {
 }
 
 // newCfgForLoadUnload creates a temporary AppConfig and directories for load/unload tests.
+// Uses /tmp so paths pass isSafePath validation on all platforms.
 func newCfgForLoadUnload(t *testing.T, parserExitOK bool) (*AppConfig, string, string) {
 	t.Helper()
-	tmp := t.TempDir()
+	tmp, err := os.MkdirTemp("/tmp", "test-loadunload-*")
+	if err != nil {
+		t.Fatalf("mkdirtemp: %v", err)
+	}
+	t.Cleanup(func() { os.RemoveAll(tmp) })
 
 	// Copy binaries in /tmp/etc/
 	etc := filepath.Join(tmp, "etc_apparmor.d_custom")

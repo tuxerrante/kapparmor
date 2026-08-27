@@ -18,25 +18,31 @@ func startHealthzServer(cfg *AppConfig) {
 		_, desired := getNewProfiles(cfg)
 		_, loaded, _ := getLoadedProfiles(cfg)
 
-		inSync := true
+		if desired == nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("NOT_READY: unable to read desired profiles"))
 
-		if len(desired) == len(loaded) {
-			for profile := range desired {
-				if !loaded[profile] {
-					inSync = false
+			return
+		}
 
-					break
-				}
-			}
+		if len(desired) != len(loaded) {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("NOT_READY"))
 
-			if inSync {
-				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("READY"))
-			} else {
+			return
+		}
+
+		for profile := range desired {
+			if !loaded[profile] {
 				w.WriteHeader(http.StatusServiceUnavailable)
 				w.Write([]byte("NOT_READY"))
+
+				return
 			}
 		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("READY"))
 	})
 
 	http.Handle("/metrics", promhttp.Handler())
